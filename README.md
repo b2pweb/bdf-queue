@@ -1,8 +1,8 @@
 ## Queue
 
 This package provides 2 layers for abstraction of message broker.
-     * A connection layer
-     * A destination layer
+     - A connection layer
+     - A destination layer
 
 [![Build Status](https://travis-ci.org/b2pweb/bdf-queue.svg?branch=master)](https://travis-ci.org/b2pweb/bdf-queue)
 [![Scrutinizer Code Quality](https://scrutinizer-ci.com/g/b2pweb/bdf-queue/badges/quality-score.png?b=master)](https://scrutinizer-ci.com/g/b2pweb/bdf-queue/?branch=master)
