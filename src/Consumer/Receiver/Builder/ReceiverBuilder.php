@@ -417,9 +417,10 @@ class ReceiverBuilder
         }
 
         return $this->logger =
-              $this->container->has(LoggerInterface::class) ? $this->container->get(LoggerInterface::class)
-            : $this->container->has('logger') ? $this->container->get('logger')
-            : new NullLogger()
+              $this->container->has(LoggerInterface::class)
+                  ? $this->container->get(LoggerInterface::class) : (
+                      $this->container->has('logger') ? $this->container->get('logger') : new NullLogger()
+              )
         ;
     }
 }

@@ -36,6 +36,7 @@ class PheanstalkQueueTest extends TestCase
         $this->pheanstalk = $this->createMock(PheanstalkInterface::class);
 
         $connection = new PheanstalkConnection('foo', new JsonSerializer());
+        $connection->setConfig([]);
         $connection->setPheanstalk($this->pheanstalk);
         $this->driver = $connection->queue();
     }
@@ -51,7 +52,11 @@ class PheanstalkQueueTest extends TestCase
 
         $regex = preg_quote('{"job":"test","data":"foo","queuedAt":{"date":"').
             '[0-9- \.\:]+'.
-            preg_quote('","timezone_type":3,"timezone":"Europe\/Paris"},"headers":{"priority":2,"ttr":3}}');
+            preg_quote('","timezone_type":').
+            '[0-9]+'.
+            preg_quote(',"timezone":"').
+            '[\w\/\\\]+'.
+            preg_quote('"},"headers":{"priority":2,"ttr":3}}');
 
         $this->pheanstalk->expects($this->once())->method('useTube')->with('queue')->willReturnSelf();
         $this->pheanstalk->expects($this->once())->method('put')
