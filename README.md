@@ -4,23 +4,23 @@ This package provides 2 layers for abstraction of message broker.
      * A connection layer
      * A destination layer
 
-[![Build Status](https://travis-ci.org/b2pweb/bdf-instantiator.svg?branch=master)](https://travis-ci.org/b2pweb/bdf-instantiator)
-[![Scrutinizer Code Quality](https://scrutinizer-ci.com/g/b2pweb/bdf-instantiator/badges/quality-score.png?b=master)](https://scrutinizer-ci.com/g/b2pweb/bdf-instantiator/?branch=master)
-[![Packagist Version](https://img.shields.io/packagist/v/b2pweb/bdf-instantiator.svg)](https://packagist.org/packages/b2pweb/bdf-instantiator)
-[![Total Downloads](https://img.shields.io/packagist/dt/b2pweb/bdf-instantiator.svg)](https://packagist.org/packages/b2pweb/bdf-instantiator)
+[![Build Status](https://travis-ci.org/b2pweb/bdf-queue.svg?branch=master)](https://travis-ci.org/b2pweb/bdf-queue)
+[![Scrutinizer Code Quality](https://scrutinizer-ci.com/g/b2pweb/bdf-queue/badges/quality-score.png?b=master)](https://scrutinizer-ci.com/g/b2pweb/bdf-queue/?branch=master)
+[![Packagist Version](https://img.shields.io/packagist/v/b2pweb/bdf-queue.svg)](https://packagist.org/packages/b2pweb/bdf-queue)
+[![Total Downloads](https://img.shields.io/packagist/dt/b2pweb/bdf-queue.svg)](https://packagist.org/packages/b2pweb/bdf-queue)
 
 #### Supports
 
 |Message Broker   | Library           | Driver name |
 |-----------------|-------------------|---------- |
 |Beanstalk        | Pheanstalk        | pheanstalk |
-|Db               | Prime             | prime |
 |Gearman          | Pecl Gearman      | gearman |
 |Kafka            | RdKafka           | rdkafka |
 |Memory           |                   | memory |
 |Null             |                   | null |
 |RabbitMQ         | Amqp lib          | amqp-lib |
 |Redis            | PhpRedis/PRedis   | redis |
+|Enqueue          | php-enqueue       | enqueue |
 
 
 ### Usage Instructions
@@ -373,7 +373,6 @@ echo $promise->await(500)->data(); // Display 2
 | `rebalance_cb`      | string      | rdkafka                        | Kafka config for global settings. |
 | `topic`             | array       | rdkafka                        | Kafka config for topic settings. |
 | `partitioner`       | string      | rdkafka                        | Kafka partitioner for topic settings. |
-| `table`             | string      | prime                          | Mandatory parameter: the table name to store messages. |
 | `sleep_duration`    | int         | amqp-lib                       | The internal sleep in milliseconds between two pop. Default `200`. |
 | `queue_flags`       | int         | amqp-lib                       | The flag for queue declaration. See AmqpDriver constants. |
 | `consumer_flags`    | int         | amqp-lib                       | The flag for consumer. See AmqpDriver constants. |
