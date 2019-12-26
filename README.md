@@ -1,8 +1,8 @@
 ## Queue
 
 This package provides 2 layers for abstraction of message broker.
-     - A connection layer
-     - A destination layer
+ - A connection layer
+ - A destination layer
 
 [![Build Status](https://travis-ci.org/b2pweb/bdf-queue.svg?branch=master)](https://travis-ci.org/b2pweb/bdf-queue)
 [![Scrutinizer Code Quality](https://scrutinizer-ci.com/g/b2pweb/bdf-queue/badges/quality-score.png?b=master)](https://scrutinizer-ci.com/g/b2pweb/bdf-queue/?branch=master)
@@ -19,8 +19,9 @@ This package provides 2 layers for abstraction of message broker.
 |Memory           |                   | memory |
 |Null             |                   | null |
 |RabbitMQ         | Amqp lib          | amqp-lib |
-|Redis            | PhpRedis/PRedis   | redis |
-|Enqueue          | php-enqueue       | enqueue |
+|Redis (Ext)      | PhpRedis          | redis+phpredis |
+|Redis            | PRedis            | redis+predis |
+|Enqueue          | php-enqueue       | enqueue+(*) |
 
 
 ### Usage Instructions
@@ -209,7 +210,8 @@ $message = \Bdf\Queue\Message\Message::createFromJob(MyHandler::class, 'foo', 'q
 $manager->send($message);
 ```
 
-If you want to register your handlers on a specific destination you could use the receiver builder:
+Use the job synthax `"Class@method"` to determine the callable (By default the method is "handle")
+or register your handlers on a specific destination you could use the receiver builder:
 
 ```PHP
 <?php
@@ -236,10 +238,11 @@ $container->set(ReceiverLoader::class, function (ContainerInterface $container) 
                 // Or register your unique processor
                 $builder->processor($myProcessor);
                 
-                // Or register the job bearer resolver as processor. The procesor will resolve the job from the message.
+                // Or register the job bearer resolver as processor. The procesor will resolve the job from the Message::$job attribute value.
                 $builder->jobProcessor();
                 
                 // Or register your own processor or handler by queue in case you consume a connection
+                // (By default the key of the map is the queue name. You can provide your own key provider with the second parameter).
                 $builder->mapProcessor([
                     'queue1' => $myProcessor,
                     'queue2' => MyHandler::class,
@@ -250,6 +253,8 @@ $container->set(ReceiverLoader::class, function (ContainerInterface $container) 
                 
                 // Or register your own receiver in the stack
                 $builder->add($myReceiver);
+                
+                // You can add more middleware here
             }
         ]
     );
