@@ -136,6 +136,12 @@ The default stack of objects that will receive the message is:
 
 `consumer (ConsumerInterface) -> receivers (ReceiverInterface) -> processor (ProcessorInterface) -> handler (callable)`
 
+- `consumer` has the strategy for reading the message from queue / topic.
+- `receivers` is the stack of middleware to interact with the envelope.
+- `processor` resolves the handler arguments. You can plug here your business logic and remove the handler layer.
+By default processor injects 2 arguments: the message data and the envelope.
+- `handler` manages the business logic. Handler allows an interface less mode.
+
 An example to consume a simple message:
 
 ```PHP
@@ -143,15 +149,14 @@ An example to consume a simple message:
 
 use Bdf\Queue\Consumer\Receiver\ProcessorReceiver;
 use Bdf\Queue\Destination\DestinationManager;
-use Bdf\Queue\Message\EnvelopeInterface;
 use Bdf\Queue\Processor\CallbackProcessor;
 use Bdf\Queue\Processor\MapProcessorResolver;
 
 // Create your processor and declare in a map:
-$myProcessor = new CallbackProcessor(function(EnvelopeInterface $envelope) {
-    echo $envelope->message()->data();
+$myProcessor = new CallbackProcessor(function($data) {
+    echo $data;
 });
-$processorResolver = new MapProcessorResolver(['queue_name' => $myProcessor]);
+$processorResolver = new MapProcessorResolver(['foo' => $myProcessor]);
 
 /** @var DestinationManager $manager */
 $manager->create('queue://foo')->consumer(new ProcessorReceiver($processorResolver))->consume(0);
