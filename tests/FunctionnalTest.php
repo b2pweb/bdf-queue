@@ -25,11 +25,10 @@ use Bdf\Queue\Message\QueuedMessage;
 use Bdf\Queue\Processor\CallbackProcessor;
 use Bdf\Queue\Processor\MapProcessorResolver;
 use Bdf\Queue\Testing\MessageWatcherReceiver;
-use Bdf\Queue\Testing\QueueAssertion;
+use Bdf\Queue\Testing\QueueHelper;
 use Bdf\Queue\Testing\StackMessagesReceiver;
 use Bdf\Queue\Tests\QueueServiceProvider;
 use League\Container\Container;
-use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use PHPUnit\Framework\TestCase;
 
@@ -39,21 +38,11 @@ use PHPUnit\Framework\TestCase;
  */
 class FunctionnalTest extends TestCase
 {
-    use QueueAssertion;
-
     /** @var Container */
     private $container;
     /** @var DestinationManager */
     private $manager;
     private $defaultQueue = 'test';
-
-    /**
-     * {@inheritDoc}
-     */
-    public function container(): ContainerInterface
-    {
-        return $this->container;
-    }
 
     /**
      *
@@ -180,6 +169,7 @@ class FunctionnalTest extends TestCase
      */
     public function test_worker_consume_job()
     {
+
         /** @var MessageWatcherReceiver $watcher */
         $watcher = null;
         $message = Message::createFromJob(QueueHandler::class, 'test message');
@@ -187,7 +177,8 @@ class FunctionnalTest extends TestCase
         $destination = $this->manager->for($message);
         $destination->send($message);
 
-        $this->consume(1, $destination, null, function(ReceiverInterface $extension) use(&$watcher) {
+        $helper = new QueueHelper($this->container);
+        $helper->consume(1, $destination, null, function(ReceiverInterface $extension) use(&$watcher) {
             return $watcher = new MessageWatcherReceiver($extension);
         });
 
@@ -219,7 +210,8 @@ class FunctionnalTest extends TestCase
             );
         });
 
-        $this->consume(1, $destination);
+        $helper = new QueueHelper($this->container);
+        $helper->consume(1, $destination);
 
         $this->assertSame('Hello world', $lastMessage);
         $this->assertFalse($lastJob->isRejected());
@@ -233,7 +225,8 @@ class FunctionnalTest extends TestCase
     {
         $lastJob = false;
 
-        $this->consume(1, $this->defaultQueue, null, function(ReceiverInterface $extension) use(&$lastJob) {
+        $helper = new QueueHelper($this->container);
+        $helper->consume(1, $this->defaultQueue, null, function(ReceiverInterface $extension) use(&$lastJob) {
             return new MessageWatcherReceiver($extension, function($envelope) use(&$lastJob) {$lastJob = $envelope;});
         });
 
@@ -250,7 +243,8 @@ class FunctionnalTest extends TestCase
         $destination = $this->manager->for($message);
         $destination->send($message);
 
-        $this->consume(1, $destination, 'test1,test2');
+        $helper = new QueueHelper($this->container);
+        $helper->consume(1, $destination, 'test1,test2');
 
         $this->assertEquals($message->data(), QueueObserver::$data);
     }
@@ -267,7 +261,8 @@ class FunctionnalTest extends TestCase
         $destination->send($message);
         $destination->send($message);
 
-        $this->consume(1, $destination, 'test');
+        $helper = new QueueHelper($this->container);
+        $helper->consume(1, $destination, 'test');
 
         /** @var QueueDriverInterface $queue */
         $queue = $this->container->get(ConnectionDriverFactoryInterface::class)->create($this->defaultQueue)->queue();
@@ -285,7 +280,8 @@ class FunctionnalTest extends TestCase
         $destination->send($message);
 
         try {
-            $this->consume(1, $destination);
+            $helper = new QueueHelper($this->container);
+            $helper->consume(1, $destination);
 
             $this->fail('Worker should raised exception');
         } catch (\Exception $e) {
@@ -308,7 +304,8 @@ class FunctionnalTest extends TestCase
         $destination = $this->manager->for($message);
         $destination->send($message);
 
-        $this->consume(1, $destination, null, function(ReceiverInterface $extension) use(&$watcher) {
+        $helper = new QueueHelper($this->container);
+        $helper->consume(1, $destination, null, function(ReceiverInterface $extension) use(&$watcher) {
             $extension = new RetryMessageReceiver($extension, $this->createMock(LoggerInterface::class));
             return $watcher = new MessageWatcherReceiver($extension);
         });
@@ -334,7 +331,8 @@ class FunctionnalTest extends TestCase
         $destination->send($message);
 
         try {
-            $this->consume(1, $destination, null, function(ReceiverInterface $extension) use(&$watcher) {
+            $helper = new QueueHelper($this->container);
+            $helper->consume(1, $destination, null, function(ReceiverInterface $extension) use(&$watcher) {
                 $extension = new RetryMessageReceiver($extension, $this->createMock(LoggerInterface::class), 1, 0);
                 return $watcher = new MessageWatcherReceiver($extension);
             });
@@ -351,7 +349,8 @@ class FunctionnalTest extends TestCase
 
         $watcher = null;
         try {
-            $this->consume(1, $destination, null, function (ReceiverInterface $extension) use (&$watcher) {
+            $helper = new QueueHelper($this->container);
+            $helper->consume(1, $destination, null, function (ReceiverInterface $extension) use (&$watcher) {
                 $extension = new RetryMessageReceiver($extension, $this->createMock(LoggerInterface::class), 1, 0);
                 return $watcher = new MessageWatcherReceiver($extension);
             });
@@ -378,7 +377,8 @@ class FunctionnalTest extends TestCase
         $destination->send($message);
 
         try {
-            $this->consume(1, $destination, null, function (ReceiverInterface $extension) use (&$watcher) {
+            $helper = new QueueHelper($this->container);
+            $helper->consume(1, $destination, null, function (ReceiverInterface $extension) use (&$watcher) {
                 $extension = new RetryMessageReceiver($extension, $this->createMock(LoggerInterface::class), 1, 0);
                 return $watcher = new MessageWatcherReceiver($extension);
             });
@@ -405,7 +405,8 @@ class FunctionnalTest extends TestCase
         $destination->send($message);
         $destination->send($message);
 
-        $this->consume(2, $destination, null, function(ReceiverInterface $extension) use(&$lastJob) {
+        $helper = new QueueHelper($this->container);
+        $helper->consume(2, $destination, null, function(ReceiverInterface $extension) use(&$lastJob) {
             return new MemoryLimiterReceiver($extension, 1);
         });
 
@@ -426,7 +427,8 @@ class FunctionnalTest extends TestCase
         $destination = $this->manager->for($message);
         $destination->send($message);
 
-        $this->consume(1, $destination, null, function(ReceiverInterface $extension) use(&$watcher) {
+        $helper = new QueueHelper($this->container);
+        $helper->consume(1, $destination, null, function(ReceiverInterface $extension) use(&$watcher) {
             $extension = new MemoryLimiterReceiver($extension, 1, null, function() {return 0;});
             return $watcher = new MessageWatcherReceiver($extension);
         });
@@ -495,7 +497,8 @@ class FunctionnalTest extends TestCase
         $destination->send($message);
 
         try {
-            $this->consume(1, $destination, null, function(ReceiverInterface $extension) use($failer) {
+            $helper = new QueueHelper($this->container);
+            $helper->consume(1, $destination, null, function(ReceiverInterface $extension) use($failer) {
                 return new MessageStoreReceiver($extension, $failer, $this->createMock(LoggerInterface::class));
             });
         } catch (\Exception $exception) {
@@ -516,7 +519,8 @@ class FunctionnalTest extends TestCase
         $destination = $this->manager->for($message);
         $promise = $destination->send($message);
 
-        $this->consume(1, $destination);
+        $helper = new QueueHelper($this->container);
+        $helper->consume(1, $destination);
 
         $this->assertSame(2, $promise->await()->data());
     }

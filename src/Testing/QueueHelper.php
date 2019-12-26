@@ -4,6 +4,7 @@ namespace Bdf\Queue\Testing;
 
 use Bdf\Queue\Connection\ConnectionDriverInterface;
 use Bdf\Queue\Connection\Factory\ConnectionDriverFactoryInterface;
+use Bdf\Queue\Connection\ManageableQueueInterface;
 use Bdf\Queue\Connection\PeekableQueueDriverInterface;
 use Bdf\Queue\Consumer\Receiver\Builder\ReceiverBuilder;
 use Bdf\Queue\Consumer\Receiver\Builder\ReceiverLoader;
@@ -31,6 +32,25 @@ class QueueHelper
     public function __construct(ContainerInterface $container)
     {
         $this->container = $container;
+    }
+
+    /**
+     * Initialize destinations for message reception
+     *
+     * @param string|null $connectionName
+     * @param string $queue
+     *
+     * @return $this
+     */
+    public function init(string $connectionName = null, string $queue = 'queue'): QueueHelper
+    {
+        $connection = $this->connection($connectionName);
+
+        if ($connection instanceof ManageableQueueInterface) {
+            $connection->declareQueue($queue);
+        }
+
+        return $this;
     }
 
     /**
@@ -140,7 +160,7 @@ class QueueHelper
      *
      * @return ConnectionDriverInterface
      */
-    private function connection(?string $connection)
+    public function connection(?string $connection)
     {
         return $this->container->get(ConnectionDriverFactoryInterface::class)->create($connection);
     }
@@ -150,7 +170,7 @@ class QueueHelper
      *
      * @return DestinationManager
      */
-    private function destination(): DestinationManager
+    public function destination(): DestinationManager
     {
         return $this->container->get(DestinationManager::class);
     }

@@ -17,10 +17,10 @@ final class QueuePromise implements PromiseInterface
      */
     private $driver;
 
-	/**
-	 * @var string
-	 */
-	private $replyTo;
+    /**
+     * @var string
+     */
+    private $replyTo;
 
     /**
      * @var null|QueuedMessage

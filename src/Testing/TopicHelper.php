@@ -4,8 +4,6 @@ namespace Bdf\Queue\Testing;
 
 use Bdf\Queue\Consumer\Receiver\Builder\ReceiverBuilder;
 use Bdf\Queue\Consumer\Receiver\Builder\ReceiverLoader;
-use Bdf\Queue\Consumer\Receiver\ProcessorReceiver;
-use Bdf\Queue\Consumer\Receiver\StopWhenEmptyReceiver;
 use Bdf\Queue\Consumer\TopicConsumer;
 use Bdf\Queue\Destination\DestinationInterface;
 use Bdf\Queue\Destination\DestinationManager;
@@ -51,7 +49,7 @@ class TopicHelper
     }
 
     /**
-     * Initialize topic destinations for receive messages
+     * Initialize topic destinations for message reception
      *
      * @param string ...$destinations The destination names
      *
