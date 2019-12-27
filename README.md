@@ -44,11 +44,11 @@ use Bdf\Queue\Serializer\JsonSerializer;
 $driverFactory = new ResolverConnectionDriverFactory([
     'foo' => [
         'driver' => 'pheanstalk',
-        'host'   => 'localhost',
-        'port'   => '11300',
-        'foo'   => 'bar',
+        'host' => 'localhost',
+        'port' => '11300',
+        'additionalOption' => 'value',
     ]
-    // OR use DSN 'foo' => 'pheanstalk://localhost:11300?foo=bar'
+    // OR use DSN 'foo' => 'pheanstalk://localhost:11300?additionalOption=value'
 ]);
 
 // Declare drivers
@@ -77,17 +77,20 @@ The consume should defined handler to process the message.
 
 ```PHP
 <?php
-$message = \Bdf\Queue\Message\Message::create('Hello world');
+
+use Bdf\Queue\Message\Message;
+
+$message = Message::create('Hello world');
 $message->setDestination('my_destination');
 // or use a lower level setting the connection and queue.
-$message = \Bdf\Queue\Message\Message::create('Hello world', 'queue');
+$message = Message::create('Hello world', 'queue');
 $message->setConnection('foo');
 
 /** @var Bdf\Queue\Destination\DestinationManager $manager */
 $manager->send($message);
 ```
 
-Useful for monolithic application that needs to differed a process.
+Useful for monolithic application that needs to differ a process.
 Push a message job into the queue. The consumer will evaluate the job string and run the processor.
 In this use case the producer and the receiver share the same model.
 
@@ -102,13 +105,13 @@ $manager->send($message);
 
 #### Available type for dsn destination
 
-The class `Bdf\Queue\Destination\DsnDestinationFactory` provides default type of destination by default:
+The class `Bdf\Queue\Destination\DsnDestinationFactory` provides default type of destination:
 
 |Name           | Exemple                                          | Definition     | 
 |---------------|--------------------------------------------------|----------------|
 |queue          | queue://connection_name/queue_name               | Publish and consume a single queue      |
 |queues         | queues://connection_name/queue1,queue2           | Only consume multi queues      |
-|topic          | topic://connection_name/topic                    | Publish and consume a topic. Pattern are allowed for consumer use case only |
+|topic          | topic://connection_name/topic                    | Publish and consume a topic. Pattern with wildcard are allowed for consumer use case only (ex: topic.*) |
 |topics         | topics://connection_name/topic1,topic2           | Only consume multi topics      |
 
 You can declare your own type:
@@ -137,10 +140,10 @@ The default stack of objects that will receive the message is:
 
 `consumer (ConsumerInterface) -> receivers (ReceiverInterface) -> processor (ProcessorInterface) -> handler (callable)`
 
-- `consumer` has the strategy for reading the message from queue / topic.
-- `receivers` is the stack of middleware to interact with the envelope.
+- `consumer` has the strategy for reading the message from queue / topic. It also manage a graceful shutdown.
+- `receivers` is the stack of middlewares interacts with the envelope.
 - `processor` resolves the handler arguments. You can plug here your business logic and remove the handler layer.
-By default processor injects 2 arguments: the message data and the envelope.
+By default processor injects 2 arguments in handlers: the message data and the envelope.
 - `handler` manages the business logic. Handler allows an interface less mode.
 
 An example to consume a simple message:
@@ -175,7 +178,7 @@ use Bdf\Queue\Processor\JobHintProcessorResolver;
 
 /** @var Instantiator $instantiator */
 
-// The job should be routed to get the processor
+// The job should be provided from message to get the processor
 $processorResolver = new JobHintProcessorResolver($instantiator);
 
 /** @var DestinationManager $manager */
@@ -210,8 +213,8 @@ $message = \Bdf\Queue\Message\Message::createFromJob(MyHandler::class, 'foo', 'q
 $manager->send($message);
 ```
 
-Use the job synthax `"Class@method"` to determine the callable (By default the method is "handle")
-or register your handlers on a specific destination you could use the receiver builder:
+Use the synthax `"Class@method"` to determine the callable (By default the method is "handle")
+or register your handlers on a specific destination with the receiver builder:
 
 ```PHP
 <?php
@@ -238,11 +241,13 @@ $container->set(ReceiverLoader::class, function (ContainerInterface $container) 
                 // Or register your unique processor
                 $builder->processor($myProcessor);
                 
-                // Or register the job bearer resolver as processor. The procesor will resolve the job from the Message::$job attribute value.
+                // Or register the job bearer resolver as processor. The procesor will resolve the job
+                // from the Message::$job attribute value.
                 $builder->jobProcessor();
                 
-                // Or register your own processor or handler by queue in case you consume a connection
-                // (By default the key of the map is the queue name. You can provide your own key provider with the second parameter).
+                // Or register your own processor or handler by queue in case you consume a connection.
+                // By default the key of the map is the queue name. You can provide your own key provider 
+                // with the second parameter.
                 $builder->mapProcessor([
                     'queue1' => $myProcessor,
                     'queue2' => MyHandler::class,
@@ -254,7 +259,8 @@ $container->set(ReceiverLoader::class, function (ContainerInterface $container) 
                 // Or register your own receiver in the stack
                 $builder->add($myReceiver);
                 
-                // You can add more middleware here
+                // You can add more defined middlewares here
+                // $builder->retry(2);
             }
         ]
     );
@@ -283,12 +289,15 @@ class MyExtension implements \Bdf\Queue\Consumer\ReceiverInterface
 {
     use \Bdf\Queue\Consumer\DelegateHelper;
     
+    private $options;
+
     /**
      * MyExtension constructor.
      */
-    public function __construct(\Bdf\Queue\Consumer\ReceiverInterface $delegate)
+    public function __construct(\Bdf\Queue\Consumer\ReceiverInterface $delegate, array $options)
     {
         $this->delegate = $delegate;
+        $this->options = $options;
     }
     
     /**
@@ -310,18 +319,20 @@ class MyExtension implements \Bdf\Queue\Consumer\ReceiverInterface
 You can use the `Bdf\Queue\Consumer\Receiver\Builder\ReceiverLoader::add()` to register your receiver in the stack
 ```PHP
 <?php
+$options = ['foo' => 'bar'];
+
 /** @var \Bdf\Queue\Consumer\Receiver\Builder\ReceiverBuilder $builder */
-$builder->add(MyExtension::class);
+$builder->add(MyExtension::class, [$options]);
 ```
 
 #### Customize the string payload
 
 The class `Bdf\Queue\Serializer\SerializerInterface` manage the payload content sent to the message broker.
 By default metadata are added to the json as:
-    - PHP Type: to help consumer to deserialize complex entities.
-    - Message info: The attempt number for retry, The sending date, ...
+- PHP Type: to help consumer to deserialize complex entities.
+- Message info: The attempt number for retry, The sending date, ...
     
-The payload looks like:
+A basic payload looks like:
 ```json
 {
   "name": "Foo",
@@ -342,9 +353,13 @@ $ example/consumer.php foo
 
 ```PHP
 <?php
+
+use Bdf\Queue\Message\InteractEnvelopeInterface;
+use Bdf\Queue\Message\Message;
+
 class RpcReplyHandler
 {
-    public function handle(int $number, \Bdf\Queue\Message\InteractEnvelopeInterface $envelope)
+    public function doSomethingUseful(int $number, InteractEnvelopeInterface $envelope)
     {
         // Send bask: 1 x 2 to client
         $envelope->reply($number * 2);
@@ -354,7 +369,7 @@ class RpcReplyHandler
     }
 }
 
-$message = \Bdf\Queue\Message\Message::createFromJob(RpcReplyHandler::class, 1, 'queue');
+$message = Message::createFromJob(RpcReplyHandler::class.'@doSomethingUseful', 1, 'queue');
 $message->setConnection('foo');
 
 /** @var Bdf\Queue\Destination\DestinationManager $manager */
@@ -362,7 +377,8 @@ $promise = $manager->send($message);
 
 // Consume the foo connection
 
-// Receive data from the reply queue. If the header "replyTo" is not set, the response will be sent to "queue_reply"
+// Receive data from the reply queue. If the header "replyTo" is not set, 
+// the response will be sent to "queue_reply"
 echo $promise->await(500)->data(); // Display 2
 ```
 
