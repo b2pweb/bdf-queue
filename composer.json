@@ -51,7 +51,8 @@
     "enqueue/enqueue": "Required to use the Enqueue driver (~0.9)"
   },
   "scripts": {
-    "tests": "phpunit"
+    "tests": "phpunit",
+    "tests-with-coverage": "phpunit --coverage-clover coverage.xml"
   },
   "extra": {
     "branch-alias": {
