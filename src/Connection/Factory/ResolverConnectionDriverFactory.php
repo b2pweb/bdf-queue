@@ -200,7 +200,7 @@ final class ResolverConnectionDriverFactory implements ConnectionDriverFactoryIn
     {
         $request = Dsn::parse($dsn);
 
-        $driver = explode('+', $request->getScheme());
+        $driver = explode('+', $request->getScheme(), 2);
 
         $config = $request->getQuery() + [
             'driver' => $driver[0],

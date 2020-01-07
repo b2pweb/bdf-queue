@@ -109,11 +109,11 @@ class ResolverConnectionDriverFactoryTest extends TestCase
      */
     public function test_with_vendor()
     {
-        $factory = new ResolverConnectionDriverFactory(['test1' => 'test+other:']);
+        $factory = new ResolverConnectionDriverFactory(['test1' => 'test+part1+part2:']);
 
         $expected = [
             'driver' => 'test',
-            'vendor' => 'other',
+            'vendor' => 'part1+part2',
             'queue' => 'test1',
             'connection' => 'test1'
         ];

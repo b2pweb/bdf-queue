@@ -29,6 +29,8 @@
   },
   "require-dev": {
     "b2pweb/bdf-serializer": "~1.0",
+    "doctrine/dbal": "~2.5",
+    "ramsey/uuid": "~3.0|~4.0",
     "enqueue/enqueue": "~0.9",
     "enqueue/fs": "~0.9",
     "jeremeamia/superclosure": "~2.1",

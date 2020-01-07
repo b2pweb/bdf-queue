@@ -2,6 +2,7 @@
 
 use Bdf\Queue\Connection\AmqpLib\AmqpLibConnection;
 use Bdf\Queue\Connection\AmqpLib\Exchange\NamespaceExchangeResolver;
+use Bdf\Queue\Connection\Doctrine\DoctrineConnection;
 use Bdf\Queue\Connection\Enqueue\EnqueueConnection;
 use Bdf\Queue\Connection\Factory\CachedConnectionDriverFactory;
 use Bdf\Queue\Connection\Factory\ConnectionDriverFactoryInterface;
@@ -89,6 +90,12 @@ function getDriverResolvers(): array
         'memory' => function($config) {
             return new MemoryConnection($config['connection'], getSerializer());
         },
+        'doctrine' => function ($config) {
+            return new DoctrineConnection(
+                $config['connection'],
+                getSerializer()
+            );
+        },
         'gearman' => function($config) {
             return new GearmanConnection($config['connection'], getSerializer());
         },
@@ -114,7 +121,7 @@ function getDriverResolvers(): array
                 getSerializer(),
                 new ConnectionFactoryFactory()
             );
-        }
+        },
     ];
 }
 

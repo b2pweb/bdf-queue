@@ -7,5 +7,5 @@ return [
         $builder->handler(function($data) {
             var_dump($data);
         });
-    }
+    },
 ];

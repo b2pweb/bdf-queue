@@ -14,6 +14,8 @@ This package provides 2 layers for abstraction of message broker.
 |Message Broker   | Library           | Driver name |
 |-----------------|-------------------|---------- |
 |Beanstalk        | Pheanstalk        | pheanstalk |
+|Db               | Doctrine          | doctrine+(*) |
+|Enqueue          | php-enqueue       | enqueue+(*) |
 |Gearman          | Pecl Gearman      | gearman |
 |Kafka            | RdKafka           | rdkafka |
 |Memory           |                   | memory |
@@ -21,7 +23,6 @@ This package provides 2 layers for abstraction of message broker.
 |RabbitMQ         | Amqp lib          | amqp-lib |
 |Redis (Ext)      | PhpRedis          | redis+phpredis |
 |Redis            | PRedis            | redis+predis |
-|Enqueue          | php-enqueue       | enqueue+(*) |
 
 
 ### Usage Instructions
