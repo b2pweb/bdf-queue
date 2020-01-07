@@ -12,7 +12,6 @@ use Bdf\Queue\Message\Message;
 use Bdf\Queue\Message\QueuedMessage;
 use DateTime;
 use Doctrine\DBAL\Connection;
-use Doctrine\DBAL\Exception\RetryableException;
 use Doctrine\DBAL\FetchMode;
 use Doctrine\DBAL\Types\Type;
 use Ramsey\Uuid\Uuid;
@@ -186,11 +185,7 @@ class DoctrineQueue implements QueueDriverInterface, ReservableQueueDriverInterf
                 ->setParameter('available_at', new DateTime("+{$message->delay()} seconds"), Type::DATETIME);
         }
 
-        try {
-            $update->execute();
-        } catch (RetryableException $e) {
-            // maybe next time we'll get more luck
-        }
+        $update->execute();
     }
 
     /**
