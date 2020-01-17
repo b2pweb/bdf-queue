@@ -59,7 +59,10 @@ final class TopicDestination implements DestinationInterface
      */
     public function send(Message $message): PromiseInterface
     {
-        $this->driver->publish($message->setTopic($this->topic));
+        $message->setConnection($this->driver->connection()->getName());
+        $message->setTopic($this->topic);
+
+        $this->driver->publish($message);
 
         return NullPromise::instance();
     }

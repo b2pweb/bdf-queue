@@ -10,7 +10,7 @@
  *
  * Options:
  *  - delay: Delay the message
- *  - raw: Message will be sent as raw message
+ *  - payload: Send message as raw payload
  *  - queue: The queue to send the message (if destination is a connection)
  *  - topic: The topic to send the message (if destination is a connection)
  *
@@ -18,7 +18,8 @@
  * ./producer.php "destination" "message" --delay=2
  */
 
-use Bdf\Queue\Message\Message;
+use Symfony\Component\Console\Input\ArgvInput;
+use Symfony\Component\Console\Output\ConsoleOutput;
 
 if (file_exists($autoloadFile = __DIR__.'/../vendor/autoload.php') || file_exists($autoloadFile = __DIR__.'/../../../autoload.php')) {
     require $autoloadFile;
@@ -29,18 +30,8 @@ require __DIR__.'/lib/console.php';
 ini_set('display_errors', 1);
 error_reporting(E_ALL);
 
-$arguments = $options = [];
+$input = new ArgvInput();
+$output = new ConsoleOutput(ConsoleOutput::VERBOSITY_DEBUG);
 
-parseCommandLine($arguments, $options);
-$destinationName = $arguments[0] ?? null;
-$message = $arguments[1] ?? null;
-
-$destination = createDestination($destinationName, $options['queue'] ?? null, $options['topic'] ?? null);
-
-if ($options['raw'] ?? false) {
-    $destination->raw($message, ['delay' => $options['delay'] ?? 0]);
-} else {
-    $destination->send(Message::create($message, $options['queue'] ?? null, $options['delay'] ?? 0));
-}
-
-echo 'Message has been sent in "'.$destinationName.'".'.PHP_EOL;
+$command = new Bdf\Queue\Console\Command\ProduceCommand(getDestinationManager());
+$command->run($input, $output);

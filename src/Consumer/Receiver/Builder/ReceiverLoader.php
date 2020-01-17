@@ -15,6 +15,11 @@ class ReceiverLoader
     private $container;
 
     /**
+     * @var ReceiverFactory
+     */
+    private $factory;
+
+    /**
      * @var callable[]
      */
     private $configuration;
@@ -25,25 +30,25 @@ class ReceiverLoader
      *
      * @param ContainerInterface $container
      * @param callable[] $configuration
+     * @param ReceiverFactory|null $factory
      */
-    public function __construct(ContainerInterface $container, array $configuration)
+    public function __construct(ContainerInterface $container, array $configuration, ReceiverFactory $factory = null)
     {
         $this->container = $container;
         $this->configuration = $configuration;
+        $this->factory = $factory;
     }
 
     /**
      * Load the receiver build from the configuration
      *
-     * @todo Remove nillable on $name on 1.7
-     *
      * @param string $name The destination name
      *
      * @return ReceiverBuilder
      */
-    public function load(?string $name): ReceiverBuilder
+    public function load(string $name): ReceiverBuilder
     {
-        $builder = new ReceiverBuilder($this->container);
+        $builder = new ReceiverBuilder($this->container, null, $this->factory);
 
         if (!isset($this->configuration[$name])) {
             return $builder;

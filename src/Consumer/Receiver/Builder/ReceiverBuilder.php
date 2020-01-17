@@ -25,7 +25,6 @@ use Bdf\Queue\Processor\SingleProcessorResolver;
 use Bdf\Serializer\SerializerInterface;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
-use Psr\Log\NullLogger;
 
 /**
  * Builder for creates the receivers stack
@@ -64,6 +63,11 @@ class ReceiverBuilder
     private $instantiator;
 
     /**
+     * @var ReceiverFactory
+     */
+    private $factory;
+
+    /**
      * Stack of middleware
      *
      * The key is the middleware class (or container id)
@@ -79,21 +83,29 @@ class ReceiverBuilder
     private $outlet;
 
     /**
-     * @var LoggerInterface
-     */
-    private $logger;
-
-
-    /**
      * ReceiverBuilder constructor.
      *
      * @param ContainerInterface $container
      * @param InstantiatorInterface $instantiator
+     * @param ReceiverFactory $factory
      */
-    public function __construct(ContainerInterface $container, InstantiatorInterface $instantiator = null)
+    public function __construct(ContainerInterface $container, InstantiatorInterface $instantiator = null, ReceiverFactory $factory = null)
     {
         $this->container = $container;
         $this->instantiator = $instantiator ?: $container->get(InstantiatorInterface::class);
+        $this->factory = $factory ?: new ReceiverFactory($this->container, $this->instantiator);
+    }
+
+    /**
+     * Check whether the middleware has a defined factory
+     *
+     * @param string $middleware
+     *
+     * @return bool
+     */
+    public function exists(string $middleware): bool
+    {
+        return $this->factory->hasFactory($middleware);
     }
 
     /**
@@ -126,10 +138,10 @@ class ReceiverBuilder
     public function log(LoggerInterface $logger = null): ReceiverBuilder
     {
         if ($logger) {
-            $this->logger = $logger;
+            $this->factory->setLogger($logger);
         }
 
-        return $this->add(MessageLoggerReceiver::class, [$this->logger()]);
+        return $this->add(MessageLoggerReceiver::class);
     }
 
     /**
@@ -144,7 +156,7 @@ class ReceiverBuilder
      */
     public function limit(int $number, int $duration = 3): ReceiverBuilder
     {
-        return $this->add(RateLimiterReceiver::class, [$this->logger(), $number, $duration]);
+        return $this->add(RateLimiterReceiver::class, [$number, $duration]);
     }
 
     /**
@@ -159,7 +171,7 @@ class ReceiverBuilder
      */
     public function max(int $number): ReceiverBuilder
     {
-        return $this->add(MessageCountLimiterReceiver::class, [$number, $this->logger()]);
+        return $this->add(MessageCountLimiterReceiver::class, [$number]);
     }
 
     /**
@@ -176,7 +188,7 @@ class ReceiverBuilder
      */
     public function memory(int $bytes): ReceiverBuilder
     {
-        return $this->add(MemoryLimiterReceiver::class, [$bytes, $this->logger()]);
+        return $this->add(MemoryLimiterReceiver::class, [$bytes]);
     }
 
     /**
@@ -191,7 +203,7 @@ class ReceiverBuilder
      */
     public function retry(int $tries, int $delay = 10): ReceiverBuilder
     {
-        return $this->add(RetryMessageReceiver::class, [$this->logger(), $tries, $delay]);
+        return $this->add(RetryMessageReceiver::class, [$tries, $delay]);
     }
 
     /**
@@ -203,7 +215,7 @@ class ReceiverBuilder
      */
     public function stopWhenEmpty(): ReceiverBuilder
     {
-        return $this->add(StopWhenEmptyReceiver::class, [$this->logger()]);
+        return $this->add(StopWhenEmptyReceiver::class);
     }
 
     /**
@@ -230,7 +242,7 @@ class ReceiverBuilder
      */
     public function store(): ReceiverBuilder
     {
-        return $this->add(MessageStoreReceiver::class, [$this->container->get(FailedJobStorageInterface::class), $this->logger()]);
+        return $this->add(MessageStoreReceiver::class);
     }
 
     /**
@@ -383,7 +395,7 @@ class ReceiverBuilder
         foreach ($this->stack as $middleware => $parameters) {
             array_unshift($parameters, $receiver);
 
-            $receiver = $this->instantiator->make($middleware, $parameters);
+            $receiver = $this->factory->create($middleware, $parameters);
         }
 
         return $receiver;
@@ -401,26 +413,5 @@ class ReceiverBuilder
         }
 
         return $this->outlet;
-    }
-
-    /**
-     * Get the logger
-     *
-     * @fixme Q&D fix for get the logger no matter if provided
-     *
-     * @return LoggerInterface
-     */
-    private function logger(): LoggerInterface
-    {
-        if ($this->logger) {
-            return $this->logger;
-        }
-
-        return $this->logger =
-              $this->container->has(LoggerInterface::class)
-                  ? $this->container->get(LoggerInterface::class) : (
-                      $this->container->has('logger') ? $this->container->get('logger') : new NullLogger()
-              )
-        ;
     }
 }

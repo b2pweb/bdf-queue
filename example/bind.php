@@ -13,7 +13,8 @@
  * ./bind.php "destination" "topic" "channel" "channel"
  */
 
-use Bdf\Queue\Connection\AmqpLib\AmqpLibConnection;
+use Symfony\Component\Console\Input\ArgvInput;
+use Symfony\Component\Console\Output\ConsoleOutput;
 
 if (file_exists($autoloadFile = __DIR__.'/../vendor/autoload.php') || file_exists($autoloadFile = __DIR__.'/../../../autoload.php')) {
     require $autoloadFile;
@@ -24,23 +25,8 @@ require __DIR__.'/lib/console.php';
 ini_set('display_errors', 1);
 error_reporting(E_ALL);
 
-$arguments = $options = [];
+$input = new ArgvInput();
+$output = new ConsoleOutput(ConsoleOutput::VERBOSITY_DEBUG);
 
-parseCommandLine($arguments, $options);
-$connectionName = array_shift($arguments);
-$topic = array_shift($arguments);
-$channels = $arguments;
-
-$connection = getConnectionsDriverFactory()->create($connectionName);
-
-if (!$connection instanceof AmqpLibConnection) {
-    die('The connection "'.$connectionName.'" does not manage binding route'.PHP_EOL);
-}
-
-$connection->bind($topic, $channels);
-
-echo sprintf(
-    'Channels %s have been binded to topic %s',
-    implode(', ', $channels),
-    $topic
-).PHP_EOL;
+$command = new Bdf\Queue\Console\Command\BindCommand(getConnectionsDriverFactory());
+$command->run($input, $output);

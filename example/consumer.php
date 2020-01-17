@@ -25,10 +25,9 @@
 use Bdf\Instantiator\Instantiator;
 use Bdf\Instantiator\InstantiatorInterface;
 use Bdf\Queue\Consumer\Receiver\Builder\ReceiverLoader;
-use Bdf\Queue\Consumer\ReceiverInterface;
-use Bdf\Queue\Worker;
-use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
+use Symfony\Component\Console\Input\ArgvInput;
+use Symfony\Component\Console\Output\ConsoleOutput;
 
 if (file_exists($autoloadFile = __DIR__.'/../vendor/autoload.php') || file_exists($autoloadFile = __DIR__.'/../../../autoload.php')) {
     require $autoloadFile;
@@ -40,72 +39,13 @@ require __DIR__.'/lib/psr.php';
 ini_set('display_errors', 1);
 error_reporting(E_ALL);
 
-$arguments = $options = [];
+$container = new Container();
+$container->set(LoggerInterface::class, new Logger());
+$container->set(InstantiatorInterface::class, new Instantiator($container));
 
-parseCommandLine($arguments, $options);
-$destinationName = $arguments[0] ?? null;
+$input = new ArgvInput();
+$output = new ConsoleOutput(ConsoleOutput::VERBOSITY_DEBUG);
+$loader = new ReceiverLoader($container, require __DIR__.'/config/receivers.php');
 
-$destination = createDestination($destinationName, $options['queue'] ?? null, $options['topic'] ?? null);
-
-$worker = new Worker($destination->consumer(createExtension($destinationName, $options)));
-$worker->run(['duration' => $options['duration'] ?? 3]);
-
-
-function createExtension(string $destination, array $options = []): ReceiverInterface
-{
-    $container = getContainer();
-
-    $builder = (new ReceiverLoader($container, require __DIR__.'/config/receivers.php'))->load($destination);
-    $builder->log($container->get(LoggerInterface::class));
-
-    if ($options['middleware'] ?? false) {
-        foreach ($options['middleware'] ?? [] as $middleware) {
-            $id = 'queue.middlewares.'.$middleware;
-            if (!$container->has($id)) {
-                echo 'Try to add an unknown middleware "'.$middleware.'"'.PHP_EOL;
-            } else {
-                $builder->add($id);
-            }
-        }
-    }
-
-    if ($options['retry'] ?? false) {
-        $builder->retry($options['retry'], $options['delay'] ?? 10);
-    }
-
-    if ($options['save'] ?? false) {
-        $builder->store();
-    }
-
-    if ($options['limit'] ?? false) {
-        $builder->limit($options['limit'], $options['duration'] ?? 3);
-    }
-
-    // Set the no failure here because the Stop...Receiver does not manage exception
-    $builder->noFailure();
-
-    if ($options['stopWhenEmpty'] ?? false) {
-        $builder->stopWhenEmpty();
-    }
-
-    if ($options['max'] ?? 0 > 0) {
-        $builder->max($options['max']);
-    }
-
-    $memory = convertToBytes($options['memory'] ?? '128M');
-    if ($memory > 0) {
-        $builder->memory($memory);
-    }
-
-    return $builder->build();
-}
-
-function getContainer(): ContainerInterface
-{
-    $container = new Container([
-        LoggerInterface::class => new Logger(),
-    ]);
-    $container->set(InstantiatorInterface::class, new Instantiator($container));
-
-    return $container;
-}
+$command = new Bdf\Queue\Console\Command\ConsumeCommand(getDestinationManager(), $loader);
+$command->run($input, $output);

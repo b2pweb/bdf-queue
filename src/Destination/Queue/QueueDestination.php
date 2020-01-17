@@ -67,6 +67,7 @@ final class QueueDestination implements DestinationInterface
      */
     public function send(Message $message): PromiseInterface
     {
+        $message->setConnection($this->driver->connection()->getName());
         $message->setQueue($this->queue);
 
         if ($message->needsReply()) {

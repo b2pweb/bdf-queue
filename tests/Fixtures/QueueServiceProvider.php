@@ -3,6 +3,7 @@
 namespace Bdf\Queue\Tests;
 
 use Bdf\Queue\Connection\AmqpLib\AmqpLibConnection;
+use Bdf\Queue\Connection\Doctrine\DoctrineConnection;
 use Bdf\Queue\Connection\Enqueue\EnqueueConnection;
 use Bdf\Queue\Connection\Factory\CachedConnectionDriverFactory;
 use Bdf\Queue\Connection\Factory\ConnectionDriverFactoryInterface;
@@ -11,12 +12,10 @@ use Bdf\Queue\Connection\Gearman\GearmanConnection;
 use Bdf\Queue\Connection\Memory\MemoryConnection;
 use Bdf\Queue\Connection\Null\NullConnection;
 use Bdf\Queue\Connection\Pheanstalk\PheanstalkConnection;
-use Bdf\Queue\Connection\Prime\DoctrineConnection;
 use Bdf\Queue\Connection\RdKafka\RdKafkaConnection;
 use Bdf\Queue\Connection\Redis\RedisConnection;
-use Bdf\Queue\Consumer\Receiver\BenchReceiver;
+use Bdf\Queue\Consumer\Receiver\Builder\ReceiverFactory;
 use Bdf\Queue\Consumer\Receiver\Builder\ReceiverLoader;
-use Bdf\Queue\Consumer\ReceiverInterface;
 use Bdf\Queue\Destination\CachedDestinationFactory;
 use Bdf\Queue\Destination\ConfigurationDestinationFactory;
 use Bdf\Queue\Destination\DestinationManager;
@@ -75,14 +74,15 @@ class QueueServiceProvider
             );
         });
 
-        $container->add('queue.middlewares.bench', function(ReceiverInterface $delegate) use($container) {
-            return new BenchReceiver($delegate, $container->get('logger'));
+        $container->share(ReceiverFactory::class, function() use($container) {
+            return new ReceiverFactory($container);
         });
 
         $container->share(ReceiverLoader::class, function() use($container) {
             return new ReceiverLoader(
                 $container,
-                $container->has('queue.consumer.config') ? require $container->get('queue.consumer.config') : []
+                $container->has('queue.consumer.config') ? require $container->get('queue.consumer.config') : [],
+                $container->get(ReceiverFactory::class)
             );
         });
     }
@@ -128,11 +128,10 @@ class QueueServiceProvider
                 'pheanstalk' => function($config) use($container) {
                     return new PheanstalkConnection($config['connection'], $this->getSerializer($container, $config['serializer'] ?? null));
                 },
-                'prime' => function($config) use($container) {
+                'doctrine' => function($config) use($container) {
                     return new DoctrineConnection(
                         $config['connection'],
-                        $this->getSerializer($container, $config['serializer'] ?? null),
-                        $container->get('prime')->connections()
+                        $this->getSerializer($container, $config['serializer'] ?? null)
                     );
                 },
                 'rdkafka' => function($config) use($container) {

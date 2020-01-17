@@ -45,12 +45,18 @@ class ReceiverBuilderTest extends TestCase
      */
     private $builder;
 
+    /**
+     * @var ReceiverFactory
+     */
+    private $factory;
+
     protected function setUp(): void
     {
         $this->container = new Container();
         $this->container->add(InstantiatorInterface::class, new Instantiator($this->container));
+        $this->factory = new ReceiverFactory($this->container);
 
-        $this->builder = new ReceiverBuilder($this->container);
+        $this->builder = new ReceiverBuilder($this->container, null, $this->factory);
     }
 
     /**
@@ -96,7 +102,8 @@ class ReceiverBuilderTest extends TestCase
                 new MyReceiver(
                     new ProcessorReceiver(new JobHintProcessorResolver($this->container->get(InstantiatorInterface::class))),
                     'bar'
-                )
+                ),
+                new NullLogger()
             ),
             $this->builder->build()
         );
@@ -109,7 +116,7 @@ class ReceiverBuilderTest extends TestCase
     {
         $this->builder
             ->add(MyReceiver::class, ['bar'])
-            ->add(StopWhenEmptyReceiver::class)
+            ->stopWhenEmpty()
             ->add(MyReceiver::class, ['rab'])
         ;
 
@@ -118,7 +125,8 @@ class ReceiverBuilderTest extends TestCase
                 new MyReceiver(
                     new ProcessorReceiver(new JobHintProcessorResolver($this->container->get(InstantiatorInterface::class))),
                     'rab'
-                )
+                ),
+                new NullLogger()
             ),
             $this->builder->build()
         );
@@ -407,6 +415,16 @@ class ReceiverBuilderTest extends TestCase
             $receiver,
             $this->builder->mapProcessor(['queue' => 'foo'])->build()
         );
+    }
+
+    /**
+     *
+     */
+    public function test_exists()
+    {
+        $this->assertFalse($this->builder->exists('foo'));
+        $this->factory->addFactory('foo', function() {});
+        $this->assertTrue($this->builder->exists('foo'));
     }
 }
 

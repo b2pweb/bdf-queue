@@ -16,6 +16,9 @@
  * ./setup.php "destination"
  */
 
+use Symfony\Component\Console\Input\ArgvInput;
+use Symfony\Component\Console\Output\ConsoleOutput;
+
 if (file_exists($autoloadFile = __DIR__.'/../vendor/autoload.php') || file_exists($autoloadFile = __DIR__.'/../../../autoload.php')) {
     require $autoloadFile;
 }
@@ -25,18 +28,8 @@ require __DIR__.'/lib/console.php';
 ini_set('display_errors', 1);
 error_reporting(E_ALL);
 
-$arguments = $options = [];
-parseCommandLine($arguments, $options);
+$input = new ArgvInput();
+$output = new ConsoleOutput(ConsoleOutput::VERBOSITY_DEBUG);
 
-$destinationName = $arguments[0] ?? null;
-$destination = createDestination($destinationName);
-
-if ($options['drop'] ?? false) {
-    $destination->destroy();
-
-    echo sprintf('The destination "%s" has been deleted.', $destinationName).PHP_EOL;
-} else {
-    $destination->declare();
-
-    echo sprintf('The destination "%s" has been declared.', $destinationName).PHP_EOL;
-}
+$command = new Bdf\Queue\Console\Command\SetupCommand(getDestinationManager());
+$command->run($input, $output);
