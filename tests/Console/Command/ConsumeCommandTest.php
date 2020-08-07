@@ -296,7 +296,7 @@ class ConsumeCommandTest extends TestCase
         $message = Message::createFromJob([QueueObserver::class, 'handleOk'], '')->setDestination('foo');
         $this->manager->send($message);
 
-        $command = new ConsumeCommand($this->manager, $this->container->get(ReceiverLoader::class), $this->container);
+        $command = new ConsumeCommand($this->manager, $this->container->get(ReceiverLoader::class));
         $tester = new CommandTester($command);
 
         $tester->execute([
@@ -316,7 +316,7 @@ class ConsumeCommandTest extends TestCase
      */
     public function test_unknown_middleware()
     {
-        $command = new ConsumeCommand($this->manager, $this->container->get(ReceiverLoader::class), $this->container);
+        $command = new ConsumeCommand($this->manager, $this->container->get(ReceiverLoader::class));
         $tester = new CommandTester($command);
 
         $tester->execute([

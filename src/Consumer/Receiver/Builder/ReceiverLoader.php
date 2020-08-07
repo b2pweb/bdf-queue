@@ -7,7 +7,7 @@ use Psr\Container\ContainerInterface;
 /**
  * Loader for receiver configuration
  */
-class ReceiverLoader
+class ReceiverLoader implements ReceiverLoaderInterface
 {
     /**
      * @var ContainerInterface

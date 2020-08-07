@@ -3,7 +3,7 @@
 namespace Bdf\Queue\Console\Command;
 
 use Bdf\Queue\Console\Command\Extension\DestinationExtension;
-use Bdf\Queue\Consumer\Receiver\Builder\ReceiverLoader;
+use Bdf\Queue\Consumer\Receiver\Builder\ReceiverLoaderInterface;
 use Bdf\Queue\Consumer\ReceiverInterface;
 use Bdf\Queue\Destination\DestinationManager;
 use Bdf\Queue\Worker;
@@ -30,20 +30,27 @@ class ConsumeCommand extends Command
     private $manager;
 
     /**
-     * @var ReceiverLoader
+     * @var ReceiverLoaderInterface
      */
     protected $receivers;
+
+    /**
+     * @var LoggerInterface
+     */
+    private $logger;
 
     /**
      * SetupCommand constructor.
      *
      * @param DestinationManager $manager
-     * @param ReceiverLoader $receivers
+     * @param ReceiverLoaderInterface $receivers
+     * @param LoggerInterface|null $logger
      */
-    public function __construct(DestinationManager $manager, ReceiverLoader $receivers)
+    public function __construct(DestinationManager $manager, ReceiverLoaderInterface $receivers, LoggerInterface $logger = null)
     {
         $this->manager = $manager;
         $this->receivers = $receivers;
+        $this->logger = $logger;
 
         parent::__construct(static::$defaultName);
     }
@@ -181,6 +188,6 @@ class ConsumeCommand extends Command
                 return new NullLogger();
         }
 
-        return null;
+        return $this->logger;
     }
 }

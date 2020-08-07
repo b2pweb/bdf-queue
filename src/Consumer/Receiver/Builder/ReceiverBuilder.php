@@ -387,6 +387,8 @@ class ReceiverBuilder
      * Build all the receiver stack
      *
      * @return ReceiverInterface
+     *
+     * @todo Manage order in middleware
      */
     public function build(): ReceiverInterface
     {
