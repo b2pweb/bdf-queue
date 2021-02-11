@@ -45,7 +45,7 @@ class TimeLimiterReceiver implements ReceiverInterface
         $this->delegate = $delegate;
         $this->logger = $logger;
         $this->limit = $limit;
-        $this->endTime = $limit + microtime(true);
+        $this->endTime = $limit + time();
     }
 
     /**
@@ -71,15 +71,15 @@ class TimeLimiterReceiver implements ReceiverInterface
     /**
      * Check the memory usage and stop receiver if memory is reached
      *
-     * @param ConsumerInterface $receiver
+     * @param ConsumerInterface $consumer
      */
-    public function checkRunningTime(ConsumerInterface $receiver): void
+    public function checkRunningTime(ConsumerInterface $consumer): void
     {
-        if ($this->endTime >= microtime(true)) {
+        if ($this->endTime >= time()) {
             return;
         }
 
-        $receiver->stop();
+        $consumer->stop();
 
         if (null !== $this->logger) {
             $this->logger->info('Receiver stopped due to time limit of {timeLimit}s reached', ['timeLimit' => $this->limit]);

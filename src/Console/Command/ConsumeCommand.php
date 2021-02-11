@@ -70,6 +70,7 @@ class ConsumeCommand extends Command
             ->addOption('limit', null, InputOption::VALUE_REQUIRED, 'Limit number of jobs in one loop.', 0)
             ->addOption('save', null, InputOption::VALUE_NONE, 'Save failed job.')
             ->addOption('max', null, InputOption::VALUE_REQUIRED, 'The max number of jobs.')
+            ->addOption('expire', null, InputOption::VALUE_REQUIRED, 'The worker duration in seconds.')
             ->addOption('stopWhenEmpty', null, InputOption::VALUE_NONE, 'Stop the worker if the queues are empty.')
             ->addOption('stopOnError', null, InputOption::VALUE_NONE, 'Stop the worker if error occurs.')
             ->addOption('logger', null, InputOption::VALUE_REQUIRED, 'The logger to use "stdout", "null", or "default".', "default")
@@ -134,6 +135,10 @@ class ConsumeCommand extends Command
 
         if ($input->getOption('max') > 0) {
             $builder->max($input->getOption('max'));
+        }
+
+        if ($input->getOption('expire')) {
+            $builder->expire((int)$input->getOption('expire'));
         }
 
         $memory = $this->convertToBytes($input->getOption('memory'));

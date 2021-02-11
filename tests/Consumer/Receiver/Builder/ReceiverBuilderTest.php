@@ -16,6 +16,7 @@ use Bdf\Queue\Consumer\Receiver\ProcessorReceiver;
 use Bdf\Queue\Consumer\Receiver\RateLimiterReceiver;
 use Bdf\Queue\Consumer\Receiver\RetryMessageReceiver;
 use Bdf\Queue\Consumer\Receiver\StopWhenEmptyReceiver;
+use Bdf\Queue\Consumer\Receiver\TimeLimiterReceiver;
 use Bdf\Queue\Consumer\ReceiverInterface;
 use Bdf\Queue\Failer\FailedJobStorageInterface;
 use Bdf\Queue\Consumer\Receiver\Binder\BinderInterface;
@@ -425,6 +426,23 @@ class ReceiverBuilderTest extends TestCase
         $this->assertFalse($this->builder->exists('foo'));
         $this->factory->addFactory('foo', function() {});
         $this->assertTrue($this->builder->exists('foo'));
+    }
+
+    /**
+     *
+     */
+    public function test_expire()
+    {
+        $this->builder->expire(10);
+
+        $this->assertEquals(
+            new TimeLimiterReceiver(
+                new ProcessorReceiver(new JobHintProcessorResolver($this->container->get(InstantiatorInterface::class))),
+                10,
+                new NullLogger()
+            ),
+            $this->builder->build()
+        );
     }
 }
 
