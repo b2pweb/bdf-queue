@@ -17,6 +17,7 @@ use Bdf\Queue\Consumer\Receiver\RetryMessageReceiver;
 use Bdf\Queue\Consumer\Receiver\StopWhenEmptyReceiver;
 use Bdf\Queue\Consumer\ReceiverInterface;
 use Bdf\Queue\Destination\DestinationManager;
+use Bdf\Queue\Exception\SerializationException;
 use Bdf\Queue\Failer\MemoryFailedJobStorage;
 use Bdf\Queue\Message\EnvelopeInterface;
 use Bdf\Queue\Message\ErrorMessage;
@@ -119,6 +120,40 @@ class FunctionnalTest extends TestCase
 
         $this->assertNotNull($stack->last());
         $this->assertEquals('my-queue', $stack->last()->message()->queue());
+    }
+
+    /**
+     *
+     */
+    public function test_receiving_error_message()
+    {
+        $destination = $this->manager->queue('test');
+        $destination->raw('empty');
+
+        $stack = new StackMessagesReceiver();
+        $destination->consumer(new StopWhenEmptyReceiver($stack))->consume(0);
+
+        $this->assertInstanceOf(ErrorMessage::class, $stack->last()->message());
+    }
+
+    /**
+     *
+     */
+    public function test_error_message_throwing_exception()
+    {
+        $this->expectException(SerializationException::class);
+
+        $destination = $this->manager->queue('test');
+        $destination->raw('empty');
+
+        $builder = new ReceiverBuilder($this->container);
+        $builder
+            ->stopWhenEmpty()
+            ->max(1)
+            ->handler(function(){})
+        ;
+
+        $destination->consumer($builder->build())->consume(0);
     }
 
     /**
