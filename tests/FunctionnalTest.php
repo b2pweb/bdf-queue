@@ -115,8 +115,13 @@ class FunctionnalTest extends TestCase
         $destination = $this->manager->for($message);
         $destination->send($message);
 
-        $stack = new StackMessagesReceiver();
-        $destination->consumer(new StopWhenEmptyReceiver($stack))->consume(0);
+        $builder = new ReceiverBuilder($this->container);
+        $builder
+            ->stopWhenEmpty()
+            ->outlet($stack = new StackMessagesReceiver())
+        ;
+
+        $destination->consumer($builder->build())->consume(0);
 
         $this->assertNotNull($stack->last());
         $this->assertEquals('my-queue', $stack->last()->message()->queue());
@@ -130,8 +135,14 @@ class FunctionnalTest extends TestCase
         $destination = $this->manager->queue('test');
         $destination->raw('empty');
 
-        $stack = new StackMessagesReceiver();
-        $destination->consumer(new StopWhenEmptyReceiver($stack))->consume(0);
+        $builder = new ReceiverBuilder($this->container);
+        $builder
+            ->stopWhenEmpty()
+            ->max(1)
+            ->outlet($stack = new StackMessagesReceiver())
+        ;
+
+        $destination->consumer($builder->build())->consume(0);
 
         $this->assertInstanceOf(ErrorMessage::class, $stack->last()->message());
     }

@@ -2,6 +2,7 @@
 
 namespace Bdf\Queue\Destination\Queue;
 
+use BadMethodCallException;
 use Bdf\Queue\Connection\Memory\MemoryConnection;
 use Bdf\Queue\Connection\Null\NullConnection;
 use Bdf\Queue\Connection\QueueDriverInterface;
@@ -9,6 +10,7 @@ use Bdf\Queue\Consumer\QueueConsumer;
 use Bdf\Queue\Consumer\Reader\MultiQueueReader;
 use Bdf\Queue\Consumer\Receiver\StopWhenEmptyReceiver;
 use Bdf\Queue\Consumer\ReceiverInterface;
+use Bdf\Queue\Destination\Promise\NullPromise;
 use Bdf\Queue\Message\Message;
 use Bdf\Queue\Testing\StackMessagesReceiver;
 use PHPUnit\Framework\TestCase;
@@ -80,9 +82,27 @@ class MultiQueueDestinationTest extends TestCase
      */
     public function test_send()
     {
-        $this->expectException(\BadMethodCallException::class);
+        $message = new Message('foo');
 
-        $this->destination->send(new Message());
+        $this->assertInstanceOf(NullPromise::class, $this->destination->send($message));
+
+        $this->assertNull($message->queue());
+        $this->assertEquals('foo', $this->driver->pop('q1')->message()->data());
+        $this->assertEquals('foo', $this->driver->pop('q2')->message()->data());
+        $this->assertEquals('foo', $this->driver->pop('q3')->message()->data());
+    }
+
+    /**
+     *
+     */
+    public function test_send_with_reply()
+    {
+        $this->expectException(BadMethodCallException::class);
+
+        $message = new Message('foo');
+        $message->setNeedsReply(true);
+
+        $this->destination->send($message);
     }
 
     /**
@@ -90,9 +110,11 @@ class MultiQueueDestinationTest extends TestCase
      */
     public function test_raw()
     {
-        $this->expectException(\BadMethodCallException::class);
+        $this->destination->raw('foo');
 
-        $this->destination->raw('');
+        $this->assertEquals('foo', $this->driver->pop('q1')->message()->raw());
+        $this->assertEquals('foo', $this->driver->pop('q2')->message()->raw());
+        $this->assertEquals('foo', $this->driver->pop('q3')->message()->raw());
     }
 
     /**
