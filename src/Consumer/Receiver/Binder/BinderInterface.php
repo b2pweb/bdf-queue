@@ -2,16 +2,12 @@
 
 namespace Bdf\Queue\Consumer\Receiver\Binder;
 
-use Bdf\Bus\MessageDispatcherInterface;
-use Bdf\Queue\Consumer\Receiver\Binder\BinderReceiver;
 use Bdf\Queue\Message\Message;
 
 /**
  * Transform incoming messages from topic or queue to an inner internal object
- * The binder is used to dispatch the received message to the bus dispatcher
  *
  * @see BinderReceiver
- * @see MessageDispatcherInterface::dispatch()
  */
 interface BinderInterface
 {

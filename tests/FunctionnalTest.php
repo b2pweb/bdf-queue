@@ -11,6 +11,8 @@ use Bdf\Queue\Consumer\Reader\BufferedReader;
 use Bdf\Queue\Consumer\Receiver\Builder\ReceiverBuilder;
 use Bdf\Queue\Consumer\Receiver\Builder\ReceiverLoader;
 use Bdf\Queue\Consumer\Receiver\MemoryLimiterReceiver;
+use Bdf\Queue\Consumer\Receiver\MessageCountLimiterReceiver;
+use Bdf\Queue\Consumer\Receiver\MessageLoggerReceiver;
 use Bdf\Queue\Consumer\Receiver\MessageStoreReceiver;
 use Bdf\Queue\Consumer\Receiver\ProcessorReceiver;
 use Bdf\Queue\Consumer\Receiver\RetryMessageReceiver;
@@ -587,6 +589,24 @@ class FunctionnalTest extends TestCase
 
         $this->assertNull($promise->await());
         $this->assertEquals(1, $queue->count($this->defaultQueue));
+    }
+
+    /**
+     *
+     */
+    public function test_debug_receiver()
+    {
+        $builder = new ReceiverBuilder($this->container);
+        $builder
+            ->stopWhenEmpty()
+            ->log()
+            ->max(1)
+            ->jobProcessor()
+        ;
+
+        $chain = MessageCountLimiterReceiver::class.'->'.MessageLoggerReceiver::class.'->'.StopWhenEmptyReceiver::class.'->'.ProcessorReceiver::class;
+
+        $this->assertEquals($chain, (string)$builder->build());
     }
 }
 

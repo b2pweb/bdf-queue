@@ -52,7 +52,7 @@ class MessageLoggerReceiver implements ReceiverInterface
 
             $this->logger->info($this->format($envelope->message(), ' succeed'));
         } catch (\Throwable $exception) {
-            $this->logger->critical($this->format($envelope->message(), ' failed'), ['exception' => $exception]);
+            $this->logger->critical($this->format($envelope->message(), ' failed: '.$exception->getMessage()), ['exception' => $exception]);
 
             throw $exception;
         }
