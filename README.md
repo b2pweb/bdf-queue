@@ -4,25 +4,25 @@ This package provides 2 layers for abstraction of message broker.
  - A connection layer
  - A destination layer
 
-[![Build Status](https://travis-ci.org/b2pweb/bdf-queue.svg?branch=master)](https://travis-ci.org/b2pweb/bdf-queue)
+[![Build Status](https://app.travis-ci.com/b2pweb/bdf-queue.svg?branch=master)](https://app.travis-ci.com/b2pweb/bdf-queue)
 [![Scrutinizer Code Quality](https://scrutinizer-ci.com/g/b2pweb/bdf-queue/badges/quality-score.png?b=master)](https://scrutinizer-ci.com/g/b2pweb/bdf-queue/?branch=master)
 [![Packagist Version](https://img.shields.io/packagist/v/b2pweb/bdf-queue.svg)](https://packagist.org/packages/b2pweb/bdf-queue)
 [![Total Downloads](https://img.shields.io/packagist/dt/b2pweb/bdf-queue.svg)](https://packagist.org/packages/b2pweb/bdf-queue)
 
 #### Supports
 
-|Message Broker   | Library           | Driver name |
-|-----------------|-------------------|---------- |
-|Beanstalk        | Pheanstalk        | pheanstalk |
-|Db               | Doctrine          | doctrine+(*) |
-|Enqueue          | php-enqueue       | enqueue+(*) |
-|Gearman          | Pecl Gearman      | gearman |
-|Kafka            | RdKafka           | rdkafka |
-|Memory           |                   | memory |
-|Null             |                   | null |
-|RabbitMQ         | Amqp lib          | amqp-lib |
-|Redis (Ext)      | PhpRedis          | redis+phpredis |
-|Redis            | PRedis            | redis+predis |
+| Message Broker | Library      | Driver name    |
+|----------------|--------------|----------------|
+| Beanstalk      | Pheanstalk   | pheanstalk     |
+| Db             | Doctrine     | doctrine+(*)   |
+| Enqueue        | php-enqueue  | enqueue+(*)    |
+| Gearman        | Pecl Gearman | gearman        |
+| Kafka          | RdKafka      | rdkafka        |
+| Memory         |              | memory         |
+| Null           |              | null           |
+| RabbitMQ       | Amqp lib     | amqp-lib       |
+| Redis (Ext)    | PhpRedis     | redis+phpredis |
+| Redis          | PRedis       | redis+predis   |
 
 
 ### Usage Instructions
