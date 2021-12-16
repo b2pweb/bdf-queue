@@ -9,10 +9,10 @@ build:
           - php-scrutinizer-run
 
     coverage:
-      tests:
-        services:
-          rabbitmq: 3
+      services:
+        rabbitmq: 3
 
+      tests:
         override:
           - command: XDEBUG_MODE=coverage composer run tests-with-coverage
             coverage:
