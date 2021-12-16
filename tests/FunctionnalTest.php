@@ -11,12 +11,15 @@ use Bdf\Queue\Consumer\Reader\BufferedReader;
 use Bdf\Queue\Consumer\Receiver\Builder\ReceiverBuilder;
 use Bdf\Queue\Consumer\Receiver\Builder\ReceiverLoader;
 use Bdf\Queue\Consumer\Receiver\MemoryLimiterReceiver;
+use Bdf\Queue\Consumer\Receiver\MessageCountLimiterReceiver;
+use Bdf\Queue\Consumer\Receiver\MessageLoggerReceiver;
 use Bdf\Queue\Consumer\Receiver\MessageStoreReceiver;
 use Bdf\Queue\Consumer\Receiver\ProcessorReceiver;
 use Bdf\Queue\Consumer\Receiver\RetryMessageReceiver;
 use Bdf\Queue\Consumer\Receiver\StopWhenEmptyReceiver;
 use Bdf\Queue\Consumer\ReceiverInterface;
 use Bdf\Queue\Destination\DestinationManager;
+use Bdf\Queue\Exception\SerializationException;
 use Bdf\Queue\Failer\MemoryFailedJobStorage;
 use Bdf\Queue\Message\EnvelopeInterface;
 use Bdf\Queue\Message\ErrorMessage;
@@ -114,11 +117,56 @@ class FunctionnalTest extends TestCase
         $destination = $this->manager->for($message);
         $destination->send($message);
 
-        $stack = new StackMessagesReceiver();
-        $destination->consumer(new StopWhenEmptyReceiver($stack))->consume(0);
+        $builder = new ReceiverBuilder($this->container);
+        $builder
+            ->stopWhenEmpty()
+            ->outlet($stack = new StackMessagesReceiver())
+        ;
+
+        $destination->consumer($builder->build())->consume(0);
 
         $this->assertNotNull($stack->last());
         $this->assertEquals('my-queue', $stack->last()->message()->queue());
+    }
+
+    /**
+     *
+     */
+    public function test_receiving_error_message()
+    {
+        $destination = $this->manager->queue('test');
+        $destination->raw('empty');
+
+        $builder = new ReceiverBuilder($this->container);
+        $builder
+            ->stopWhenEmpty()
+            ->max(1)
+            ->outlet($stack = new StackMessagesReceiver())
+        ;
+
+        $destination->consumer($builder->build())->consume(0);
+
+        $this->assertInstanceOf(ErrorMessage::class, $stack->last()->message());
+    }
+
+    /**
+     *
+     */
+    public function test_error_message_throwing_exception()
+    {
+        $this->expectException(SerializationException::class);
+
+        $destination = $this->manager->queue('test');
+        $destination->raw('empty');
+
+        $builder = new ReceiverBuilder($this->container);
+        $builder
+            ->stopWhenEmpty()
+            ->max(1)
+            ->handler(function(){})
+        ;
+
+        $destination->consumer($builder->build())->consume(0);
     }
 
     /**
@@ -541,6 +589,24 @@ class FunctionnalTest extends TestCase
 
         $this->assertNull($promise->await());
         $this->assertEquals(1, $queue->count($this->defaultQueue));
+    }
+
+    /**
+     *
+     */
+    public function test_debug_receiver()
+    {
+        $builder = new ReceiverBuilder($this->container);
+        $builder
+            ->stopWhenEmpty()
+            ->log()
+            ->max(1)
+            ->jobProcessor()
+        ;
+
+        $chain = MessageCountLimiterReceiver::class.'->'.MessageLoggerReceiver::class.'->'.StopWhenEmptyReceiver::class.'->'.ProcessorReceiver::class;
+
+        $this->assertEquals($chain, (string)$builder->build());
     }
 }
 

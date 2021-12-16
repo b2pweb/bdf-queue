@@ -3,6 +3,7 @@
 namespace Bdf\Queue\Processor;
 
 use Bdf\Queue\Message\EnvelopeInterface;
+use Bdf\Queue\Message\ErrorMessage;
 
 /**
  * Processor using a callback for process the job
@@ -29,6 +30,11 @@ class CallbackProcessor implements ProcessorInterface
      */
     public function process(EnvelopeInterface $envelope)
     {
+        // Already resolved
+        if ($envelope->message() instanceof ErrorMessage) {
+            throw $envelope->message()->exception();
+        }
+
         ($this->callback)($envelope->message()->data(), $envelope);
     }
 }

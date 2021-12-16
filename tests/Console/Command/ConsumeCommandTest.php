@@ -199,6 +199,31 @@ class ConsumeCommandTest extends TestCase
     /**
      *
      */
+    public function test_expire_option()
+    {
+        $message = Message::createFromJob([QueueObserver::class, 'handleOk'], '')->setDestination('foo');
+        $this->manager->send($message);
+        $message = Message::createFromJob([QueueObserver::class, 'wait'], '')->setDestination('foo');
+        $this->manager->send($message);
+
+        $command = new ConsumeCommand($this->manager, $this->container->get(ReceiverLoader::class));
+        $tester = new CommandTester($command);
+
+        $tester->execute([
+            'connection' => 'foo',
+            '--expire' => 1,
+            '--memory' => 0,
+        ]);
+
+        $logs = $this->logger->flush();
+
+        $this->assertEquals('triggered', QueueObserver::$data);
+        $this->assertStringContainsString('Receiver stopped due to time limit of {timeLimit}s reached', end($logs)['message']);
+    }
+
+    /**
+     *
+     */
     public function test_stop_when_empty_option()
     {
         $command = new ConsumeCommand($this->manager, $this->container->get(ReceiverLoader::class));
@@ -356,6 +381,7 @@ class QueueObserver
 {
     public static $job;
     public static $data;
+    public static $sleep = 1;
 
     public function handleOk()
     {
@@ -365,5 +391,10 @@ class QueueObserver
     public function handleFail()
     {
         throw new \Exception('foo');
+    }
+
+    public function wait()
+    {
+        sleep(self::$sleep);
     }
 }

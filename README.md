@@ -388,36 +388,53 @@ echo $promise->await(500)->data(); // Display 2
 
 | Option              | Type        | Supports                       | Description  |
 |---------------------|-------------|--------------------------------|--------------|
+| `driver`            | string      |                                | The name of the driver to use. See driver name in support section. |
+| `vendor`            | string      |                                | Second part of the protocol. Vendor is used by some driver that use internal drivers. |
+| `queue`             | string      |                                | The default queue of the connection used only if no queue has been set on the message. Destination should provide the queue. |
+| `host`              | string      |                                | The host / ip to connect to message broker. Usually set to `localhost`. |
+| `port`              | int         |                                | The port of the message broker. Usually set to the default port. |
+| `user`              | string      |                                |  |
+| `password`          | string      |                                |  |
 | `prefetch`          | int         |                                | Load a number of message in memory. Faster for some broker that supports reservation |
 | `serializer`        | string      |                                | Load a serializer for this connection. Used only by driver that needs serializer. |
+| `vhost`             | string      | amqp-lib                       | Default `/`. |
+| `group`             | string      | amqp-lib                       | Group use by topic to allows set of consumers on the same topic. Default `bdf`. |
+| `sleep_duration`    | int         | amqp-lib                       | The internal sleep in milliseconds between two pop. Default `200`. |
+| `queue_flags`       | int         | amqp-lib                       | The flag for queue declaration. See AmqpDriver constants. Default `2` (`FLAG_QUEUE_DURABLE` value). |
+| `topic_flags`       | int         | amqp-lib                       | The flag for topic declaration. See AmqpDriver constants. Default `0` (`FLAG_NOPARAM` value). |
+| `consumer_flags`    | int         | amqp-lib                       | The flag for consumer. See AmqpDriver constants. Default `0` (`FLAG_NOPARAM` value). |
+| `auto_declare`      | bool        | amqp-lib, redis, enqueue       | Auto declare the queue when pushing or poping. Use queue setup command otherwise. Default `false`. |
+| `qos_prefetch_size` | int         | amqp-lib                       | Prefetch optimisation. Default `0`. |
+| `qos_prefetch_count`| int         | amqp-lib                       | Prefetch optimisation. Default `1`. |
+| `qos_global`        | int         | amqp-lib                       | Prefetch optimisation. Default `false`. |
+| `table`             | string      | doctrine                       | The table name to use to store message. Default value `doctrine_queue` |
 | `ttr`               | int         | pheanstalk                     | Time to run in seconds. Can also be defined in message header. Default `60`. |
 | `client-timeout`    | int         | pheanstalk, gearman            | Timeout of client in milliseconds. Disable by default. |
-| `commitAsync`       | bool        | rdkafka                        | Enable asynchrone ack. Default `true`. |
+| `commitAsync`       | bool        | rdkafka                        | Enable asynchrone ack. Default `false`. |
 | `offset`            | int         | rdkafka                        | Position to start consumer. Default `null`. |
+| `partition`         | int         | rdkafka                        | Partition to use, see kafka constant. Default `1` (`RD_KAFKA_PARTITION_UA` value). |
 | `global`            | array       | rdkafka                        | Kafka config for global settings. |
 | `dr_msg_cb`         | string      | rdkafka                        | Kafka config for global settings. |
 | `error_cb`          | string      | rdkafka                        | Kafka config for global settings. |
 | `rebalance_cb`      | string      | rdkafka                        | Kafka config for global settings. |
 | `topic`             | array       | rdkafka                        | Kafka config for topic settings. |
 | `partitioner`       | string      | rdkafka                        | Kafka partitioner for topic settings. |
-| `sleep_duration`    | int         | amqp-lib                       | The internal sleep in milliseconds between two pop. Default `200`. |
-| `queue_flags`       | int         | amqp-lib                       | The flag for queue declaration. See AmqpDriver constants. |
-| `consumer_flags`    | int         | amqp-lib                       | The flag for consumer. See AmqpDriver constants. |
-| `auto_declare`      | bool        | amqp-lib                       | Auto declare the queue when pushing or poping. Use queue setup command otherwise. |
+| `group`             | string      | rdkafka                        | Group use by topic to allows set of consumers on the same topic. Default `"2"`. |
 | `timeout`           | int         | redis                          | The connection timeout in seconds. Default `0`. |
 | `prefix`            | string      | redis                          | The key prefix. Default `queues:`. |
-| `auto_declare`      | bool        | redis                          | Auto declare the queue when pushing or poping. Use queue setup command otherwise. |
 
+Note:
+Format of a valid DSN: {driver}+{vendor}://{user}:{password}@{host}:{port}/{queue}?{option}=value
 
 #### Additionnal options for message
 
 | Option              | Type        | Supports                       | Description  |
 |---------------------|-------------|--------------------------------|--------------|
+| `flags`             | int         | amqp-lib                       | The flags for message. See driver constants. |
 | `priority`          | int         | pheanstalk                     | Priority message. Default `1024`. |
 | `ttr`               | int         | pheanstalk                     | Time to run in seconds. Default `60`. |
 | `key`               | string      | rdkafka                        |  |
 | `partition`         | int         | rdkafka                        | The number of the partition. |
-| `flags`             | int         | amqp-lib                       | The flags for message. See driver constants. |
 
 
 ### Serialization

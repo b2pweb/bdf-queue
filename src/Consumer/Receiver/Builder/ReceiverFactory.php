@@ -13,6 +13,7 @@ use Bdf\Queue\Consumer\Receiver\NoFailureReceiver;
 use Bdf\Queue\Consumer\Receiver\RateLimiterReceiver;
 use Bdf\Queue\Consumer\Receiver\RetryMessageReceiver;
 use Bdf\Queue\Consumer\Receiver\StopWhenEmptyReceiver;
+use Bdf\Queue\Consumer\Receiver\TimeLimiterReceiver;
 use Bdf\Queue\Consumer\ReceiverInterface;
 use Bdf\Queue\Failer\FailedJobStorageInterface;
 use Psr\Container\ContainerInterface;
@@ -67,6 +68,9 @@ class ReceiverFactory
             },
             MemoryLimiterReceiver::class => function(ReceiverFactory $factory, ReceiverInterface $receiver, int $bytes) {
                 return new MemoryLimiterReceiver($receiver, $bytes, $factory->logger());
+            },
+            TimeLimiterReceiver::class => function(ReceiverFactory $factory, ReceiverInterface $receiver, int $expire) {
+                return new TimeLimiterReceiver($receiver, $expire, $factory->logger());
             },
             RetryMessageReceiver::class => function(ReceiverFactory $factory, ReceiverInterface $receiver, int $tries, int $delay) {
                 return new RetryMessageReceiver($receiver, $factory->logger(), $tries, $delay);

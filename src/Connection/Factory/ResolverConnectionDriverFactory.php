@@ -15,7 +15,7 @@ final class ResolverConnectionDriverFactory implements ConnectionDriverFactoryIn
     /**
      * The array of queue driver resolvers {@see ConnectionDriverInterface}
      *
-     * @var Closure[]
+     * @var callable[]
      */
     private $driverResolvers = [];
 
@@ -129,9 +129,9 @@ final class ResolverConnectionDriverFactory implements ConnectionDriverFactoryIn
      * </code>
      *
      * @param string $driver The driver name. It's used as scheme of the DSN
-     * @param Closure $resolver The connection resolver. Takes the configuration as parameter, and returns the connection driver instance
+     * @param callable $resolver The connection resolver. Takes the configuration as parameter, and returns the connection driver instance
      */
-    public function addDriverResolver(string $driver, Closure $resolver)
+    public function addDriverResolver(string $driver, callable $resolver)
     {
         $this->driverResolvers[$driver] = $resolver;
     }
@@ -139,7 +139,7 @@ final class ResolverConnectionDriverFactory implements ConnectionDriverFactoryIn
     /**
      * Set all queue driver resolvers
      *
-     * @param Closure[] $factory
+     * @param callable[] $factory
      */
     public function setDriverResolver(array $factory)
     {

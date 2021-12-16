@@ -68,12 +68,11 @@ class AmqpLibTopicTest extends TestCase
             })
         ;
 
-        $destination->consumer($builder->build())->consume(1);
-
         $message = Message::create('Hello world');
         $message->setDestination('my_destination');
         $destination->send($message);
 
+        $destination->consumer($builder->build())->consume(1);
         $this->assertSame(['Hello world'], $messages);
     }
 }

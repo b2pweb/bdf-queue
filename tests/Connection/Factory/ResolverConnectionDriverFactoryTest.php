@@ -153,6 +153,22 @@ class ResolverConnectionDriverFactoryTest extends TestCase
     /**
      *
      */
+    public function test_callable_resolver()
+    {
+        $factory = new ResolverConnectionDriverFactory(['test' => 'test://localhost:1552/test']);
+        $factory->addDriverResolver('test', [$this, 'createNullConnection']);
+
+        $this->assertInstanceOf(NullConnection::class, $factory->create('test'));
+    }
+
+    public static function createNullConnection($config)
+    {
+        return new NullConnection($config['connection']);
+    }
+
+    /**
+     *
+     */
     public function test_defaultConnection_not_found()
     {
         $this->expectException(\LogicException::class);
@@ -160,4 +176,5 @@ class ResolverConnectionDriverFactoryTest extends TestCase
         $factory = new ResolverConnectionDriverFactory([]);
         $factory->defaultConnection();
     }
+
 }

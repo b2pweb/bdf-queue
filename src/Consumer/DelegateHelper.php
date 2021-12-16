@@ -44,4 +44,18 @@ trait DelegateHelper
     {
         $this->delegate->terminate();
     }
+
+    /**
+     * Debug: show the order of item in the chain list
+     *
+     * @return string
+     */
+    public function __toString()
+    {
+        $next = method_exists($this->delegate, '__toString')
+                ? (string) $this->delegate
+                : get_class($this->delegate);
+
+        return get_class($this).'->'.$next;
+    }
 }

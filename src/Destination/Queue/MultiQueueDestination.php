@@ -11,6 +11,7 @@ use Bdf\Queue\Consumer\QueueConsumer;
 use Bdf\Queue\Consumer\Reader\MultiQueueReader;
 use Bdf\Queue\Consumer\ReceiverInterface;
 use Bdf\Queue\Destination\DestinationInterface;
+use Bdf\Queue\Destination\Promise\NullPromise;
 use Bdf\Queue\Destination\Promise\PromiseInterface;
 use Bdf\Queue\Message\Message;
 
@@ -56,7 +57,20 @@ final class MultiQueueDestination implements DestinationInterface
      */
     public function send(Message $message): PromiseInterface
     {
-        throw new \BadMethodCallException('Multi-queue destination is read-only');
+        if ($message->needsReply()) {
+            throw new \BadMethodCallException('Bdf multi-queue destination does not support reply option.');
+        }
+
+        $message->setConnection($this->driver->connection()->getName());
+
+        foreach ($this->queues as $queue) {
+            $toSend = clone $message;
+            $toSend->setQueue($queue);
+
+            $this->driver->push($toSend);
+        }
+
+        return NullPromise::instance();
     }
 
     /**
@@ -64,7 +78,11 @@ final class MultiQueueDestination implements DestinationInterface
      */
     public function raw($payload, array $options = []): void
     {
-        throw new \BadMethodCallException('Multi-queue destination is read-only');
+        $delay = $options['delay'] ?? 0;
+
+        foreach ($this->queues as $queue) {
+            $this->driver->pushRaw($payload, $queue, $delay);
+        }
     }
 
     /**

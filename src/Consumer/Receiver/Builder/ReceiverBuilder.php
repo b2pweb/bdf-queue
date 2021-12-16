@@ -16,6 +16,7 @@ use Bdf\Queue\Consumer\Receiver\ProcessorReceiver;
 use Bdf\Queue\Consumer\Receiver\RateLimiterReceiver;
 use Bdf\Queue\Consumer\Receiver\RetryMessageReceiver;
 use Bdf\Queue\Consumer\Receiver\StopWhenEmptyReceiver;
+use Bdf\Queue\Consumer\Receiver\TimeLimiterReceiver;
 use Bdf\Queue\Consumer\ReceiverInterface;
 use Bdf\Queue\Failer\FailedJobStorageInterface;
 use Bdf\Queue\Processor\JobHintProcessorResolver;
@@ -172,6 +173,21 @@ class ReceiverBuilder
     public function max(int $number): ReceiverBuilder
     {
         return $this->add(MessageCountLimiterReceiver::class, [$number]);
+    }
+
+    /**
+     * Limit the number of received message
+     * When the limit is reached, the consumer is stopped
+     *
+     * @param int $seconds Number of messages
+     *
+     * @return $this
+     *
+     * @see MessageCountLimiterReceiver
+     */
+    public function expire(int $seconds): ReceiverBuilder
+    {
+        return $this->add(TimeLimiterReceiver::class, [$seconds]);
     }
 
     /**
