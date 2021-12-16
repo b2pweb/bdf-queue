@@ -9,8 +9,8 @@ build:
           - php-scrutinizer-run
 
     coverage:
-      services:
-        rabbitmq: 3
+#      services:
+#        rabbitmq: 3
 
       tests:
         override:
