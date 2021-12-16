@@ -7,6 +7,9 @@ php:
   - 7.4
   - 8.0
 
+services:
+  - rabbitmq
+
 install:
   - travis_retry composer install
 

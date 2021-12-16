@@ -297,9 +297,11 @@ class AmqpLibQueueTest extends TestCase
         try {
             $destination->declare();
         } catch (AMQPIOException $e) {
-            if (strpos($e->getMessage(), 'Unable to connect to') !== false) {
+            if (stripos($e->getMessage(), 'Unable to connect to') !== false) {
                 $this->markTestSkipped('RabbitMQ not started');
             }
+
+            throw $e;
         }
 
         $message = Message::create('Hello world');

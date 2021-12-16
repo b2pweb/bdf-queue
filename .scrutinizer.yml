@@ -10,6 +10,9 @@ build:
 
     coverage:
       tests:
+        services:
+          rabbitmq: 3
+
         override:
           - command: XDEBUG_MODE=coverage composer run tests-with-coverage
             coverage:
