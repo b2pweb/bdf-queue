@@ -70,6 +70,10 @@ class AmqpLibTopicTest extends TestCase
             })
         ;
 
+
+        $destination->consumer($builder->build())->consume(1);
+        sleep(1);
+
         $message = Message::create('Hello world');
         $message->setDestination('my_destination');
         $destination->send($message);
