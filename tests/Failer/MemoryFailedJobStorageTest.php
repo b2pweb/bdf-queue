@@ -45,7 +45,7 @@ class MemoryFailedJobStorageTest extends TestCase
         $this->assertSame('foo', $created->error);
         $this->assertSame(0, $created->attempts);
         $this->assertInstanceOf(\DateTime::class, $created->failedAt);
-        $this->assertInstanceOf(\DateTime::class, $created->lastFailedAt);
+        $this->assertInstanceOf(\DateTime::class, $created->firstFailedAt);
     }
 
     /**
