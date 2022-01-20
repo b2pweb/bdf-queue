@@ -43,7 +43,9 @@ class MemoryFailedJobStorageTest extends TestCase
         $this->assertSame($message->toQueue(), $created->messageContent);
         $this->assertSame(QueuedMessage::class, $created->messageClass);
         $this->assertSame('foo', $created->error);
+        $this->assertSame(0, $created->attempts);
         $this->assertInstanceOf(\DateTime::class, $created->failedAt);
+        $this->assertInstanceOf(\DateTime::class, $created->firstFailedAt);
     }
 
     /**
@@ -55,8 +57,32 @@ class MemoryFailedJobStorageTest extends TestCase
         $message->setName('job');
         $message->setConnection('queue-connection');
         $message->setQueue('queue');
+        $message->setHeaders([
+            'failer-failed-at' => new \DateTime(),
+        ]);
 
         $created = FailedJob::create($message, new \Exception('foo'));
+
+        $this->assertEquals($message, $created->toMessage());
+    }
+
+    /**
+     *
+     */
+    public function test_to_message_with_retry()
+    {
+        $message = new QueuedMessage();
+        $message->setName('job');
+        $message->setConnection('queue-connection');
+        $message->setQueue('queue');
+        $message->setHeaders([
+            'failer-failed-at' => new \DateTime(),
+            'failer-attempts' => 1,
+        ]);
+
+        $created = FailedJob::create($message, new \Exception('foo'));
+        $created->attempts++;
+        $message->addHeader('failer-attempts', 2);
 
         $this->assertEquals($message, $created->toMessage());
     }

@@ -58,6 +58,8 @@ class RetryCommand extends Command
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         foreach ($this->getFailedJobs($input->getArgument('id'), $output) as $job) {
+            $job->attempts++;
+
             if ($message = $job->toMessage()) {
                 $this->manager->send($message);
             }
@@ -76,7 +78,7 @@ class RetryCommand extends Command
      * @param string $id
      *
      * @param OutputInterface $output
-     * @return FailedJob[]
+     * @return FailedJob[]|iterable
      */
     private function getFailedJobs($id, OutputInterface $output)
     {

@@ -62,11 +62,25 @@ class FailedJob
     public $error;
 
     /**
-     * The failure date
+     * The most recent failure date
      *
      * @var \DateTime
      */
     public $failedAt;
+
+    /**
+     * The first failure date
+     *
+     * @var \DateTime
+     */
+    public $firstFailedAt;
+
+    /**
+     * Number of attempts to retry the failed job
+     *
+     * @var int
+     */
+    public $attempts = 0;
 
     /**
      * FailedJob constructor.
@@ -76,6 +90,7 @@ class FailedJob
     public function __construct(array $values = [])
     {
         $this->failedAt = new \DateTime();
+        $this->firstFailedAt = new \DateTime();
 
         foreach ($values as $attribute => $value) {
             if (property_exists($this, $attribute)) {
@@ -105,7 +120,11 @@ class FailedJob
         $failed->messageContent = $message->toQueue();
         $failed->messageClass = get_class($message);
         $failed->error = $exception ? $exception->getMessage() : null;
-        $failed->failedAt = new \DateTime();
+        $failed->attempts = $message->header('failer-attempts', 0);
+
+        if ($date = $message->header('failer-failed-at')) {
+            $failed->firstFailedAt = $date;
+        }
 
         return $failed;
     }
@@ -125,6 +144,11 @@ class FailedJob
         $message = $this->messageClass::fromQueue($this->messageContent);
         $message->setConnection($this->connection);
         $message->setQueue($this->queue);
+        $message->addHeader('failer-failed-at', $this->firstFailedAt);
+
+        if ($this->attempts > 0) {
+            $message->addHeader('failer-attempts', $this->attempts);
+        }
 
         return $message;
     }
