@@ -120,8 +120,11 @@ class FailedJob
         $failed->messageContent = $message->toQueue();
         $failed->messageClass = get_class($message);
         $failed->error = $exception ? $exception->getMessage() : null;
-        $failed->failedAt = $message->header('failer-failed-at', new \DateTime());
         $failed->attempts = $message->header('failer-attempts', 0);
+
+        if ($date = $message->header('failer-failed-at')) {
+            $failed->failedAt = $date;
+        }
 
         return $failed;
     }
