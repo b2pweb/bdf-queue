@@ -144,4 +144,26 @@ class RetryCommandTest extends TestCase
         $this->assertRegExp('/^Job #1 has been pushed back onto the queue/', $tester->getDisplay());
         $this->assertRegExp('/Job #2 has been pushed back onto the queue/', $tester->getDisplay());
     }
+
+    /**
+     *
+     */
+    public function test_retry_attempts()
+    {
+        $failer = new MemoryFailedJobStorage();
+        $command = new RetryCommand($failer, $this->manager);
+        $tester = new CommandTester($command);
+
+        $failer->store(new FailedJob([
+            'connection' => 'test',
+            'queue' => $this->defaultQueue,
+            'messageContent' => ['job' => 'showCommand@test'],
+        ]));
+
+        $tester->execute(['id' => '1']);
+
+        $envelope = $this->queue->pop($this->defaultQueue);
+        $this->assertEquals(1, $envelope->message()->header('failer-attempts'));
+        $this->assertNotNull($envelope->message()->header('failer-failed-at'));
+    }
 }
