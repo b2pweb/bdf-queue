@@ -2,10 +2,10 @@
 
 namespace Bdf\Queue\Console\Command\Failer;
 
+use Bdf\Queue\Failer\FailedJob;
+use Bdf\Queue\Failer\FailedJobCriteria;
 use Bdf\Queue\Failer\FailedJobStorageInterface;
-use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Helper\Table;
-use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\VarDumper\Cloner\Stub;
@@ -15,14 +15,9 @@ use Symfony\Component\VarDumper\Dumper\CliDumper;
 /**
  * ShowCommand
  */
-class ShowCommand extends Command
+class ShowCommand extends AbstractFailerCommand
 {
     protected static $defaultName = 'queue:failer:show';
-
-    /**
-     * @var FailedJobStorageInterface
-     */
-    private $failer;
 
     /**
      * The table headers for the command.
@@ -34,13 +29,11 @@ class ShowCommand extends Command
     /**
      * SetupCommand constructor.
      *
-     * @param FailedJobStorageInterface $failer
+     * @param FailedJobStorageInterface $storage
      */
-    public function __construct(FailedJobStorageInterface $failer)
+    public function __construct(FailedJobStorageInterface $storage)
     {
-        $this->failer = $failer;
-
-        parent::__construct(static::$defaultName);
+        parent::__construct($storage);
     }
 
     /**
@@ -48,36 +41,19 @@ class ShowCommand extends Command
      */
     protected function configure(): void
     {
-        $this
-            ->setDescription('List all of the failed queue jobs')
-            ->addArgument('id', InputArgument::OPTIONAL, 'The ID of the failed job')
-        ;
+        parent::configure();
+
+        $this->setDescription('List all of the failed queue jobs');
     }
-    
+
     /**
      * {@inheritdoc}
      */
-    protected function execute(InputInterface $input, OutputInterface $output): int
+    protected function handleOne(InputInterface $input, OutputInterface $output, ?FailedJob $job): int
     {
-        if ($id = $input->getArgument('id')) {
-            $this->showOne($id, $output);
-        } else {
-            $this->showList($output);
-        }
-
-        return 0;
-    }
-
-    /**
-     * @param string $id
-     */
-    protected function showOne($id, OutputInterface $output)
-    {
-        $job = $this->failer->find($id);
-
         if ($job === null) {
-            $output->writeln(sprintf('<error>No failed job "%s"</error>', $id));
-            return;
+            $output->writeln(sprintf('<error>No failed job "%s"</error>', $input->getArgument('id')));
+            return 1;
         }
         $failedAt = $job->failedAt ? $job->failedAt->format('H:i:s d/m/Y') : null;
 
@@ -96,7 +72,7 @@ EOF
 
         if (!class_exists(CliDumper::class)) {
             var_dump($job->messageContent);
-            return;
+            return 0;
         }
 
         $cloner = new VarCloner();
@@ -114,16 +90,18 @@ EOF
                 $output->writeln(str_repeat('  ', $depth).$line);
             }
         });
+
+        return 0;
     }
 
     /**
-     *
+     * {@inheritdoc}
      */
-    protected function showList(OutputInterface $output)
+    protected function handleCriteria(InputInterface $input, OutputInterface $output, FailedJobCriteria $criteria): int
     {
         $rows = [];
 
-        foreach ($this->failer->all() as $job) {
+        foreach ($this->repository->search($criteria) as $job) {
             $rows[] = [
                 'id' => $job->id,
                 'connection' => $job->connection,
@@ -136,7 +114,7 @@ EOF
 
         if (count($rows) === 0) {
             $output->writeln('<info>No failed jobs found</info>');
-            return;
+            return 0;
         }
 
         (new Table($output))
@@ -144,5 +122,7 @@ EOF
             ->setRows($rows)
             ->setStyle('box')
             ->render();
+
+        return 0;
     }
 }

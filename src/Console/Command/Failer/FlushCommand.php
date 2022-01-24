@@ -36,7 +36,7 @@ class FlushCommand extends Command
      */
     protected function configure(): void
     {
-        $this->setDescription('Flush all of the failed queue jobs');
+        $this->setDescription('Flush all of the failed queue jobs [deprecated]');
     }
     
     /**

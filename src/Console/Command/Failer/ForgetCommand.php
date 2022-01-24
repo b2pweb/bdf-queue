@@ -38,7 +38,7 @@ class ForgetCommand extends Command
     protected function configure(): void
     {
         $this
-            ->setDescription('Delete a failed queue job')
+            ->setDescription('Delete a failed queue job [deprecated]')
             ->addArgument('id', InputArgument::REQUIRED, 'The ID of the failed job')
         ;
     }

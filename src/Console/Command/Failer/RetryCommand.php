@@ -4,6 +4,7 @@ namespace Bdf\Queue\Console\Command\Failer;
 
 use Bdf\Queue\Destination\DestinationManager;
 use Bdf\Queue\Failer\FailedJob;
+use Bdf\Queue\Failer\FailedJobCriteria;
 use Bdf\Queue\Failer\FailedJobStorageInterface;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;
@@ -13,14 +14,9 @@ use Symfony\Component\Console\Output\OutputInterface;
 /**
  * RetryCommand
  */
-class RetryCommand extends Command
+class RetryCommand extends AbstractFailerCommand
 {
     protected static $defaultName = 'queue:failer:retry';
-
-    /**
-     * @var FailedJobStorageInterface
-     */
-    private $failer;
 
     /**
      * @var DestinationManager
@@ -30,15 +26,14 @@ class RetryCommand extends Command
     /**
      * SetupCommand constructor.
      *
-     * @param FailedJobStorageInterface $failer
+     * @param FailedJobStorageInterface $storage
      * @param DestinationManager $manager
      */
-    public function __construct(FailedJobStorageInterface $failer, DestinationManager $manager)
+    public function __construct(FailedJobStorageInterface $storage, DestinationManager $manager)
     {
-        $this->failer = $failer;
-        $this->manager = $manager;
+        parent::__construct($storage);
 
-        parent::__construct(static::$defaultName);
+        $this->manager = $manager;
     }
 
     /**
@@ -46,53 +41,80 @@ class RetryCommand extends Command
      */
     protected function configure(): void
     {
-        $this
-            ->setDescription('Retry a failed queue job')
-            ->addArgument('id', InputArgument::REQUIRED, 'The ID of the failed job. Type "all" to retry all job.')
-        ;
+        parent::configure();
+
+        $this->setDescription('Retry a failed queue job');
     }
-    
+
     /**
      * {@inheritdoc}
      */
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
-        foreach ($this->getFailedJobs($input->getArgument('id'), $output) as $job) {
-            $job->attempts++;
+        if ($input->getArgument('id') === 'all') {
+            return $this->handleAll($output);
+        }
 
-            if ($message = $job->toMessage()) {
-                $this->manager->send($message);
-            }
+        return parent::execute($input, $output);
+    }
 
-            $this->failer->forget($job->id);
+    /**
+     * {@inheritdoc}
+     */
+    protected function handleOne(InputInterface $input, OutputInterface $output, ?FailedJob $job): int
+    {
+        if (!$job) {
+            $output->writeln('<error>No failed job matches the given ID.</error>');
+            return 1;
+        }
 
-            $output->writeln(sprintf('Job <info>#%s</info> has been pushed back onto the queue', $job->id));
+        $this->doRetry($job, $output);
+
+        return 0;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    protected function handleCriteria(InputInterface $input, OutputInterface $output, FailedJobCriteria $criteria): int
+    {
+        foreach ($this->repository->search($criteria) as $job) {
+            $this->doRetry($job, $output);
         }
 
         return 0;
     }
 
     /**
-     * Get the list of failed jobs
-     *
-     * @param string $id
-     *
-     * @param OutputInterface $output
-     * @return FailedJob[]|iterable
+     * Retry all failed jobs (without any filters)
      */
-    private function getFailedJobs($id, OutputInterface $output)
+    protected function handleAll(OutputInterface $output): int
     {
-        if ($id === 'all') {
-            return $this->failer->all();
+        foreach ($this->repository->all() as $job) {
+            $this->doRetry($job, $output);
         }
 
-        $job = $this->failer->find($id);
+        return 0;
+    }
 
-        if ($job === null) {
-            $output->writeln('<error>No failed job matches the given ID.</error>');
-            return [];
+    /**
+     * Repush the job into queue
+     *
+     * @param FailedJob $job
+     * @param OutputInterface $output
+     *
+     * @return void
+     */
+    private function doRetry(FailedJob $job, OutputInterface $output): void
+    {
+        $job->attempts++;
+
+        if ($message = $job->toMessage()) {
+            $this->manager->send($message);
         }
 
-        return [$job];
+        $this->repository->delete($job);
+
+        $output->writeln(sprintf('Job <info>#%s</info> has been pushed back onto the queue', $job->id));
     }
 }

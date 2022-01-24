@@ -19,40 +19,15 @@ use Symfony\Component\Console\Tester\CommandTester;
 /**
  *
  */
-class RetryCommandTest extends TestCase
+class DeleteCommandTest extends TestCase
 {
-    /** @var Container */
-    private $container;
-    /** @var DestinationManager */
-    private $manager;
-    /** @var QueueDriverInterface */
-    private $queue;
-    private $defaultQueue = 'queue';
-
-    /**
-     *
-     */
-    protected function setUp(): void
-    {
-        $this->container = new Container();
-        $this->container->add(InstantiatorInterface::class, new Instantiator($this->container));
-        $this->container->add('queue.connections', [
-            'test' => ['driver' => 'memory']
-        ]);
-        (new QueueServiceProvider())->configure($this->container);
-
-        $this->manager = $this->container->get(DestinationManager::class);
-        $this->queue = $this->container->get(ConnectionDriverFactoryInterface::class)->create('test')->queue();
-    }
-
     /**
      *
      */
     public function test_option_definition()
     {
-        $command = new RetryCommand(
-            $this->createMock(FailedJobStorageInterface::class),
-            $this->manager
+        $command = new DeleteCommand(
+            $this->createMock(FailedJobStorageInterface::class)
         );
         $options = $command->getDefinition()->getArguments();
 
@@ -63,131 +38,108 @@ class RetryCommandTest extends TestCase
     /**
      * 
      */
-    public function test_retry_empty()
+    public function test_delete_not_found()
     {
         $failer = new MemoryFailedJobRepository();
-        $command = new RetryCommand($failer, $this->manager);
+        $command = new DeleteCommand($failer);
         $tester = new CommandTester($command);
 
         $tester->execute(['id' => '1']);
 
-        $this->assertEquals(0, $this->queue->count($this->defaultQueue));
         $this->assertRegExp('/^No failed job matches the given ID/', $tester->getDisplay());
     }
     
     /**
      * 
      */
-    public function test_retry()
+    public function test_delete()
     {
         $failer = new MemoryFailedJobRepository();
-        $command = new RetryCommand($failer, $this->manager);
+        $command = new DeleteCommand($failer);
         $tester = new CommandTester($command);
 
         $failer->store(new FailedJob([
             'connection' => 'test',
-            'queue' => $this->defaultQueue,
+            'queue' => 'queue',
             'messageContent' => ['job' => 'showCommand@test'],
         ]));
 
         $tester->execute(['id' => '1']);
         
         $this->assertEquals(0, count($failer->all()));
-        $this->assertEquals(1, $this->queue->count($this->defaultQueue));
-        $this->assertRegExp('/^Job #1 has been pushed back onto the queue/', $tester->getDisplay());
-    }
-    
-    /**
-     * 
-     */
-    public function test_retry_with_empty_raw()
-    {
-        $failer = new MemoryFailedJobRepository();
-        $command = new RetryCommand($failer, $this->manager);
-        $tester = new CommandTester($command);
-
-        $failer->store(new FailedJob([
-            'connection' => 'test',
-            'queue' => $this->defaultQueue,
-        ]));
-        
-        $tester->execute(['id' => '1']);
-
-        $this->assertEquals(0, count($failer->all()));
-        $this->assertEquals(0, $this->queue->count($this->defaultQueue));
-        $this->assertRegExp('/^Job #1 has been pushed back onto the queue/', $tester->getDisplay());
+        $this->assertRegExp('/^Failed job deleted successfully/', $tester->getDisplay());
     }
 
     /**
      *
      */
-    public function test_retry_all()
+    public function test_delete_all()
     {
         $failer = new MemoryFailedJobRepository();
-        $command = new RetryCommand($failer, $this->manager);
+        $command = new DeleteCommand($failer);
         $tester = new CommandTester($command);
 
         $failer->store(new FailedJob([
             'connection' => 'test',
-            'queue' => $this->defaultQueue,
+            'queue' => 'queue',
             'messageContent' => ['job' => 'showCommand@test'],
         ]));
         $failer->store(new FailedJob([
             'connection' => 'test',
-            'queue' => $this->defaultQueue,
+            'queue' => 'queue',
             'messageContent' => ['job' => 'showCommand@test'],
         ]));
 
-        $tester->execute(['id' => 'all']);
+        $tester->execute([]);
 
         $this->assertEquals(0, count($failer->all()));
-        $this->assertEquals(2, $this->queue->count($this->defaultQueue));
-        $this->assertRegExp('/^Job #1 has been pushed back onto the queue/', $tester->getDisplay());
-        $this->assertRegExp('/Job #2 has been pushed back onto the queue/', $tester->getDisplay());
+        $this->assertRegExp('/^2 failed jobs deleted successfully/', $tester->getDisplay());
     }
 
     /**
      * @dataProvider provideOptions
      */
-    public function test_retry_with_filter(array $options, array $ids)
+    public function test_delete_with_filter(array $options, array $ids)
     {
         $failer = new MemoryFailedJobRepository();
-        $command = new RetryCommand($failer, $this->manager);
+        $command = new DeleteCommand($failer);
         $tester = new CommandTester($command);
 
         $failer->store(new FailedJob([
             'connection' => 'test',
-            'queue' => $this->defaultQueue,
+            'queue' => 'queue',
             'name' => 'Foo',
             'failedAt' => new \DateTime('2022-01-15 15:02:30'),
+            'firstFailedAt' => new \DateTime('2022-01-15 15:02:30'),
             'error' => 'my error',
             'messageContent' => ['job' => 'showCommand@test'],
+            'attempts' => 2,
         ]));
         $failer->store(new FailedJob([
             'connection' => 'test',
-            'queue' => $this->defaultQueue,
+            'queue' => 'queue',
             'name' => 'Bar',
             'failedAt' => new \DateTime('2022-01-15 22:14:15'),
+            'firstFailedAt' => new \DateTime('2022-01-15 22:14:15'),
             'error' => 'my other error',
             'messageContent' => ['job' => 'showCommand@test'],
+            'attempts' => 1,
         ]));
         $failer->store(new FailedJob([
             'connection' => 'test',
-            'queue' => $this->defaultQueue,
+            'queue' => 'queue',
             'name' => 'Baz',
             'error' => 'hello world',
             'failedAt' => new \DateTime('2021-12-21 08:00:35'),
+            'firstFailedAt' => new \DateTime('2021-12-21 08:00:35'),
             'messageContent' => ['job' => 'showCommand@test'],
+            'attempts' => 3,
         ]));
 
         $tester->execute($options);
 
         $this->assertEquals(3 - count($ids), count($failer->all()));
-        $this->assertEquals(count($ids), $this->queue->count($this->defaultQueue));
-
-        foreach ($ids as $id) {
-            $this->assertRegExp('/Job #' . $id . ' has been pushed back onto the queue/', $tester->getDisplay());
-        }
+        $this->assertRegExp('/^' . count($ids) . ' failed jobs deleted successfully/', $tester->getDisplay());
     }
 
     /**
@@ -196,22 +148,24 @@ class RetryCommandTest extends TestCase
     public function test_filter_queue_and_connection()
     {
         $failer = new MemoryFailedJobRepository();
-        $command = new RetryCommand($failer, $this->manager);
+        $command = new DeleteCommand($failer);
         $tester = new CommandTester($command);
 
         $failer->store(new FailedJob([
             'connection' => 'test',
-            'queue' => $this->defaultQueue,
+            'queue' => 'queue',
             'name' => 'Foo',
             'failedAt' => new \DateTime('2022-01-15 15:02:30'),
+            'firstFailedAt' => new \DateTime('2022-01-15 15:02:30'),
             'error' => 'my error',
             'messageContent' => ['job' => 'showCommand@test'],
         ]));
         $failer->store(new FailedJob([
             'connection' => 'con2',
-            'queue' => $this->defaultQueue,
+            'queue' => 'queue',
             'name' => 'Bar',
             'failedAt' => new \DateTime('2022-01-15 22:14:15'),
+            'firstFailedAt' => new \DateTime('2022-01-15 22:14:15'),
             'error' => 'my other error',
             'messageContent' => ['job' => 'showCommand@test'],
         ]));
@@ -221,15 +175,15 @@ class RetryCommandTest extends TestCase
             'name' => 'Baz',
             'error' => 'hello world',
             'failedAt' => new \DateTime('2021-12-21 08:00:35'),
+            'firstFailedAt' => new \DateTime('2021-12-21 08:00:35'),
             'messageContent' => ['job' => 'showCommand@test'],
         ]));
 
-        $tester->execute(['--queue' => $this->defaultQueue, '--connection' => 'test']);
+        $tester->execute(['--queue' => 'queue', '--connection' => 'test']);
 
         $this->assertEquals(2, count($failer->all()));
-        $this->assertEquals(1, $this->queue->count($this->defaultQueue));
 
-        $this->assertRegExp('/^Job #1 has been pushed back onto the queue/', $tester->getDisplay());
+        $this->assertRegExp('/^1 failed jobs deleted successfully/', $tester->getDisplay());
     }
 
     public function provideOptions()
@@ -246,29 +200,12 @@ class RetryCommandTest extends TestCase
             'failedAt with string' => [['--failedAt' => '2022-01-15 22:14:15'], [2]],
             'failedAt with wildcard' => [['--failedAt' => '2022-01-15*'], [1, 2]],
             'failedAt with operator on value' => [['--failedAt' => '> 2022-01-01'], [1, 2]],
+            'firstFailedAt with date' => [['--firstFailedAt' => '2022-01-15 22:14:15'], [2]],
+            'firstFailedAt with string' => [['--firstFailedAt' => '2022-01-15 22:14:15'], [2]],
+            'firstFailedAt with wildcard' => [['--firstFailedAt' => '2022-01-15*'], [1, 2]],
+            'firstFailedAt with operator on value' => [['--firstFailedAt' => '> 2022-01-01'], [1, 2]],
+            'attempts' => [['--attempts' => '>= 2'], [1, 3]],
             'none match' => [['--name' => 'Foo', '--error' => '*world*'], []],
         ];
-    }
-
-    /**
-     *
-     */
-    public function test_retry_attempts()
-    {
-        $failer = new MemoryFailedJobRepository();
-        $command = new RetryCommand($failer, $this->manager);
-        $tester = new CommandTester($command);
-
-        $failer->store(new FailedJob([
-            'connection' => 'test',
-            'queue' => $this->defaultQueue,
-            'messageContent' => ['job' => 'showCommand@test'],
-        ]));
-
-        $tester->execute(['id' => '1']);
-
-        $envelope = $this->queue->pop($this->defaultQueue);
-        $this->assertEquals(1, $envelope->message()->header('failer-attempts'));
-        $this->assertNotNull($envelope->message()->header('failer-failed-at'));
     }
 }

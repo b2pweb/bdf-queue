@@ -4,7 +4,7 @@ namespace Bdf\Queue\Console\Command\Failer;
 
 use Bdf\Queue\Failer\FailedJob;
 use Bdf\Queue\Failer\FailedJobStorageInterface;
-use Bdf\Queue\Failer\MemoryFailedJobStorage;
+use Bdf\Queue\Failer\MemoryFailedJobRepository;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Console\Tester\CommandTester;
 
@@ -30,7 +30,7 @@ class ShowCommandTest extends TestCase
      */
     public function test_show_empty()
     {
-        $failer = new MemoryFailedJobStorage();
+        $failer = new MemoryFailedJobRepository();
         $command = new ShowCommand($failer);
         $tester = new CommandTester($command);
 
@@ -44,7 +44,7 @@ class ShowCommandTest extends TestCase
      */
     public function test_show()
     {
-        $failer = new MemoryFailedJobStorage();
+        $failer = new MemoryFailedJobRepository();
         $failer->store(new FailedJob([
             'name' => 'showCommand@test',
             'connection' => 'queue-connection',
@@ -66,9 +66,41 @@ class ShowCommandTest extends TestCase
     /**
      *
      */
+    public function test_show_with_filter()
+    {
+        $failer = new MemoryFailedJobRepository();
+        $failer->store(new FailedJob([
+            'name' => 'showCommand@test',
+            'connection' => 'queue-connection',
+            'queue' => 'queue',
+            'messageContent' => ['job' => 'showCommand@test'],
+        ]));
+        $failer->store(new FailedJob([
+            'name' => 'showCommand@other',
+            'connection' => 'queue-connection',
+            'queue' => 'queue',
+            'messageContent' => ['job' => 'showCommand@test'],
+        ]));
+        $command = new ShowCommand($failer);
+        $tester = new CommandTester($command);
+
+        $tester->execute(['--name' => '*@other']);
+
+        $display = $tester->getDisplay();
+
+        $this->assertRegExp('/ queue-connection /', $display);
+        $this->assertRegExp('/ queue /', $display);
+        $this->assertRegExp('/ showCommand@other /', $display);
+
+        $this->assertNotRegExp('/ showCommand@test /', $display);
+    }
+
+    /**
+     *
+     */
     public function test_show_id()
     {
-        $failer = new MemoryFailedJobStorage();
+        $failer = new MemoryFailedJobRepository();
         $failer->store(new FailedJob([
             'name' => 'showCommand@test',
             'connection' => 'queue-connection',
