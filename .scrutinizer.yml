@@ -13,8 +13,8 @@ build:
         docker: true
         php:
           pecl_extensions:
-            - rdkafka
             - gearman
+            - redis
 #      services:
 #        rabbitmq: 3
 
