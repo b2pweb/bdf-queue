@@ -20,7 +20,7 @@ use Bdf\Queue\Destination\DestinationInterface;
 use Bdf\Queue\Destination\DestinationManager;
 use Bdf\Queue\Destination\DsnDestinationFactory;
 use Bdf\Queue\Failer\FailedJobStorageInterface;
-use Bdf\Queue\Failer\MemoryFailedJobStorage;
+use Bdf\Queue\Failer\MemoryFailedJobRepository;
 use Bdf\Queue\Serializer\BdfSerializer;
 use Bdf\Queue\Serializer\SerializerInterface;
 use Bdf\Serializer\SerializerBuilder;

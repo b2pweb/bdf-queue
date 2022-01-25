@@ -20,7 +20,7 @@ use Bdf\Queue\Consumer\Receiver\StopWhenEmptyReceiver;
 use Bdf\Queue\Consumer\ReceiverInterface;
 use Bdf\Queue\Destination\DestinationManager;
 use Bdf\Queue\Exception\SerializationException;
-use Bdf\Queue\Failer\MemoryFailedJobStorage;
+use Bdf\Queue\Failer\MemoryFailedJobRepository;
 use Bdf\Queue\Message\EnvelopeInterface;
 use Bdf\Queue\Message\ErrorMessage;
 use Bdf\Queue\Message\Message;
@@ -536,7 +536,7 @@ class FunctionnalTest extends TestCase
      */
     public function test_failure()
     {
-        $failer = new MemoryFailedJobStorage();
+        $failer = new MemoryFailedJobRepository();
 
         $message = QueuedMessage::createFromJob(QueueHandler::class.'@error', 'test_queue_failed');
         $message->setAttempts(3);

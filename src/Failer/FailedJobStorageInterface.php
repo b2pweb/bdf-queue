@@ -4,6 +4,8 @@ namespace Bdf\Queue\Failer;
 
 /**
  * FailedJobStorageInterface
+ *
+ * @deprecated Use FailedJobRepositoryInterface instead
  */
 interface FailedJobStorageInterface
 {
@@ -11,13 +13,15 @@ interface FailedJobStorageInterface
      * Store a failed job.
      *
      * @param FailedJob
+     *
+     * @return void
      */
     public function store(FailedJob $job);
 
     /**
-     * Get a list of all of the failed jobs.
+     * List all failed jobs.
      *
-     * @return FailedJob[]|iterable
+     * @return iterable<FailedJob>
      */
     public function all();
 
@@ -27,6 +31,7 @@ interface FailedJobStorageInterface
      * @param mixed  $id
      * 
      * @return FailedJob
+     * @deprecated Use findById() instead
      */
     public function find($id);
 
@@ -36,11 +41,15 @@ interface FailedJobStorageInterface
      * @param mixed  $id
      * 
      * @return bool
+     * @deprecated Use delete() instead
      */
     public function forget($id);
 
     /**
-     * Flush all of the failed jobs from storage.
+     * Flush all failed jobs from storage.
+     *
+     * @return void
+     * @deprecated Use `purge()` instead
      */
     public function flush();
 }
