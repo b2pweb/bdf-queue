@@ -8,9 +8,13 @@ build:
         override:
           - php-scrutinizer-run
 
-    coverage:
+    static_analysis:
       environment:
         docker: true
+        php:
+          pecl_extensions:
+            - rdkafka
+            - gearman
 #      services:
 #        rabbitmq: 3
 
