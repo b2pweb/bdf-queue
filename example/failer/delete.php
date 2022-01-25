@@ -25,5 +25,5 @@ error_reporting(E_ALL);
 $input = new ArgvInput();
 $output = new ConsoleOutput();
 
-$command = new Bdf\Queue\Console\Command\Failer\ForgetCommand(getFailerStorage());
+$command = new Bdf\Queue\Console\Command\Failer\DeleteCommand(getFailerStorage());
 $command->run($input, $output);

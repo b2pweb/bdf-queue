@@ -19,8 +19,7 @@ use Bdf\Queue\Destination\DestinationFactoryInterface;
 use Bdf\Queue\Destination\DestinationInterface;
 use Bdf\Queue\Destination\DestinationManager;
 use Bdf\Queue\Destination\DsnDestinationFactory;
-use Bdf\Queue\Failer\FailedJobStorageInterface;
-use Bdf\Queue\Failer\MemoryFailedJobRepository;
+use Bdf\Queue\Failer\FailedJobRepositoryInterface;
 use Bdf\Queue\Serializer\BdfSerializer;
 use Bdf\Queue\Serializer\SerializerInterface;
 use Bdf\Serializer\SerializerBuilder;
@@ -132,7 +131,7 @@ function getSerializer(): SerializerInterface
 
 //--- The failer storage
 
-function getFailerStorage(): FailedJobStorageInterface
+function getFailerStorage(): FailedJobRepositoryInterface
 {
     return require __DIR__.'/../config/failer.php';
 }

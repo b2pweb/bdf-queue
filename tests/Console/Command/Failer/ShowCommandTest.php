@@ -118,6 +118,7 @@ name............ showCommand@test
 connection...... queue-connection
 queue........... queue
 error........... 
+attempts........ 0
 EOF;
         $this->assertStringContainsString($expected, $tester->getDisplay());
 

@@ -24,7 +24,7 @@ class ShowCommand extends AbstractFailerCommand
      *
      * @var array
      */
-    private $headers = ['ID', 'Connection', 'Queue', 'Job', 'Error', 'Failed At'];
+    private $headers = ['ID', 'Connection', 'Queue', 'Job', 'Error', 'Attempts', 'Failed At', 'First failed at'];
 
     /**
      * SetupCommand constructor.
@@ -55,7 +55,9 @@ class ShowCommand extends AbstractFailerCommand
             $output->writeln(sprintf('<error>No failed job "%s"</error>', $input->getArgument('id')));
             return 1;
         }
+
         $failedAt = $job->failedAt ? $job->failedAt->format('H:i:s d/m/Y') : null;
+        $firstFailedAt = $job->firstFailedAt ? $job->firstFailedAt->format('H:i:s d/m/Y') : null;
 
         $output->writeln(<<<EOF
 id.............. {$job->id}
@@ -63,7 +65,9 @@ name............ {$job->name}
 connection...... {$job->connection}
 queue........... {$job->queue}
 error........... {$job->error}
+attempts........ {$job->attempts}
 failed at....... {$failedAt}
+first failed at. {$firstFailedAt}
 message class... {$job->messageClass}
 
 <comment>message content:</comment>
@@ -108,7 +112,9 @@ EOF
                 'queue' => $job->queue,
                 'name' => $job->name,
                 'error' => $job->error,
+                'attempts' => $job->attempts,
                 'failedAt' => $job->failedAt ? $job->failedAt->format('H:i:s d/m/Y') : '' ,
+                'firstFailedAt' => $job->firstFailedAt ? $job->firstFailedAt->format('H:i:s d/m/Y') : '' ,
             ];
         }
 

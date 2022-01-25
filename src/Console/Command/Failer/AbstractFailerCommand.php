@@ -42,12 +42,12 @@ abstract class AbstractFailerCommand extends Command
     {
         $this
             ->addArgument('id', InputArgument::OPTIONAL, 'The ID of the failed job')
-            ->addOption('name', null, InputArgument::OPTIONAL, 'The message name. Wildcard can be used.')
-            ->addOption('connection', null, InputArgument::OPTIONAL, 'The queue connection name.')
-            ->addOption('queue', null, InputArgument::OPTIONAL, 'The queue name.')
+            ->addOption('name', null, InputArgument::OPTIONAL, 'Filter by the message name. Wildcard can be used.')
+            ->addOption('connection', null, InputArgument::OPTIONAL, 'Filter by the queue connection name.')
+            ->addOption('queue', null, InputArgument::OPTIONAL, 'Filter by the queue name.')
             ->addOption('error', null, InputArgument::OPTIONAL, 'Search for error message. Wildcard can be used.')
-            ->addOption('failedAt', null, InputArgument::OPTIONAL, 'Search for failing date. You can prefix the date with an operator like > or <.')
-            ->addOption('firstFailedAt', null, InputArgument::OPTIONAL, 'Search for original failing date. You can prefix the date with an operator like > or <.')
+            ->addOption('failedAt', null, InputArgument::OPTIONAL, 'Filter by failing date. You can prefix the date with an operator like > or <.')
+            ->addOption('firstFailedAt', null, InputArgument::OPTIONAL, 'Filter by original failing date. You can prefix the date with an operator like > or <.')
             ->addOption('attempts', null, InputArgument::OPTIONAL, 'Filter by number of retry attempts. You can prefix the number with an operator like > or <.')
         ;
     }
