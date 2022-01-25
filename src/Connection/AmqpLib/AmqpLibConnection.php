@@ -286,10 +286,10 @@ class AmqpLibConnection implements ConnectionDriverInterface, ManageableQueueInt
     /**
      * {@inheritdoc}
      */
-    public function declareTopic(string $name): void
+    public function declareTopic(string $topic): void
     {
         $this->channel()->exchange_declare(
-            $this->exchangeResolver->resolve($name),
+            $this->exchangeResolver->resolve($topic),
             'topic',
             (bool) ($this->config['topic_flags'] & self::FLAG_QUEUE_PASSIVE),
             (bool) ($this->config['topic_flags'] & self::FLAG_QUEUE_DURABLE),
@@ -302,10 +302,10 @@ class AmqpLibConnection implements ConnectionDriverInterface, ManageableQueueInt
     /**
      * {@inheritdoc}
      */
-    public function deleteTopic(string $name): void
+    public function deleteTopic(string $topic): void
     {
         $this->channel()->exchange_delete(
-            $this->exchangeResolver->resolve($name),
+            $this->exchangeResolver->resolve($topic),
             (bool) ($this->config['topic_flags'] & self::FLAG_QUEUE_IFUNUSED),
             (bool) ($this->config['topic_flags'] & self::FLAG_QUEUE_NOWAIT)
         );

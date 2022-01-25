@@ -60,21 +60,21 @@ class RetryMessageReceiver implements ReceiverInterface
     /**
      * {@inheritdoc}
      *
-     * @param InteractEnvelopeInterface $envelope
+     * @param InteractEnvelopeInterface $message
      */
-    public function receive($envelope, ConsumerInterface $consumer): void
+    public function receive($message, ConsumerInterface $consumer): void
     {
         try {
-            $this->delegate->receive($envelope, $consumer);
+            $this->delegate->receive($message, $consumer);
         } catch (\Throwable $exception) {
             // Too many attemps: we dont retry the job and let the other middleware take care about it.
-            if ($this->maxTriesReached($envelope->message())) {
+            if ($this->maxTriesReached($message->message())) {
                 throw $exception;
             }
 
-            $this->logger->notice('Sending the job "'.$envelope->message()->name().'" back to queue');
+            $this->logger->notice('Sending the job "'.$message->message()->name().'" back to queue');
 
-            $envelope->retry($this->delay);
+            $message->retry($this->delay);
         }
     }
 

@@ -3,7 +3,7 @@
 namespace Bdf\Queue\Connection\Enqueue;
 
 use Bdf\Queue\Connection\ConnectionDriverInterface;
-use Bdf\Queue\Connection\Extension\EnvelopeHelper;
+use Bdf\Queue\Connection\Extension\TopicEnvelopeHelper;
 use Bdf\Queue\Connection\TopicDriverInterface;
 use Bdf\Queue\Message\Message;
 use Enqueue\Consumption\FallbackSubscriptionConsumer;
@@ -17,7 +17,7 @@ use Interop\Queue\SubscriptionConsumer;
  */
 class EnqueueTopic implements TopicDriverInterface
 {
-    use EnvelopeHelper;
+    use TopicEnvelopeHelper;
 
     /**
      * @var EnqueueConnection

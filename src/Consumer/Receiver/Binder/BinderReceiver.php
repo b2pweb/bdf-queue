@@ -40,17 +40,17 @@ final class BinderReceiver implements ReceiverInterface
     /**
      * {@inheritdoc}
      *
-     * @param EnvelopeInterface $envelope
+     * @param EnvelopeInterface $message
      */
-    public function receive($envelope, ConsumerInterface $consumer): void
+    public function receive($message, ConsumerInterface $consumer): void
     {
         foreach ($this->binders as $binder) {
-            if ($binder->bind($envelope->message())) {
+            if ($binder->bind($message->message())) {
                 break;
             }
         }
 
-        $this->next->receive($envelope, $consumer);
+        $this->next->receive($message, $consumer);
     }
 
     /**

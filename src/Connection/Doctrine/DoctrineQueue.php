@@ -3,7 +3,7 @@
 namespace Bdf\Queue\Connection\Doctrine;
 
 use Bdf\Queue\Connection\ConnectionDriverInterface;
-use Bdf\Queue\Connection\Extension\EnvelopeHelper;
+use Bdf\Queue\Connection\Extension\QueueEnvelopeHelper;
 use Bdf\Queue\Connection\PeekableQueueDriverInterface;
 use Bdf\Queue\Connection\QueueDriverInterface;
 use Bdf\Queue\Connection\ReservableQueueDriverInterface;
@@ -21,7 +21,7 @@ use Ramsey\Uuid\Uuid;
  */
 class DoctrineQueue implements QueueDriverInterface, ReservableQueueDriverInterface, PeekableQueueDriverInterface
 {
-    use EnvelopeHelper;
+    use QueueEnvelopeHelper;
 
     /**
      * @var DoctrineConnection

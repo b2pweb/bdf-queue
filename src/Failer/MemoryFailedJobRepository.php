@@ -17,7 +17,7 @@ class MemoryFailedJobRepository implements FailedJobRepositoryInterface
     /**
      * The prime connection
      *
-     * @var FailedJob[]
+     * @var int
      */
     private $index = 1;
 

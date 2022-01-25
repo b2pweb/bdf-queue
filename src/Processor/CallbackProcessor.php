@@ -30,11 +30,13 @@ class CallbackProcessor implements ProcessorInterface
      */
     public function process(EnvelopeInterface $envelope)
     {
+        $message = $envelope->message();
+
         // Already resolved
-        if ($envelope->message() instanceof ErrorMessage) {
-            throw $envelope->message()->exception();
+        if ($message instanceof ErrorMessage) {
+            throw $message->exception();
         }
 
-        ($this->callback)($envelope->message()->data(), $envelope);
+        ($this->callback)($message->data(), $envelope);
     }
 }

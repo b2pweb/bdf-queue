@@ -4,7 +4,7 @@ namespace Bdf\Queue\Connection\Gearman;
 
 use Bdf\Queue\Connection\ConnectionDriverInterface;
 use Bdf\Queue\Connection\Extension\ConnectionBearer;
-use Bdf\Queue\Connection\Extension\EnvelopeHelper;
+use Bdf\Queue\Connection\Extension\QueueEnvelopeHelper;
 use Bdf\Queue\Connection\QueueDriverInterface;
 use Bdf\Queue\Message\EnvelopeInterface;
 use Bdf\Queue\Message\Message;
@@ -19,7 +19,7 @@ use RuntimeException;
 class GearmanQueue implements QueueDriverInterface
 {
     use ConnectionBearer;
-    use EnvelopeHelper;
+    use QueueEnvelopeHelper;
 
     /**
      * GearmanQueue constructor.

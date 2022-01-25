@@ -42,7 +42,9 @@
     "phpbench/phpbench": "~0.0|~1.0",
     "phpunit/phpunit": "~7.0|~8.0",
     "symfony/error-handler": "~4.3|~5.0",
-    "symfony/var-dumper": "~4.3|~5.0"
+    "symfony/var-dumper": "~4.3|~5.0",
+    "vimeo/psalm": "~4.18",
+    "predis/predis": "~1.1.0"
   },
   "suggest": {
     "ext-redis": "Required to use the Redis queue driver",
@@ -56,7 +58,8 @@
   },
   "scripts": {
     "tests": "phpunit",
-    "tests-with-coverage": "phpunit --coverage-clover coverage.xml"
+    "tests-with-coverage": "phpunit --coverage-clover coverage.xml",
+    "psalm": "psalm --shepherd"
   },
   "extra": {
     "branch-alias": {

@@ -256,7 +256,7 @@ final class FailedJobCriteria
                     $entityValue = $entityValue->format(DateTime::ATOM);
                 }
 
-                return preg_match('#^' . str_replace('\*', '.*', preg_quote($comparedValue)) . '$#i', $entityValue);
+                return (bool) preg_match('#^' . str_replace('\*', '.*', preg_quote($comparedValue)) . '$#i', $entityValue);
 
             default:
                 throw new InvalidArgumentException('Unsupported operator ' . $operator);

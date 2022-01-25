@@ -67,6 +67,12 @@ class BdfSerializer implements SerializerInterface
 
     /**
      * {@inheritdoc}
+     *
+     * @param string $raw
+     * @param class-string<M> $messageClass
+     * @return M
+     *
+     * @template M as QueuedMessage
      */
     public function unserialize($raw, $messageClass = QueuedMessage::class): QueuedMessage
     {
@@ -74,6 +80,7 @@ class BdfSerializer implements SerializerInterface
         // allows to instantiate internal object from message that will not be present
         // in the serialized message.
         // Careful: a valid json with different structure will not return error.
+        /** @var M|null $message */
         $message = $this->serializer->deserialize($raw, new $messageClass, $this->format, $this->options);
 
         if ($message !== null) {

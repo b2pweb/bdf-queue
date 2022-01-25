@@ -157,6 +157,7 @@ class PhpRedis implements RedisInterface
         $count = 0;
 
         try {
+            /** @psalm-suppress InvalidArgument */
             $this->redis->psubscribe($patterns, function($redis, $filter, $channel, $payload) use($callback, &$count) {
                 ++$count;
                 $callback($filter, $channel, $payload);

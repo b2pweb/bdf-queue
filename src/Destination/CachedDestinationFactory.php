@@ -31,12 +31,12 @@ final class CachedDestinationFactory implements DestinationFactoryInterface
     /**
      * {@inheritdoc}
      */
-    public function create(string $name): DestinationInterface
+    public function create(string $destination): DestinationInterface
     {
-        if (isset($this->cache[$name])) {
-            return $this->cache[$name];
+        if (isset($this->cache[$destination])) {
+            return $this->cache[$destination];
         }
 
-        return $this->cache[$name] = $this->factory->create($name);
+        return $this->cache[$destination] = $this->factory->create($destination);
     }
 }

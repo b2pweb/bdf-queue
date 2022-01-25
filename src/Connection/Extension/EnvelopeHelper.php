@@ -8,30 +8,12 @@ use Bdf\Queue\Message\TopicEnvelope;
 
 /**
  * Trait EnvelopeHelper
+ *
+ * @psalm-require-implements \Bdf\Queue\Connection\QueueDriverInterface
+ * @psalm-require-implements \Bdf\Queue\Connection\TopicDriverInterface
  */
 trait EnvelopeHelper
 {
-    /**
-     * Create the queue envelope
-     *
-     * @param QueuedMessage $message
-     *
-     * @return QueueEnvelope
-     */
-    public function toQueueEnvelope(QueuedMessage $message)
-    {
-        return new QueueEnvelope($this, $message);
-    }
-
-    /**
-     * Create the topic envelope
-     *
-     * @param QueuedMessage $message
-     *
-     * @return TopicEnvelope
-     */
-    public function toTopicEnvelope(QueuedMessage $message)
-    {
-        return new TopicEnvelope($this, $message);
-    }
+    use QueueEnvelopeHelper;
+    use TopicEnvelopeHelper;
 }

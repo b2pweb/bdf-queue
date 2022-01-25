@@ -69,7 +69,7 @@ interface FailedJobRepositoryInterface extends FailedJobStorageInterface
      *
      * @param FailedJobCriteria $criteria
      *
-     * @return positive-int
+     * @return positive-int|-1
      */
     public function purge(FailedJobCriteria $criteria): int;
 
