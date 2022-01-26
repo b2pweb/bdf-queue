@@ -15,7 +15,8 @@ build:
           - pecl install gearman
 
       environment:
-        docker: true
+        docker:
+          remote_engine: true
         php:
           pecl_extensions:
             - redis
