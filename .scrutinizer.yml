@@ -9,6 +9,10 @@ build:
           - php-scrutinizer-run
 
     static_analysis:
+      dependencies:
+        before:
+          - sudo apt-get install -y libgearman-dev
+
       environment:
         docker: true
         php:
