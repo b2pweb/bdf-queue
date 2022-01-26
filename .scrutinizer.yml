@@ -12,7 +12,7 @@ build:
       dependencies:
         before:
           - sudo apt-get install -y libgearman-dev
-          - sudo pecl install gearman
+          - pecl install gearman
 
       environment:
         docker: true
