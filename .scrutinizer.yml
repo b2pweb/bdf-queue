@@ -1,10 +1,6 @@
 build:
   environment:
     php: 7.4
-  dependencies:
-    before:
-      - sudo apt-get install -y libgearman-dev
-
   nodes:
     analysis:
       tests:
@@ -12,11 +8,16 @@ build:
           - php-scrutinizer-run
 
     static_analysis:
+      # Install gearman manually because "pecl_extensions" is executed before this node
+      dependencies:
+        before:
+          - sudo apt-get install -y libgearman-dev
+          - sudo pecl install gearman
+
       environment:
         docker: true
         php:
           pecl_extensions:
-            - gearman
             - redis
 #      services:
 #        rabbitmq: 3
