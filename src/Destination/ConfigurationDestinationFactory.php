@@ -33,12 +33,12 @@ final class ConfigurationDestinationFactory implements DestinationFactoryInterfa
     /**
      * {@inheritdoc}
      */
-    public function create(string $name): DestinationInterface
+    public function create(string $destination): DestinationInterface
     {
-        if (!isset($this->config[$name])) {
-            throw new \InvalidArgumentException('The destination '.$name.' is not configured');
+        if (!isset($this->config[$destination])) {
+            throw new \InvalidArgumentException('The destination '.$destination.' is not configured');
         }
 
-        return $this->factory->create($this->config[$name]);
+        return $this->factory->create($this->config[$destination]);
     }
 }

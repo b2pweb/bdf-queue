@@ -8,6 +8,8 @@ use Bdf\Queue\Processor\ProcessorResolverInterface;
 
 /**
  * Message to push in queue
+ *
+ * @psalm-consistent-constructor
  */
 class Message
 {
@@ -54,7 +56,7 @@ class Message
     /**
      * Choose to no store the job if it fails
      *
-     * @var null|true
+     * @var null|bool
      */
     private $noStore;
 
@@ -165,7 +167,7 @@ class Message
      *
      * @param array $data
      *
-     * @return self
+     * @return static
      */
     public static function fromQueue($data): self
     {
@@ -400,7 +402,7 @@ class Message
      * Does the job should be saved when failed to execute ?
      * If the return value is true, the failed job should not be stored
      *
-     * @return null|true
+     * @return null|bool
      */
     public function noStore()
     {

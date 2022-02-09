@@ -38,21 +38,21 @@ class MessageLoggerReceiver implements ReceiverInterface
     /**
      * {@inheritdoc}
      *
-     * @param EnvelopeInterface $envelope
+     * @param EnvelopeInterface $message
      */
-    public function receive($envelope, ConsumerInterface $consumer): void
+    public function receive($message, ConsumerInterface $consumer): void
     {
         try {
-            $this->logger->info($this->format($envelope->message(), ' starting'), [
-                'queued at' => $envelope->message()->queuedAt()->format('Y/m/d H:i:s')
+            $this->logger->info($this->format($message->message(), ' starting'), [
+                'queued at' => $message->message()->queuedAt()->format('Y/m/d H:i:s')
             ]);
-            $this->logger->debug($envelope->message()->raw());
+            $this->logger->debug($message->message()->raw());
 
-            $this->delegate->receive($envelope, $consumer);
+            $this->delegate->receive($message, $consumer);
 
-            $this->logger->info($this->format($envelope->message(), ' succeed'));
+            $this->logger->info($this->format($message->message(), ' succeed'));
         } catch (\Throwable $exception) {
-            $this->logger->critical($this->format($envelope->message(), ' failed: '.$exception->getMessage()), ['exception' => $exception]);
+            $this->logger->critical($this->format($message->message(), ' failed: '.$exception->getMessage()), ['exception' => $exception]);
 
             throw $exception;
         }

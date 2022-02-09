@@ -32,22 +32,22 @@ class ProcessorReceiver implements ReceiverInterface
     /**
      * {@inheritdoc}
      *
-     * @param EnvelopeInterface $envelope
+     * @param EnvelopeInterface $message
      */
-    public function receive($envelope, ConsumerInterface $consumer): void
+    public function receive($message, ConsumerInterface $consumer): void
     {
         // Don't handle job deleted by extension
-        if ($envelope->isDeleted()) {
+        if ($message->isDeleted()) {
             return;
         }
 
         try {
-            $processor = $this->resolver->resolve($envelope);
-            $processor->process($envelope);
+            $processor = $this->resolver->resolve($message);
+            $processor->process($message);
 
-            $envelope->acknowledge();
+            $message->acknowledge();
         } catch (\Throwable $exception) {
-            $envelope->reject();
+            $message->reject();
 
             throw $exception;
         }

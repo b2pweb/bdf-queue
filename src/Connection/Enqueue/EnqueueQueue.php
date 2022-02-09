@@ -3,7 +3,7 @@
 namespace Bdf\Queue\Connection\Enqueue;
 
 use Bdf\Queue\Connection\ConnectionDriverInterface;
-use Bdf\Queue\Connection\Extension\EnvelopeHelper;
+use Bdf\Queue\Connection\Extension\QueueEnvelopeHelper;
 use Bdf\Queue\Connection\QueueDriverInterface;
 use Bdf\Queue\Message\EnvelopeInterface;
 use Bdf\Queue\Message\Message;
@@ -14,7 +14,7 @@ use Bdf\Queue\Message\QueuedMessage;
  */
 class EnqueueQueue implements QueueDriverInterface
 {
-    use EnvelopeHelper;
+    use QueueEnvelopeHelper;
 
     /**
      * @var EnqueueConnection

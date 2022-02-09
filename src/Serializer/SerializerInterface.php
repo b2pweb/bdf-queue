@@ -23,9 +23,11 @@ interface SerializerInterface
      * Decode data from queue
      * 
      * @param string $raw
-     * @param string $messageClass  The class of the message to deserialize
+     * @param class-string<M> $messageClass  The class of the message to deserialize
      *
-     * @return QueuedMessage
+     * @return M
+     *
+     * @template M as QueuedMessage
      */
     public function unserialize($raw, $messageClass = QueuedMessage::class): QueuedMessage;
 }

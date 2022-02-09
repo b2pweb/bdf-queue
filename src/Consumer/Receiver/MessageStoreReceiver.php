@@ -49,17 +49,17 @@ class MessageStoreReceiver implements ReceiverInterface
     /**
      * {@inheritdoc}
      *
-     * @param EnvelopeInterface $envelope
+     * @param EnvelopeInterface $message
      */
-    public function receive($envelope, ConsumerInterface $consumer): void
+    public function receive($message, ConsumerInterface $consumer): void
     {
         try {
-            $this->delegate->receive($envelope, $consumer);
+            $this->delegate->receive($message, $consumer);
         } catch (\Throwable $exception) {
-            if ($envelope->message()->noStore() !== true) {
-                $this->logger->info('Storing the job "'.$envelope->message()->name().'".');
+            if ($message->message()->noStore() !== true) {
+                $this->logger->info('Storing the job "'.$message->message()->name().'".');
 
-                $this->storage->store(FailedJob::create($envelope->message(), $exception));
+                $this->storage->store(FailedJob::create($message->message(), $exception));
             }
 
             throw $exception;

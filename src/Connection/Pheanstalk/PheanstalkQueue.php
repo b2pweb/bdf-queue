@@ -4,7 +4,7 @@ namespace Bdf\Queue\Connection\Pheanstalk;
 
 use Bdf\Queue\Connection\ConnectionDriverInterface;
 use Bdf\Queue\Connection\Extension\ConnectionBearer;
-use Bdf\Queue\Connection\Extension\EnvelopeHelper;
+use Bdf\Queue\Connection\Extension\QueueEnvelopeHelper;
 use Bdf\Queue\Connection\QueueDriverInterface;
 use Bdf\Queue\Message\EnvelopeInterface;
 use Bdf\Queue\Message\Message;
@@ -19,7 +19,7 @@ use Pheanstalk\Pheanstalk;
 class PheanstalkQueue implements QueueDriverInterface
 {
     use ConnectionBearer;
-    use EnvelopeHelper;
+    use QueueEnvelopeHelper;
 
     /**
      * PheanstalkQueue constructor.
@@ -143,6 +143,7 @@ class PheanstalkQueue implements QueueDriverInterface
 
         foreach ($pheanstalk->listTubes() as $tube) {
             try {
+                /** @var \Pheanstalk\Response\ArrayResponse $stats */
                 $stats = $pheanstalk->statsTube($tube);
 
                 $status[] = [

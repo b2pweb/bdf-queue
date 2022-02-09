@@ -5,6 +5,7 @@ namespace Bdf\Queue\Connection\Memory;
 use Bdf\Queue\Connection\ConnectionDriverInterface;
 use Bdf\Queue\Connection\Extension\ConnectionBearer;
 use Bdf\Queue\Connection\Extension\EnvelopeHelper;
+use Bdf\Queue\Connection\Extension\QueueEnvelopeHelper;
 use Bdf\Queue\Connection\PeekableQueueDriverInterface;
 use Bdf\Queue\Connection\QueueDriverInterface;
 use Bdf\Queue\Connection\ReservableQueueDriverInterface;
@@ -18,7 +19,7 @@ use Bdf\Queue\Message\QueuedMessage;
 class MemoryQueue implements QueueDriverInterface, ReservableQueueDriverInterface, PeekableQueueDriverInterface
 {
     use ConnectionBearer;
-    use EnvelopeHelper;
+    use QueueEnvelopeHelper;
 
     /**
      * MemoryQueue constructor.
@@ -60,20 +61,20 @@ class MemoryQueue implements QueueDriverInterface, ReservableQueueDriverInterfac
     /**
      * {@inheritdoc}
      */
-    public function pop(string $queueName, int $duration = ConnectionDriverInterface::DURATION): ?EnvelopeInterface
+    public function pop(string $queue, int $duration = ConnectionDriverInterface::DURATION): ?EnvelopeInterface
     {
-        $this->connection->declareQueue($queueName);
+        $this->connection->declareQueue($queue);
 
         $found = null;
-        $queue = $this->connection->storage()->queues[$queueName];
+        $storage = $this->connection->storage()->queues[$queue];
 
-        foreach ($queue as $message) {
-            $metadata = $queue[$message];
+        foreach ($storage as $message) {
+            $metadata = $storage[$message];
             
             if (!$metadata['reserved'] && $metadata['delay'] <= time()) {
                 $message->metadata = $metadata;
                 $message->metadata['reserved'] = true;
-                $queue[$message] = $message->metadata;
+                $storage[$message] = $message->metadata;
                 $found = $message;
                 break;
             }
@@ -84,7 +85,7 @@ class MemoryQueue implements QueueDriverInterface, ReservableQueueDriverInterfac
         }
         
         return $this->toQueueEnvelope(
-            $this->connection->toQueuedMessage($found->raw, $queueName, $found)
+            $this->connection->toQueuedMessage($found->raw, $queue, $found)
         );
     }
 
@@ -149,11 +150,11 @@ class MemoryQueue implements QueueDriverInterface, ReservableQueueDriverInterfac
     /**
      * {@inheritdoc}
      */
-    public function count(string $queueName): ?int
+    public function count(string $queue): ?int
     {
-        $queue = $this->connection->storage()->queues[$queueName] ?? null;
+        $storage = $this->connection->storage()->queues[$queue] ?? null;
 
-        return $queue ? $queue->count() : 0;
+        return $storage ? $storage->count() : 0;
     }
 
     /**

@@ -4,8 +4,8 @@ namespace Bdf\Queue\Connection\Memory;
 
 use Bdf\Queue\Connection\ConnectionDriverInterface;
 use Bdf\Queue\Connection\Extension\ConnectionBearer;
-use Bdf\Queue\Connection\Extension\EnvelopeHelper;
 use Bdf\Queue\Connection\Extension\Subscriber;
+use Bdf\Queue\Connection\Extension\TopicEnvelopeHelper;
 use Bdf\Queue\Connection\TopicDriverInterface;
 use Bdf\Queue\Message\Message;
 
@@ -15,7 +15,7 @@ use Bdf\Queue\Message\Message;
 class MemoryTopic implements TopicDriverInterface
 {
     use ConnectionBearer;
-    use EnvelopeHelper;
+    use TopicEnvelopeHelper;
     use Subscriber {
         subscribe as addSubscriber;
     }

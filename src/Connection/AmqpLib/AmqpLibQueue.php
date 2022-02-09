@@ -4,7 +4,7 @@ namespace Bdf\Queue\Connection\AmqpLib;
 
 use Bdf\Queue\Connection\ConnectionDriverInterface;
 use Bdf\Queue\Connection\Extension\ConnectionBearer;
-use Bdf\Queue\Connection\Extension\EnvelopeHelper;
+use Bdf\Queue\Connection\Extension\QueueEnvelopeHelper;
 use Bdf\Queue\Connection\QueueDriverInterface;
 use Bdf\Queue\Message\EnvelopeInterface;
 use Bdf\Queue\Message\Message;
@@ -17,7 +17,7 @@ use PhpAmqpLib\Message\AMQPMessage;
 class AmqpLibQueue implements QueueDriverInterface
 {
     use ConnectionBearer;
-    use EnvelopeHelper;
+    use QueueEnvelopeHelper;
 
     /**
      * PhpRedisQueue constructor.

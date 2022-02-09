@@ -4,7 +4,7 @@ namespace Bdf\Queue\Connection\Redis;
 
 use Bdf\Queue\Connection\ConnectionDriverInterface;
 use Bdf\Queue\Connection\Extension\ConnectionBearer;
-use Bdf\Queue\Connection\Extension\EnvelopeHelper;
+use Bdf\Queue\Connection\Extension\TopicEnvelopeHelper;
 use Bdf\Queue\Connection\TopicDriverInterface;
 use Bdf\Queue\Message\Message;
 
@@ -21,7 +21,7 @@ use Bdf\Queue\Message\Message;
 class RedisTopic implements TopicDriverInterface
 {
     use ConnectionBearer;
-    use EnvelopeHelper;
+    use TopicEnvelopeHelper;
 
     /**
      * The Redis connection.
