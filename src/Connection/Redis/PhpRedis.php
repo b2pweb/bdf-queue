@@ -58,7 +58,7 @@ class PhpRedis implements RedisInterface
      */
     public function sAdd($key, $value)
     {
-        return $this->redis->sAdd($key, $value);
+        return (int) $this->redis->sAdd($key, $value);
     }
 
     /**
@@ -66,7 +66,7 @@ class PhpRedis implements RedisInterface
      */
     public function sRem($key, $member)
     {
-        return $this->redis->sRem($key, $member);
+        return (int) $this->redis->sRem($key, $member);
     }
 
     /**
@@ -74,7 +74,7 @@ class PhpRedis implements RedisInterface
      */
     public function del($key)
     {
-        return $this->redis->del($key);
+        return (int) $this->redis->del($key);
     }
 
     /**

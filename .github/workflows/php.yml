@@ -59,7 +59,7 @@ jobs:
       uses: shivammathur/setup-php@v2
       with:
         php-version: 7.4
-        extensions: json, gearman
+        extensions: json, gearman, redis
         ini-values: date.timezone=Europe/Paris
 
     - name: Validate composer.json and composer.lock

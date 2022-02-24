@@ -44,7 +44,7 @@ class BdfSerializer implements SerializerInterface
     /**
      * BdfSerializer constructor.
      *
-     * @param BaseSerializer $serializer
+     * @param BaseSerializer|null $serializer
      * @param string $format
      * @param array $options
      */
@@ -54,7 +54,6 @@ class BdfSerializer implements SerializerInterface
         $this->format = $format;
 
         $this->setOptions($options);
-
     }
 
     /**
@@ -62,6 +61,7 @@ class BdfSerializer implements SerializerInterface
      */
     public function serialize(Message $message)
     {
+        /** @var string */
         return $this->serializer->serialize($message->toQueue(), $this->format, $this->options);
     }
 
