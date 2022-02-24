@@ -130,7 +130,11 @@ class DoctrineConnection implements ConnectionDriverInterface, ManageableQueueIn
      */
     public function schema()
     {
-        $schema = $this->connection()->createSchemaManager();
+        $connection = $this->connection();
+        $schema = method_exists($connection, 'createSchemaManager')
+            ? $connection->createSchemaManager()
+            : $connection->getSchemaManager()
+        ;
 
         if ($schema->tablesExist([$this->table()])) {
             return;
