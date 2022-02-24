@@ -66,7 +66,7 @@ jobs:
       run: composer install --prefer-dist --no-progress
 
     - name: Install gearman PECL
-      run: apt-get install -y libgearman-dev && pecl install gearman
+      run: sudo apt-get install -y libgearman-dev && sudo pecl install gearman
 
     - name: Install kafka stubs
       run: composer require --ignore-platform-req=ext-rdkafka "kwn/php-rdkafka-stubs:~1.1.0"
