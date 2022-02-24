@@ -21,7 +21,7 @@
   },
   "minimum-stability": "dev",
   "require": {
-    "php": "~7.1 || ~8.0.0",
+    "php": "~7.1 || ~8.0.0 || ~8.1.0",
     "ext-pcntl": "*",
     "b2pweb/bdf-dsn": "~1.0",
     "b2pweb/bdf-instantiator": "~1.0",
@@ -59,7 +59,7 @@
   "scripts": {
     "tests": "phpunit",
     "tests-with-coverage": "phpunit --coverage-clover coverage.xml",
-    "psalm": "psalm --shepherd"
+    "psalm": "psalm --shepherd --output-format=github"
   },
   "extra": {
     "branch-alias": {

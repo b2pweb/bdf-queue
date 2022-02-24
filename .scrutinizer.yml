@@ -29,9 +29,6 @@ build:
             coverage:
               file: coverage.xml
               format: clover
-          - command: composer require --ignore-platform-req=ext-rdkafka "kwn/php-rdkafka-stubs:~1.1.0"
-          - command: composer run psalm
-          #- command: docker run --rm -v `pwd`:/app nyholm/roave-bc-check || true # Ignore BC break errors
 
 filter:
   excluded_paths:

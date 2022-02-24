@@ -42,7 +42,7 @@ class StackMessagesReceiver implements ReceiverInterface, \ArrayAccess, \Countab
     /**
      * {@inheritdoc}
      */
-    public function offsetExists($offset)
+    public function offsetExists($offset): bool
     {
         return isset($this->messages[$offset]);
     }
@@ -58,7 +58,7 @@ class StackMessagesReceiver implements ReceiverInterface, \ArrayAccess, \Countab
     /**
      * {@inheritdoc}
      */
-    public function offsetSet($offset, $value)
+    public function offsetSet($offset, $value): void
     {
         throw new \BadMethodCallException();
     }
@@ -66,7 +66,7 @@ class StackMessagesReceiver implements ReceiverInterface, \ArrayAccess, \Countab
     /**
      * {@inheritdoc}
      */
-    public function offsetUnset($offset)
+    public function offsetUnset($offset): void
     {
         throw new \BadMethodCallException();
     }
@@ -74,7 +74,7 @@ class StackMessagesReceiver implements ReceiverInterface, \ArrayAccess, \Countab
     /**
      * {@inheritdoc}
      */
-    public function count()
+    public function count(): int
     {
         return count($this->messages);
     }

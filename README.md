@@ -4,10 +4,11 @@ This package provides 2 layers for abstraction of message broker.
  - A connection layer
  - A destination layer
 
-[![Build Status](https://scrutinizer-ci.com/g/b2pweb/bdf-queue/badges/build.png?b=master)](https://scrutinizer-ci.com/g/b2pweb/bdf-queue/build-status/master)
+[![build](https://github.com/b2pweb/bdf-queue/actions/workflows/php.yml/badge.svg)](https://github.com/b2pweb/bdf-queue/actions/workflows/php.yml)
 [![Scrutinizer Code Quality](https://scrutinizer-ci.com/g/b2pweb/bdf-queue/badges/quality-score.png?b=master)](https://scrutinizer-ci.com/g/b2pweb/bdf-queue/?branch=master)
 [![Packagist Version](https://img.shields.io/packagist/v/b2pweb/bdf-queue.svg)](https://packagist.org/packages/b2pweb/bdf-queue)
 [![Total Downloads](https://img.shields.io/packagist/dt/b2pweb/bdf-queue.svg)](https://packagist.org/packages/b2pweb/bdf-queue)
+[![Type Coverage](https://shepherd.dev/github/b2pweb/bdf-queue/coverage.svg)](https://shepherd.dev/github/b2pweb/bdf-queue)
 
 #### Supports
 

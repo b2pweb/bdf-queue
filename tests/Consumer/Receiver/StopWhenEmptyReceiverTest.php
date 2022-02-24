@@ -5,7 +5,7 @@ namespace Bdf\Queue\Consumer\Receiver;
 use Bdf\Queue\Consumer\ConsumerInterface;
 use Bdf\Queue\Consumer\ReceiverInterface;
 use PHPUnit\Framework\TestCase;
-use Psr\Log\Test\TestLogger;
+use Psr\Log\LoggerInterface;
 
 /**
  * @group Bdf_Queue
@@ -18,7 +18,9 @@ class StopWhenEmptyReceiverTest extends TestCase
      */
     public function test_no_stop_if_not_empty()
     {
-        $logger = new TestLogger();
+        $logger = $this->createMock(LoggerInterface::class);
+
+        $logger->expects($this->once())->method('info')->with('The worker will stop for no consuming job');
 
         $decorate = $this->createMock(ReceiverInterface::class);
         $decorate->expects($this->once())->method('receiveTimeout');
@@ -28,7 +30,5 @@ class StopWhenEmptyReceiverTest extends TestCase
 
         $extension = new StopWhenEmptyReceiver($decorate, $logger);
         $extension->receiveTimeout($consumer);
-
-        $this->assertTrue($logger->hasInfoThatContains('The worker will stop for no consuming job'));
     }
 }

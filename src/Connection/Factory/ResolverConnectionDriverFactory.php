@@ -215,7 +215,7 @@ final class ResolverConnectionDriverFactory implements ConnectionDriverFactoryIn
         }
 
         if (!isset($config['queue'])) {
-            $config['queue'] = trim($request->getPath(), '/');
+            $config['queue'] = trim((string) $request->getPath(), '/');
         }
 
         return array_filter($config);

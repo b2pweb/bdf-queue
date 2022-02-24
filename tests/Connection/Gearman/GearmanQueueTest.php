@@ -76,9 +76,12 @@ class GearmanQueueTest extends TestCase
     public function test_push_fail()
     {
         $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage('foo');
 
         $this->client->expects($this->once())->method('doBackground')->with('queue', 'test');
         $this->client->expects($this->once())->method('returnCode')->willReturn(1);
+        $this->client->expects($this->once())->method('error')->willReturn('foo');
+        $this->client->expects($this->once())->method('getErrno')->willReturn(123);
 
         $this->driver->queue()->pushRaw('test', 'queue');
     }
