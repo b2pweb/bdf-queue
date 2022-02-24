@@ -52,11 +52,14 @@ jobs:
       with:
         timezoneLinux: "Europe/Paris"
 
+    - name: Install gearman PECL
+      run: sudo apt-get install -y libgearman-dev
+
     - name: Install PHP
       uses: shivammathur/setup-php@v2
       with:
         php-version: 7.4
-        extensions: json
+        extensions: json, gearman
         ini-values: date.timezone=Europe/Paris
 
     - name: Validate composer.json and composer.lock
@@ -64,9 +67,6 @@ jobs:
 
     - name: Install dependencies
       run: composer install --prefer-dist --no-progress
-
-    - name: Install gearman PECL
-      run: sudo apt-get install -y libgearman-dev && sudo pecl install gearman
 
     - name: Install kafka stubs
       run: composer require --ignore-platform-req=ext-rdkafka "kwn/php-rdkafka-stubs:~1.1.0"
