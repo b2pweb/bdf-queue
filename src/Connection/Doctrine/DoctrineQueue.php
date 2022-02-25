@@ -12,8 +12,7 @@ use Bdf\Queue\Message\Message;
 use Bdf\Queue\Message\QueuedMessage;
 use DateTime;
 use Doctrine\DBAL\Connection;
-use Doctrine\DBAL\FetchMode;
-use Doctrine\DBAL\Types\Type;
+use Doctrine\DBAL\Types\Types;
 use Ramsey\Uuid\Uuid;
 
 /**
@@ -63,13 +62,13 @@ class DoctrineQueue implements QueueDriverInterface, ReservableQueueDriverInterf
     public function pushRaw($raw, string $queue, int $delay = 0): void
     {
         $types = [
-            'id'            => Type::GUID,
-            'queue'         => Type::STRING,
-            'raw'           => Type::STRING,
-            'reserved'      => Type::BOOLEAN,
-            'reserved_at'   => Type::DATETIME,
-            'available_at'  => Type::DATETIME,
-            'created_at'    => Type::DATETIME,
+            'id'            => Types::GUID,
+            'queue'         => Types::STRING,
+            'raw'           => Types::STRING,
+            'reserved'      => Types::BOOLEAN,
+            'reserved_at'   => Types::DATETIME_MUTABLE,
+            'available_at'  => Types::DATETIME_MUTABLE,
+            'created_at'    => Types::DATETIME_MUTABLE,
         ];
 
         $this->connection->connection()->insert(
@@ -110,11 +109,11 @@ class DoctrineQueue implements QueueDriverInterface, ReservableQueueDriverInterf
                     'available_at' => new DateTime(),
                 ],
                 [
-                    'queue' => Type::STRING,
-                    'reserved' => Type::BOOLEAN,
-                    'available_at' => Type::DATETIME,
+                    'queue' => Types::STRING,
+                    'reserved' => Types::BOOLEAN,
+                    'available_at' => Types::DATETIME_MUTABLE,
                 ]
-            )->fetchAll(FetchMode::ASSOCIATIVE);
+            )->fetchAllAssociative();
 
             if (!$dbJobs) {
                 return [];
@@ -125,15 +124,21 @@ class DoctrineQueue implements QueueDriverInterface, ReservableQueueDriverInterf
                 $ids[] = $job['id'];
             }
 
-            $doctrine->createQueryBuilder()
+            $updateQuery = $doctrine->createQueryBuilder()
                 ->update($this->connection->table())
                 ->set('reserved', ':reserved')
                 ->set('reserved_at', ':reserved_at')
                 ->andWhere('id IN (:ids)')
-                ->setParameter('reserved', true, Type::BOOLEAN)
-                ->setParameter('reserved_at', new DateTime(), Type::DATETIME)
-                ->setParameter('ids', $ids, Connection::PARAM_STR_ARRAY)
-                ->execute();
+                ->setParameter('reserved', true, Types::BOOLEAN)
+                ->setParameter('reserved_at', new DateTime(), Types::DATETIME_MUTABLE)
+                ->setParameter('ids', $ids, Connection::PARAM_STR_ARRAY);
+
+            // Doctrine 3 compatibility
+            if (method_exists($updateQuery, 'executeStatement')) {
+                $updateQuery->executeStatement();
+            } else {
+                $updateQuery->execute();
+            }
 
             return $dbJobs;
         });
@@ -176,16 +181,21 @@ class DoctrineQueue implements QueueDriverInterface, ReservableQueueDriverInterf
             ->set('reserved', ':reserved')
             ->andWhere('id = :id')
             ->setParameter('id', $message->internalJob()['id'])
-            ->setParameter('reserved', false, Type::BOOLEAN)
+            ->setParameter('reserved', false, Types::BOOLEAN)
         ;
 
         if ($message->delay() > 0) {
             $update
                 ->set('available_at', ':available_at')
-                ->setParameter('available_at', new DateTime("+{$message->delay()} seconds"), Type::DATETIME);
+                ->setParameter('available_at', new DateTime("+{$message->delay()} seconds"), Types::DATETIME_MUTABLE);
         }
 
-        $update->execute();
+        // Doctrine 3 compatibility
+        if (method_exists($update, 'executeStatement')) {
+            $update->executeStatement();
+        } else {
+            $update->execute();
+        }
     }
 
     /**
@@ -193,14 +203,15 @@ class DoctrineQueue implements QueueDriverInterface, ReservableQueueDriverInterf
      */
     public function count(string $queue): ?int
     {
-        return $this->connection->connection()->createQueryBuilder()
+        $query = $this->connection->connection()->createQueryBuilder()
             ->select('COUNT(*)')
             ->from($this->connection->table())
             ->andWhere('queue = :queue')
-            ->setParameter('queue', $queue)
-            ->execute()
-            ->fetchColumn()
-        ;
+            ->setParameter('queue', $queue);
+
+        $result = method_exists($query, 'executeQuery') ? $query->executeQuery() : $query->execute();
+
+        return $result->fetchOne();
     }
 
     /**
@@ -208,16 +219,17 @@ class DoctrineQueue implements QueueDriverInterface, ReservableQueueDriverInterf
      */
     public function peek(string $queueName, int $rowCount = 20, int $page = 1): array
     {
-        $dbJobs = $this->connection->connection()->createQueryBuilder()
+        $query = $this->connection->connection()->createQueryBuilder()
             ->select('*')
             ->from($this->connection->table())
             ->andWhere('queue = :queue')
             ->orderBy('available_at, created_at')
             ->setParameter('queue', $queueName)
             ->setFirstResult($rowCount * ($page - 1))
-            ->setMaxResults($rowCount)
-            ->execute()
-            ->fetchAll(FetchMode::ASSOCIATIVE);
+            ->setMaxResults($rowCount);
+
+        $result = method_exists($query, 'executeQuery') ? $query->executeQuery() : $query->execute();
+        $dbJobs = $result->fetchAllAssociative();
 
         $messages = [];
         foreach ($dbJobs as $job) {
@@ -239,38 +251,42 @@ class DoctrineQueue implements QueueDriverInterface, ReservableQueueDriverInterf
         $queueDelayed = [];
 
         // Get running job by queue and group result by queue
-        $result = $this->connection->connection()->createQueryBuilder()
+        $query = $this->connection->connection()->createQueryBuilder()
             ->select('queue, COUNT(*) as nb')
             ->from($this->connection->table())
             ->andWhere('reserved = :reserved')
             ->groupBy('queue')
-            ->setParameter('reserved', true, Type::BOOLEAN)
-            ->execute()
-            ->fetchAll(FetchMode::ASSOCIATIVE);
+            ->setParameter('reserved', true, Types::BOOLEAN);
+
+        $result = method_exists($query, 'executeQuery') ? $query->executeQuery() : $query->execute();
+        $result = $result->fetchAllAssociative();
+
         foreach ($result as $row) {
             $queueReserved[$row['queue']] = (int)$row['nb'];
         }
 
         // Get delayed job by queue and group result by queue
-        $result = $this->connection->connection()->createQueryBuilder()
+        $query = $this->connection->connection()->createQueryBuilder()
             ->select('queue, COUNT(*) as nb')
             ->from($this->connection->table())
             ->andWhere('available_at > :available_at')
             ->groupBy('queue')
-            ->setParameter('available_at', new DateTime(), Type::DATETIME)
-            ->execute()
-            ->fetchAll(FetchMode::ASSOCIATIVE);
+            ->setParameter('available_at', new DateTime(), Types::DATETIME_MUTABLE);
+
+        $result = method_exists($query, 'executeQuery') ? $query->executeQuery() : $query->execute();
+        $result = $result->fetchAllAssociative();
+
         foreach ($result as $row) {
             $queueDelayed[$row['queue']] = (int)$row['nb'];
         }
         
         // Get all job by queue
-        $result = $this->connection->connection()->createQueryBuilder()
+        $query = $this->connection->connection()->createQueryBuilder()
             ->select('queue, COUNT(*) as nb')
-            ->from($this->connection->table())
-            ->groupBy('queue')
-            ->execute()
-            ->fetchAll(FetchMode::ASSOCIATIVE);
+            ->from($this->connection->table());
+
+        $result = method_exists($query, 'executeQuery') ? $query->executeQuery() : $query->execute();
+        $result = $result->fetchAllAssociative();
 
         // build stats result.
         foreach ($result as $row) {
@@ -306,9 +322,9 @@ class DoctrineQueue implements QueueDriverInterface, ReservableQueueDriverInterf
     {
         $connection = $this->connection->connection();
 
-        $row['created_at'] = $connection->convertToPHPValue($row['created_at'], Type::DATETIME);
-        $row['available_at'] = $connection->convertToPHPValue($row['available_at'], Type::DATETIME);
-        $row['reserved_at'] = $connection->convertToPHPValue($row['reserved_at'], Type::DATETIME);
+        $row['created_at'] = $connection->convertToPHPValue($row['created_at'], Types::DATETIME_MUTABLE);
+        $row['available_at'] = $connection->convertToPHPValue($row['available_at'], Types::DATETIME_MUTABLE);
+        $row['reserved_at'] = $connection->convertToPHPValue($row['reserved_at'], Types::DATETIME_MUTABLE);
         
         return $row;
     }

@@ -13,7 +13,7 @@ use Bdf\Queue\Serializer\SerializerInterface;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\DriverManager;
 use Doctrine\DBAL\Schema\Table;
-use Doctrine\DBAL\Types\Type;
+use Doctrine\DBAL\Types\Types;
 
 /**
  * Driver using Prime DBAL
@@ -130,20 +130,24 @@ class DoctrineConnection implements ConnectionDriverInterface, ManageableQueueIn
      */
     public function schema()
     {
-        $schema = $this->connection()->getSchemaManager();
+        $connection = $this->connection();
+        $schema = method_exists($connection, 'createSchemaManager')
+            ? $connection->createSchemaManager()
+            : $connection->getSchemaManager()
+        ;
 
         if ($schema->tablesExist([$this->table()])) {
             return;
         }
 
         $table = new Table($this->table());
-        $table->addColumn('id', Type::GUID, ['length' => 16, 'fixed' => true]);
-        $table->addColumn('queue', Type::STRING, ['length' => 90]);
-        $table->addColumn('raw', Type::TEXT);
-        $table->addColumn('reserved', Type::BOOLEAN);
-        $table->addColumn('reserved_at', Type::DATETIME, ['notnull' => false]);
-        $table->addColumn('available_at', Type::DATETIME);
-        $table->addColumn('created_at', Type::DATETIME);
+        $table->addColumn('id', Types::GUID, ['length' => 16, 'fixed' => true]);
+        $table->addColumn('queue', Types::STRING, ['length' => 90]);
+        $table->addColumn('raw', Types::TEXT);
+        $table->addColumn('reserved', Types::BOOLEAN);
+        $table->addColumn('reserved_at', Types::DATETIME_MUTABLE, ['notnull' => false]);
+        $table->addColumn('available_at', Types::DATETIME_MUTABLE);
+        $table->addColumn('created_at', Types::DATETIME_MUTABLE);
         $table->addIndex(['queue', 'reserved']);
         $table->setPrimaryKey(['id']);
 
@@ -155,7 +159,11 @@ class DoctrineConnection implements ConnectionDriverInterface, ManageableQueueIn
      */
     public function dropSchema()
     {
-        $schema = $this->connection()->getSchemaManager();
+        $connection = $this->connection();
+        $schema = method_exists($connection, 'createSchemaManager')
+            ? $connection->createSchemaManager()
+            : $connection->getSchemaManager()
+        ;
 
         if ($schema->tablesExist([$this->table()])) {
             $schema->dropTable($this->table());
