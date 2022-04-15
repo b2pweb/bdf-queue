@@ -25,8 +25,8 @@
     "ext-pcntl": "*",
     "b2pweb/bdf-dsn": "~1.0",
     "b2pweb/bdf-instantiator": "~1.0",
-    "symfony/console": "~4.3|~5.0",
-    "symfony/messenger": "~4.3|~5.0"
+    "symfony/console": "~4.3|~5.0|~6.0",
+    "symfony/messenger": "~4.3|~5.0|~6.0"
   },
   "require-dev": {
     "b2pweb/bdf-serializer": "~1.0",
@@ -41,8 +41,9 @@
     "php-amqplib/php-amqplib": "~3.0",
     "phpbench/phpbench": "~0.0|~1.0",
     "phpunit/phpunit": "~7.0|~8.0",
-    "symfony/error-handler": "~4.3|~5.0",
-    "symfony/var-dumper": "~4.3|~5.0",
+    "symfony/error-handler": "~4.3|~5.0|~6.0",
+    "symfony/phpunit-bridge": "~4.3|~5.0|~6.0",
+    "symfony/var-dumper": "~4.3|~5.0|~6.0",
     "vimeo/psalm": "~4.18",
     "predis/predis": "~1.1.0"
   },
@@ -54,7 +55,7 @@
     "php-amqplib/php-amqplib": "Required to use the RabbitMQ queue driver (~2.6|~3.0)",
     "kwn/php-rdkafka-stubs": "Required to use the Kafka queue driver (~1.1.0)",
     "enqueue/enqueue": "Required to use the Enqueue driver (~0.9)",
-    "symfony/var-dumper": "VarDumper could be used for displaying failed message (~4.3|~5.0)"
+    "symfony/var-dumper": "VarDumper could be used for displaying failed message (~4.3|~5.0|~6.0)"
   },
   "scripts": {
     "tests": "phpunit",

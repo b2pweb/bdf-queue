@@ -3,6 +3,7 @@
 namespace Bdf\Queue\Tests;
 
 use Psr\Log\LoggerInterface;
+use Stringable;
 
 class BufferLogger implements LoggerInterface
 {
@@ -13,7 +14,7 @@ class BufferLogger implements LoggerInterface
     /**
      * @inheritDoc
      */
-    public function log($level, $message, array $context = array())
+    public function log($level, /*Stringable|string*/ $message, array $context = array()): void
     {
         $this->buffer[] = [
             'level' => $level,
