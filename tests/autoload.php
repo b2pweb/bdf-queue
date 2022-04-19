@@ -2,4 +2,6 @@
 
 require_once __DIR__ . '/../vendor/autoload.php';
 
-\Symfony\Bridge\PhpUnit\DeprecationErrorHandler::register(999999);
+if (getenv('SYMFONY_DEPRECATIONS_HELPER') === false) {
+    putenv('SYMFONY_DEPRECATIONS_HELPER=999999');
+}
