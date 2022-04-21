@@ -224,7 +224,7 @@ class QueueHelper
     /**
      * Returns the destination manager
      *
-     * @return DestinationInterface
+     * @return DestinationInterface|DestinationManager
      */
     public function destination(string $destination = null)/*: DestinationInterface*/
     {
