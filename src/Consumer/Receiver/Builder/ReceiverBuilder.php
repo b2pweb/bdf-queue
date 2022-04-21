@@ -23,6 +23,7 @@ use Bdf\Queue\Processor\JobHintProcessorResolver;
 use Bdf\Queue\Processor\MapProcessorResolver;
 use Bdf\Queue\Processor\ProcessorInterface;
 use Bdf\Queue\Processor\SingleProcessorResolver;
+use Bdf\Queue\Testing\MessageWatcherReceiver;
 use Bdf\Serializer\SerializerInterface;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
@@ -330,6 +331,18 @@ class ReceiverBuilder
                 $validator
             )
         );
+    }
+
+    /**
+     * Add a watcher on the middleware stack
+     *
+     * @param callable|null $callable
+     *
+     * @return $this
+     */
+    public function watch(callable $callable = null): ReceiverBuilder
+    {
+        return $this->add(MessageWatcherReceiver::class, [$callable]);
     }
 
     /**

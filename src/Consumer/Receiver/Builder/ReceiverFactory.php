@@ -16,6 +16,7 @@ use Bdf\Queue\Consumer\Receiver\StopWhenEmptyReceiver;
 use Bdf\Queue\Consumer\Receiver\TimeLimiterReceiver;
 use Bdf\Queue\Consumer\ReceiverInterface;
 use Bdf\Queue\Failer\FailedJobStorageInterface;
+use Bdf\Queue\Testing\MessageWatcherReceiver;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
@@ -86,6 +87,9 @@ class ReceiverFactory
             },
             BinderReceiver::class => function(ReceiverFactory $factory, ReceiverInterface $receiver, array $binders) {
                 return new BinderReceiver($receiver, $binders);
+            },
+            MessageWatcherReceiver::class => function(ReceiverFactory $factory, ReceiverInterface $receiver, callable $callable = null) {
+                return new MessageWatcherReceiver($receiver, $callable);
             },
         ];
 

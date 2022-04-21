@@ -292,7 +292,7 @@ class FunctionnalTest extends TestCase
         $destination->send($message);
 
         $helper = new QueueHelper($this->container);
-        $helper->consume(1, $destination, 'test1,test2');
+        $helper->consume(1, $destination);
 
         $this->assertEquals($message->data(), QueueObserver::$data);
     }
@@ -310,7 +310,7 @@ class FunctionnalTest extends TestCase
         $destination->send($message);
 
         $helper = new QueueHelper($this->container);
-        $helper->consume(1, $destination, 'test');
+        $helper->consume(1, $destination);
 
         /** @var QueueDriverInterface $queue */
         $queue = $this->container->get(ConnectionDriverFactoryInterface::class)->create($this->defaultQueue)->queue();

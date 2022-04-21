@@ -4,6 +4,7 @@ namespace Bdf\Queue\Testing;
 
 use Bdf\Instantiator\Instantiator;
 use Bdf\Instantiator\InstantiatorInterface;
+use Bdf\Queue\Consumer\Receiver\Builder\ReceiverBuilder;
 use Bdf\Queue\Message\Message;
 use Bdf\Queue\Tests\QueueServiceProvider;
 use League\Container\Container;
@@ -34,7 +35,24 @@ class QueueHelperTest extends TestCase
 
 
         $this->helper = new QueueHelper($this->container);
-        $this->helper->init('test', 'myQueue');
+        $this->helper->init('test::myQueue');
+    }
+
+    /**
+     *
+     */
+    public function test_legacy()
+    {
+        $this->helper->init('test', 'legacy');
+
+        $this->helper->destination()->send(Message::createFromJob('handler@handle', 'data', 'legacy'));
+
+        $this->assertSame(1, $this->helper->count('legacy'));
+        $this->assertSame(1, $this->helper->count('legacy', 'test'));
+        $this->assertNotEmpty($this->helper->peek(1, 'legacy'));
+        $this->assertNotEmpty($this->helper->peek(1, 'legacy', 'test'));
+        $this->assertTrue($this->helper->contains('@handle', 'legacy'));
+        $this->assertTrue($this->helper->contains('@handle', 'legacy', 'test'));
     }
 
     /**
@@ -42,8 +60,8 @@ class QueueHelperTest extends TestCase
      */
     public function test_empty_assertion()
     {
-        $this->assertSame(0, $this->helper->count('myQueue'));
-        $this->assertSame([], $this->helper->peek(1, 'myQueue'));
+        $this->assertSame(0, $this->helper->count('test::myQueue'));
+        $this->assertSame([], $this->helper->peek(1, 'test::myQueue'));
     }
 
     /**
@@ -51,14 +69,15 @@ class QueueHelperTest extends TestCase
      */
     public function test_assertion_job()
     {
-        $this->helper->destination()->send(Message::createFromJob('handler@handle', 'data', 'myQueue'));
+        $this->helper->destination()->send(Message::createFromJob('handler@handle', 'data')->setDestination('test::myQueue'));
 
-        $this->assertSame(1, $this->helper->count('myQueue'));
-        $this->assertTrue($this->helper->contains('@handle', 'myQueue'));
-        $this->assertTrue($this->helper->contains('handler', 'myQueue'));
-        $this->assertTrue($this->helper->contains('handler@handle', 'myQueue'));
-        $this->assertTrue($this->helper->contains('data', 'myQueue'));
-        $this->assertNotEmpty($this->helper->peek(1, 'myQueue'));
+        $this->assertSame(1, $this->helper->count('test::myQueue'));
+        $this->assertTrue($this->helper->contains('@handle', 'test::myQueue'));
+        $this->assertTrue($this->helper->contains('@handle', 'test::myQueue'));
+        $this->assertTrue($this->helper->contains('handler', 'test::myQueue'));
+        $this->assertTrue($this->helper->contains('handler@handle', 'test::myQueue'));
+        $this->assertTrue($this->helper->contains('data', 'test::myQueue'));
+        $this->assertNotEmpty($this->helper->peek(1, 'test::myQueue'));
     }
 
     /**
@@ -67,12 +86,12 @@ class QueueHelperTest extends TestCase
     public function test_consume()
     {
         TestQueueAssertionHandler::$count = 0;
-        $this->helper->destination()->send(Message::createFromJob(TestQueueAssertionHandler::class, 'data1', 'myQueue'));
-        $this->helper->destination()->send(Message::createFromJob(TestQueueAssertionHandler::class, 'data2', 'myQueue'));
+        $this->helper->destination()->send(Message::createFromJob(TestQueueAssertionHandler::class, 'data1')->setDestination('test::myQueue'));
+        $this->helper->destination()->send(Message::createFromJob(TestQueueAssertionHandler::class, 'data2')->setDestination('test::myQueue'));
 
-        $this->helper->consume(2, 'test', 'myQueue');
+        $this->helper->consume(2, 'test::myQueue');
 
-        $this->assertSame(0, $this->helper->count('myQueue'));
+        $this->assertSame(0, $this->helper->count('test::myQueue'));
         $this->assertSame(2, TestQueueAssertionHandler::$count);
     }
 
@@ -82,12 +101,12 @@ class QueueHelperTest extends TestCase
     public function test_consume_one()
     {
         TestQueueAssertionHandler::$count = 0;
-        $this->helper->destination()->send(Message::createFromJob(TestQueueAssertionHandler::class, 'data1', 'myQueue'));
-        $this->helper->destination()->send(Message::createFromJob(TestQueueAssertionHandler::class, 'data2', 'myQueue'));
+        $this->helper->destination()->send(Message::createFromJob(TestQueueAssertionHandler::class, 'data1')->setDestination('test::myQueue'));
+        $this->helper->destination()->send(Message::createFromJob(TestQueueAssertionHandler::class, 'data2')->setDestination('test::myQueue'));
 
-        $this->helper->consume(1, 'test', 'myQueue');
+        $this->helper->consume(1, 'test::myQueue');
 
-        $this->assertSame(1, $this->helper->count('myQueue'));
+        $this->assertSame(1, $this->helper->count('test::myQueue'));
         $this->assertSame(1, TestQueueAssertionHandler::$count);
     }
 
@@ -97,12 +116,12 @@ class QueueHelperTest extends TestCase
     public function test_consume_many()
     {
         TestQueueAssertionHandler::$count = 0;
-        $this->helper->destination()->send(Message::createFromJob(TestQueueAssertionHandler::class, 'data1', 'myQueue'));
-        $this->helper->destination()->send(Message::createFromJob(TestQueueAssertionHandler::class, 'data2', 'myQueue'));
-        $this->helper->destination()->send(Message::createFromJob(TestQueueAssertionHandler::class, 'data2', 'myQueue'));
-        $this->helper->consume(2, 'test', 'myQueue');
+        $this->helper->destination()->send(Message::createFromJob(TestQueueAssertionHandler::class, 'data1')->setDestination('test::myQueue'));
+        $this->helper->destination()->send(Message::createFromJob(TestQueueAssertionHandler::class, 'data2')->setDestination('test::myQueue'));
+        $this->helper->destination()->send(Message::createFromJob(TestQueueAssertionHandler::class, 'data2')->setDestination('test::myQueue'));
+        $this->helper->consume(2, 'test::myQueue');
 
-        $this->assertSame(1, $this->helper->count('myQueue'));
+        $this->assertSame(1, $this->helper->count('test::myQueue'));
         $this->assertSame(2, TestQueueAssertionHandler::$count);
     }
 
@@ -113,25 +132,25 @@ class QueueHelperTest extends TestCase
     {
         TestQueueAssertionHandler::$count = 0;
 
-        $this->helper->destination()->send(Message::createFromJob(TestQueueAssertionHandler::class, 'data1', 'myQueue'));
-        $this->helper->destination()->send(Message::createFromJob(TestQueueAssertionHandler::class, 'data2', 'myQueue'));
-        $this->helper->destination()->send(Message::createFromJob(TestQueueAssertionHandler::class, 'data3', 'myQueue'));
+        $this->helper->destination()->send(Message::createFromJob(TestQueueAssertionHandler::class, 'data1')->setDestination('test::myQueue'));
+        $this->helper->destination()->send(Message::createFromJob(TestQueueAssertionHandler::class, 'data2')->setDestination('test::myQueue'));
+        $this->helper->destination()->send(Message::createFromJob(TestQueueAssertionHandler::class, 'data3')->setDestination('test::myQueue'));
 
-        $this->helper->consume(2, 'test', 'myQueue', function($extension) {
-            return new MessageWatcherReceiver($extension, function() {
+        $this->helper->consume(2, 'test::myQueue', function(ReceiverBuilder $builder) {
+            $builder->watch(function() {
                 // Assert all the 3 jobs are reserved
-                foreach ($this->helper->peek(10, 'myQueue', 'test') as $message) {
+                foreach ($this->helper->peek(10, 'test::myQueue') as $message) {
                     $this->assertSame(true, $message->internalJob()->metadata['reserved']);
                 }
             });
         });
 
-        $this->assertSame(1, $this->helper->count('myQueue'));
-        $this->assertTrue($this->helper->contains('data3', 'myQueue'));
+        $this->assertSame(1, $this->helper->count('test::myQueue'));
+        $this->assertTrue($this->helper->contains('data3', 'test::myQueue'));
         $this->assertSame(2, TestQueueAssertionHandler::$count);
 
         // The job is available
-        $message = $this->helper->peek(1, 'myQueue', 'test')[0];
+        $message = $this->helper->peek(1, 'test::myQueue')[0];
         $this->assertSame(false, $message->internalJob()->metadata['reserved']);
     }
 }
