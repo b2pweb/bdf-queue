@@ -227,7 +227,7 @@ class QueueHelper
      * @param string|null $destination
      *
      * @return DestinationInterface|DestinationManager
-     * @psalm-return func_num_args() is 0 ? DestinationManager : DestinationInterface
+     * @psalm-return (func_num_args() is 0 ? DestinationManager : DestinationInterface)
      */
     public function destination(string $destination = null)/*: DestinationInterface*/
     {
