@@ -224,11 +224,13 @@ class QueueHelper
     /**
      * Returns the destination manager
      *
+     * @param string|null $destination
+     *
      * @return DestinationInterface|DestinationManager
      */
     public function destination(string $destination = null)/*: DestinationInterface*/
     {
-        if ($destination === null) {
+        if (func_num_args() === 0) {
             @trigger_error("Since 1.2: destination manager should be get with destinations() method. Will be removed in 2.0", \E_USER_DEPRECATED);
 
             return $this->destinations();
