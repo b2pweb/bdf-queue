@@ -180,7 +180,7 @@ class RdKafkaDriver implements QueueDriverInterface, TopicDriverInterface
      *
      * @param string $queue
      *
-     * @return null
+     * @return int
      */
     public function count(string $queue): ?int
     {
