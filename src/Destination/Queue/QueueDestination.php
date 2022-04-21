@@ -4,6 +4,7 @@ namespace Bdf\Queue\Destination\Queue;
 
 use Bdf\Dsn\DsnRequest;
 use Bdf\Queue\Connection\ConnectionDriverInterface;
+use Bdf\Queue\Connection\CountableQueueDriverInterface;
 use Bdf\Queue\Connection\ManageableQueueInterface;
 use Bdf\Queue\Connection\PeekableQueueDriverInterface;
 use Bdf\Queue\Connection\QueueDriverInterface;
@@ -118,9 +119,13 @@ final class QueueDestination implements DestinationInterface, ReadableDestinatio
     /**
      * {@inheritdoc}
      */
-    public function count(): ?int
+    public function count(): int
     {
         $queue = $this->driver->connection()->queue();
+
+        if (!$queue instanceof CountableQueueDriverInterface) {
+            throw new \BadMethodCallException(__METHOD__.' works only with countable connection.');
+        }
 
         return $queue->count($this->queue);
     }

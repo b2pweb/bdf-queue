@@ -12,11 +12,9 @@ interface ReadableDestinationInterface
     /**
      * Get the total number of messages
      *
-     * Note: May return null if the operation is not supported by the driver
-     *
      * @return int
      */
-    public function count(): ?int;
+    public function count(): int;
 
     /**
      * Inspect a list of messages without interact with their state.

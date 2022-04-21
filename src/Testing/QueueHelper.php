@@ -43,14 +43,12 @@ class QueueHelper
      */
     public function init(string $destination = null): QueueHelper
     {
-        if ($destination === null) {
-            @trigger_error("Since 1.2: the destination parameter can not be null. Will be removed in 2.0", \E_USER_DEPRECATED);
-        }
-
         if (func_num_args() > 1) {
             @trigger_error("Since 1.2: use destination or 'connectionName::queue' syntax instead of. Will be removed in 2.0", \E_USER_DEPRECATED);
 
             $destination = "$destination::".func_get_arg(1);
+        } elseif ($destination === null) {
+            @trigger_error("Since 1.2: the destination parameter can not be null. Will be removed in 2.0", \E_USER_DEPRECATED);
         }
 
         $this->destination($destination)->declare();
@@ -82,7 +80,7 @@ class QueueHelper
             @trigger_error("Since 1.2: the queue parameter is deprecated. Use destination or 'connectionName::queue' syntax instead of. Will be removed in 2.0", \E_USER_DEPRECATED);
         }
 
-        return $destination->count() ?? 0;
+        return $destination->count();
     }
 
     /**

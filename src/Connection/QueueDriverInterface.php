@@ -61,17 +61,6 @@ interface QueueDriverInterface
     public function release(QueuedMessage $message): void;
 
     /**
-     * Get the total number of messages
-     *
-     * Note: May return null if the operation is not supported by the driver
-     *
-     * @param string $queue
-     *
-     * @return int
-     */
-    public function count(string $queue): ?int;
-
-    /**
      * Get the monitoring info
      *
      * Should returns an associative array containing stats by report.

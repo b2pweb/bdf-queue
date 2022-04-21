@@ -4,6 +4,7 @@ namespace Bdf\Queue\Destination\Queue;
 
 use Bdf\Dsn\DsnRequest;
 use Bdf\Queue\Connection\ConnectionDriverInterface;
+use Bdf\Queue\Connection\CountableQueueDriverInterface;
 use Bdf\Queue\Connection\ManageableQueueInterface;
 use Bdf\Queue\Connection\PeekableQueueDriverInterface;
 use Bdf\Queue\Connection\QueueDriverInterface;
@@ -122,10 +123,14 @@ final class MultiQueueDestination implements DestinationInterface, ReadableDesti
     /**
      * {@inheritdoc}
      */
-    public function count(): ?int
+    public function count(): int
     {
         $count = 0;
         $queue = $this->driver->connection()->queue();
+
+        if (!$queue instanceof CountableQueueDriverInterface) {
+            throw new \BadMethodCallException(__METHOD__.' works only with countable connection.');
+        }
 
         foreach ($this->queues as $queueName) {
             $count += $queue->count($queueName);
@@ -142,12 +147,16 @@ final class MultiQueueDestination implements DestinationInterface, ReadableDesti
         $queue = $this->driver->connection()->queue();
 
         if (!$queue instanceof PeekableQueueDriverInterface) {
-            throw new \LogicException(__METHOD__.' works only with peekable connection.');
+            throw new \BadMethodCallException(__METHOD__.' works only with peekable connection.');
         }
 
         $items = [];
         foreach ($this->queues as $queueName) {
-            $items += $queue->peek($queueName, $rowCount, $page);
+            $items = array_merge($items, $queue->peek($queueName, $rowCount, $page));
+
+            if (count($items) >= $rowCount) {
+                break;
+            }
         }
 
         return $items;

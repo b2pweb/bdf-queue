@@ -67,8 +67,8 @@ class ReceiverFactory
             MessageCountLimiterReceiver::class => function(ReceiverFactory $factory, ReceiverInterface $receiver, int $number) {
                 return new MessageCountLimiterReceiver($receiver, $number, $factory->logger());
             },
-            MemoryLimiterReceiver::class => function(ReceiverFactory $factory, ReceiverInterface $receiver, int $bytes) {
-                return new MemoryLimiterReceiver($receiver, $bytes, $factory->logger());
+            MemoryLimiterReceiver::class => function(ReceiverFactory $factory, ReceiverInterface $receiver, int $bytes, callable $memoryResolver = null) {
+                return new MemoryLimiterReceiver($receiver, $bytes, $factory->logger(), $memoryResolver);
             },
             TimeLimiterReceiver::class => function(ReceiverFactory $factory, ReceiverInterface $receiver, int $expire) {
                 return new TimeLimiterReceiver($receiver, $expire, $factory->logger());

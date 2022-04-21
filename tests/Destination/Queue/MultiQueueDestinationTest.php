@@ -139,4 +139,47 @@ class MultiQueueDestinationTest extends TestCase
         $destination->declare();
         $destination->destroy();
     }
+
+    /**
+     *
+     */
+    public function test_count()
+    {
+        $destination = new MultiQueueDestination($this->driver, ['q1', 'q2', 'q3']);
+
+        $this->assertSame(0, $destination->count());
+
+        $this->driver->push((new Message('foo'))->setQueue('q1'));
+        $this->driver->push((new Message('bar'))->setQueue('q3'));
+
+        $this->assertSame(2, $destination->count());
+    }
+
+    /**
+     *
+     */
+    public function test_peek()
+    {
+        $destination = new MultiQueueDestination($this->driver, ['q1', 'q2', 'q3']);
+
+        $this->assertSame([], $destination->peek());
+
+        $this->driver->push((new Message('foo'))->setQueue('q1'));
+        $this->driver->push((new Message('bar'))->setQueue('q3'));
+
+        $this->assertCount(2, $destination->peek());
+    }
+
+    /**
+     *
+     */
+    public function test_peek_returns_exact_num_rows()
+    {
+        $destination = new MultiQueueDestination($this->driver, ['q1', 'q2', 'q3']);
+
+        $this->driver->push((new Message('foo'))->setQueue('q1'));
+        $this->driver->push((new Message('bar'))->setQueue('q3'));
+
+        $this->assertCount(1, $destination->peek(1));
+    }
 }

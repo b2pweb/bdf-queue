@@ -3,6 +3,7 @@
 namespace Bdf\Queue\Connection\Null;
 
 use Bdf\Queue\Connection\ConnectionDriverInterface;
+use Bdf\Queue\Connection\CountableQueueDriverInterface;
 use Bdf\Queue\Connection\Extension\ConnectionBearer;
 use Bdf\Queue\Connection\QueueDriverInterface;
 use Bdf\Queue\Message\EnvelopeInterface;
@@ -12,7 +13,7 @@ use Bdf\Queue\Message\QueuedMessage;
 /**
  * NullQueue
  */
-class NullQueue implements QueueDriverInterface
+class NullQueue implements QueueDriverInterface, CountableQueueDriverInterface
 {
     use ConnectionBearer;
 
@@ -69,7 +70,7 @@ class NullQueue implements QueueDriverInterface
     /**
      * {@inheritdoc}
      */
-    public function count(string $queue): ?int
+    public function count(string $queueName): int
     {
         return 0;
     }

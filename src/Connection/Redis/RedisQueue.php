@@ -3,6 +3,7 @@
 namespace Bdf\Queue\Connection\Redis;
 
 use Bdf\Queue\Connection\ConnectionDriverInterface;
+use Bdf\Queue\Connection\CountableQueueDriverInterface;
 use Bdf\Queue\Connection\Extension\ConnectionBearer;
 use Bdf\Queue\Connection\Extension\QueueEnvelopeHelper;
 use Bdf\Queue\Connection\QueueDriverInterface;
@@ -13,7 +14,7 @@ use Bdf\Queue\Message\QueuedMessage;
 /**
  * PhpRedisQueue
  */
-class RedisQueue implements QueueDriverInterface
+class RedisQueue implements QueueDriverInterface, CountableQueueDriverInterface
 {
     use ConnectionBearer;
     use QueueEnvelopeHelper;
@@ -125,11 +126,11 @@ LUA;
     /**
      * {@inheritdoc}
      */
-    public function count(string $queue): ?int
+    public function count(string $queueName): int
     {
         $redis = $this->connection->connect();
 
-        return $redis->lLen($this->connection->queuePrefix().$queue);
+        return $redis->lLen($this->connection->queuePrefix().$queueName);
     }
 
     /**

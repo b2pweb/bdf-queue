@@ -159,4 +159,28 @@ class QueueDestinationTest extends TestCase
             (new QueueDestination($this->driver, 'my-queue', 10))->consumer($receiver)
         );
     }
+
+    /**
+     *
+     */
+    public function test_count()
+    {
+        $destination = new QueueDestination($this->driver, 'my-queue');
+
+        $this->assertSame(0, $destination->count());
+        $destination->send(new Message());
+        $this->assertSame(1, $destination->count());
+    }
+
+    /**
+     *
+     */
+    public function test_peek()
+    {
+        $destination = new QueueDestination($this->driver, 'my-queue');
+
+        $this->assertSame([], $destination->peek());
+        $destination->send(new Message());
+        $this->assertNotEmpty($destination->peek());
+    }
 }

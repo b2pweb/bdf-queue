@@ -176,10 +176,16 @@ class RdKafkaDriver implements QueueDriverInterface, TopicDriverInterface
     }
 
     /**
-     * {@inheritdoc}
+     * @deprecated Since 1.2: Rdkafka does not support count method. Will be removed in 2.0
+     *
+     * @param string $queue
+     *
+     * @return null
      */
     public function count(string $queue): ?int
     {
+        @trigger_error("Since 1.2: Rdkafka does not support count method. Will be removed in 2.0", \E_USER_DEPRECATED);
+
         return 0;
     }
     

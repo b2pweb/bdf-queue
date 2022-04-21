@@ -5,6 +5,9 @@ namespace Bdf\Queue\Testing;
 use Bdf\Instantiator\Instantiator;
 use Bdf\Instantiator\InstantiatorInterface;
 use Bdf\Queue\Consumer\Receiver\Builder\ReceiverBuilder;
+use Bdf\Queue\Consumer\ReceiverInterface;
+use Bdf\Queue\Destination\DestinationManager;
+use Bdf\Queue\Destination\Queue\QueueDestination;
 use Bdf\Queue\Message\Message;
 use Bdf\Queue\Tests\QueueServiceProvider;
 use League\Container\Container;
@@ -45,7 +48,7 @@ class QueueHelperTest extends TestCase
     {
         $this->helper->init('test', 'legacy');
 
-        $this->helper->destination()->send(Message::createFromJob('handler@handle', 'data', 'legacy'));
+        $this->helper->destination()->send(Message::createFromJob(TestQueueAssertionHandler::class.'@handle', 'data', 'legacy'));
 
         $this->assertSame(1, $this->helper->count('legacy'));
         $this->assertSame(1, $this->helper->count('legacy', 'test'));
@@ -53,6 +56,25 @@ class QueueHelperTest extends TestCase
         $this->assertNotEmpty($this->helper->peek(1, 'legacy', 'test'));
         $this->assertTrue($this->helper->contains('@handle', 'legacy'));
         $this->assertTrue($this->helper->contains('@handle', 'legacy', 'test'));
+        $this->assertInstanceOf(DestinationManager::class, $this->helper->destination());
+
+        $called = false;
+        $this->helper->consume(1, 'test', 'legacy', function($extension) use(&$called) {
+            $called = true;
+            $this->assertInstanceOf(ReceiverInterface::class, $extension);
+            return $extension;
+        });
+        $this->assertTrue($called);
+        $this->assertSame(0, $this->helper->count('test::myQueue'));
+    }
+
+    /**
+     *
+     */
+    public function test_accessors()
+    {
+        $this->assertInstanceOf(DestinationManager::class, $this->helper->destinations());
+        $this->assertInstanceOf(QueueDestination::class, $this->helper->destination('test::myQueue'));
     }
 
     /**

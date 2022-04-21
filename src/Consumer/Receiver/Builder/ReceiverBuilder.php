@@ -203,9 +203,9 @@ class ReceiverBuilder
      *
      * @see MemoryLimiterReceiver
      */
-    public function memory(int $bytes): ReceiverBuilder
+    public function memory(int $bytes, callable $memoryResolver = null): ReceiverBuilder
     {
-        return $this->add(MemoryLimiterReceiver::class, [$bytes]);
+        return $this->add(MemoryLimiterReceiver::class, [$bytes, $memoryResolver]);
     }
 
     /**
@@ -336,11 +336,11 @@ class ReceiverBuilder
     /**
      * Add a watcher on the middleware stack
      *
-     * @param callable|null $callable
+     * @param callable $callable Receive the message and the consumer in parameters. The message is null in case of timeout
      *
      * @return $this
      */
-    public function watch(callable $callable = null): ReceiverBuilder
+    public function watch(callable $callable): ReceiverBuilder
     {
         return $this->add(MessageWatcherReceiver::class, [$callable]);
     }
