@@ -80,6 +80,10 @@ class QueueHelper
             @trigger_error("Since 1.2: the queue parameter is deprecated. Use destination or 'connectionName::queue' syntax instead of. Will be removed in 2.0", \E_USER_DEPRECATED);
         }
 
+        if (!$destination instanceof ReadableDestinationInterface) {
+            throw new LogicException(__METHOD__.' works only with countable destination.');
+        }
+
         return $destination->count();
     }
 
@@ -110,7 +114,7 @@ class QueueHelper
         }
 
         if (!$destination instanceof ReadableDestinationInterface) {
-            throw new LogicException(__METHOD__.' works only with peekable connection.');
+            throw new LogicException(__METHOD__.' works only with peekable destination.');
         }
 
         $page = 1;
