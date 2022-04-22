@@ -162,7 +162,11 @@ class MemoryQueue implements QueueDriverInterface, ReservableQueueDriverInterfac
      */
     public function peek(string $queueName, int $rowCount = 20, int $page = 1): array
     {
-        $queues = $this->connection->storage()->queues[$queueName] ?? new \SplObjectStorage();
+        if (!isset($this->connection->storage()->queues[$queueName])) {
+            return [];
+        }
+
+        $queues = $this->connection->storage()->queues[$queueName];
         $iterator = new \LimitIterator($queues, $rowCount * ($page - 1), $rowCount);
         $messages = [];
 
