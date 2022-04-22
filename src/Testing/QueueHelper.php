@@ -190,7 +190,10 @@ class QueueHelper
             $configurator = func_get_arg(3);
 
             // Cannot add receivers here, because it will be added before configurator
-            $extension = $configurator($builder->build());
+            $extension = $builder->build();
+            if ($configurator !== null) {
+                $extension = $configurator($extension);
+            }
             $extension = new StopWhenEmptyReceiver($extension);
             $extension = new MessageCountLimiterReceiver($extension, $number);
         } else {
