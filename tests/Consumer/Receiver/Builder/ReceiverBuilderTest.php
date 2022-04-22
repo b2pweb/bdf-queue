@@ -25,6 +25,7 @@ use Bdf\Queue\Processor\JobHintProcessorResolver;
 use Bdf\Queue\Processor\MapProcessorResolver;
 use Bdf\Queue\Processor\ProcessorInterface;
 use Bdf\Queue\Processor\SingleProcessorResolver;
+use Bdf\Queue\Testing\MessageWatcherReceiver;
 use Bdf\Serializer\SerializerInterface;
 use League\Container\Container;
 use PHPUnit\Framework\TestCase;
@@ -440,6 +441,24 @@ class ReceiverBuilderTest extends TestCase
                 new ProcessorReceiver(new JobHintProcessorResolver($this->container->get(InstantiatorInterface::class))),
                 10,
                 new NullLogger()
+            ),
+            $this->builder->build()
+        );
+    }
+
+    /**
+     *
+     */
+    public function test_watch()
+    {
+        $callable = function() {};
+
+        $this->builder->watch($callable);
+
+        $this->assertEquals(
+            new MessageWatcherReceiver(
+                new ProcessorReceiver(new JobHintProcessorResolver($this->container->get(InstantiatorInterface::class))),
+                $callable
             ),
             $this->builder->build()
         );

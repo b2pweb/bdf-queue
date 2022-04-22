@@ -16,6 +16,7 @@ use Bdf\Queue\Consumer\Receiver\StopWhenEmptyReceiver;
 use Bdf\Queue\Consumer\Receiver\TimeLimiterReceiver;
 use Bdf\Queue\Consumer\ReceiverInterface;
 use Bdf\Queue\Failer\FailedJobStorageInterface;
+use Bdf\Queue\Testing\MessageWatcherReceiver;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
@@ -66,8 +67,8 @@ class ReceiverFactory
             MessageCountLimiterReceiver::class => function(ReceiverFactory $factory, ReceiverInterface $receiver, int $number) {
                 return new MessageCountLimiterReceiver($receiver, $number, $factory->logger());
             },
-            MemoryLimiterReceiver::class => function(ReceiverFactory $factory, ReceiverInterface $receiver, int $bytes) {
-                return new MemoryLimiterReceiver($receiver, $bytes, $factory->logger());
+            MemoryLimiterReceiver::class => function(ReceiverFactory $factory, ReceiverInterface $receiver, int $bytes, callable $memoryResolver = null) {
+                return new MemoryLimiterReceiver($receiver, $bytes, $factory->logger(), $memoryResolver);
             },
             TimeLimiterReceiver::class => function(ReceiverFactory $factory, ReceiverInterface $receiver, int $expire) {
                 return new TimeLimiterReceiver($receiver, $expire, $factory->logger());
@@ -86,6 +87,9 @@ class ReceiverFactory
             },
             BinderReceiver::class => function(ReceiverFactory $factory, ReceiverInterface $receiver, array $binders) {
                 return new BinderReceiver($receiver, $binders);
+            },
+            MessageWatcherReceiver::class => function(ReceiverFactory $factory, ReceiverInterface $receiver, callable $callable = null) {
+                return new MessageWatcherReceiver($receiver, $callable);
             },
         ];
 

@@ -3,6 +3,7 @@
 namespace Bdf\Queue\Connection\Pheanstalk;
 
 use Bdf\Queue\Connection\ConnectionDriverInterface;
+use Bdf\Queue\Connection\CountableQueueDriverInterface;
 use Bdf\Queue\Connection\Extension\ConnectionBearer;
 use Bdf\Queue\Connection\Extension\QueueEnvelopeHelper;
 use Bdf\Queue\Connection\QueueDriverInterface;
@@ -16,7 +17,7 @@ use Pheanstalk\Pheanstalk;
 /**
  * PheanstalkDriver
  */
-class PheanstalkQueue implements QueueDriverInterface
+class PheanstalkQueue implements QueueDriverInterface, CountableQueueDriverInterface
 {
     use ConnectionBearer;
     use QueueEnvelopeHelper;
@@ -100,10 +101,10 @@ class PheanstalkQueue implements QueueDriverInterface
     /**
      * {@inheritdoc}
      */
-    public function count(string $queue): ?int
+    public function count(string $queueName): int
     {
         try {
-            return $this->connection->pheanstalk()->statsTube($queue)['current-jobs-ready'];
+            return $this->connection->pheanstalk()->statsTube($queueName)['current-jobs-ready'];
         } catch (Exception $e) {
             return 0;
         }

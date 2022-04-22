@@ -3,8 +3,8 @@
 namespace Bdf\Queue\Connection\Memory;
 
 use Bdf\Queue\Connection\ConnectionDriverInterface;
+use Bdf\Queue\Connection\CountableQueueDriverInterface;
 use Bdf\Queue\Connection\Extension\ConnectionBearer;
-use Bdf\Queue\Connection\Extension\EnvelopeHelper;
 use Bdf\Queue\Connection\Extension\QueueEnvelopeHelper;
 use Bdf\Queue\Connection\PeekableQueueDriverInterface;
 use Bdf\Queue\Connection\QueueDriverInterface;
@@ -16,7 +16,7 @@ use Bdf\Queue\Message\QueuedMessage;
 /**
  * MemoryQueue
  */
-class MemoryQueue implements QueueDriverInterface, ReservableQueueDriverInterface, PeekableQueueDriverInterface
+class MemoryQueue implements QueueDriverInterface, ReservableQueueDriverInterface, PeekableQueueDriverInterface, CountableQueueDriverInterface
 {
     use ConnectionBearer;
     use QueueEnvelopeHelper;
@@ -150,9 +150,9 @@ class MemoryQueue implements QueueDriverInterface, ReservableQueueDriverInterfac
     /**
      * {@inheritdoc}
      */
-    public function count(string $queue): ?int
+    public function count(string $queueName): int
     {
-        $storage = $this->connection->storage()->queues[$queue] ?? null;
+        $storage = $this->connection->storage()->queues[$queueName] ?? null;
 
         return $storage ? $storage->count() : 0;
     }
@@ -162,7 +162,11 @@ class MemoryQueue implements QueueDriverInterface, ReservableQueueDriverInterfac
      */
     public function peek(string $queueName, int $rowCount = 20, int $page = 1): array
     {
-        $queues = $this->connection->storage()->queues[$queueName] ?? [];
+        if (!isset($this->connection->storage()->queues[$queueName])) {
+            return [];
+        }
+
+        $queues = $this->connection->storage()->queues[$queueName];
         $iterator = new \LimitIterator($queues, $rowCount * ($page - 1), $rowCount);
         $messages = [];
 

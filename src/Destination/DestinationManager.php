@@ -130,7 +130,14 @@ final class DestinationManager implements DestinationFactoryInterface
 
         // Get the queue from the connection
         if (strpos($destination, '::') !== false) {
-            return $this->queue(...explode('::', $destination, 2));
+            list($connection, $queue) = explode('::', $destination, 2);
+
+            // Manage multi queues
+            if (strpos($queue, ',') !== false) {
+                $queue = explode(',', $queue);
+            }
+
+            return $this->queue($connection, $queue);
         }
 
         try {

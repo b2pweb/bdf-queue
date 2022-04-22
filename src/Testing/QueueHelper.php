@@ -4,14 +4,14 @@ namespace Bdf\Queue\Testing;
 
 use Bdf\Queue\Connection\ConnectionDriverInterface;
 use Bdf\Queue\Connection\Factory\ConnectionDriverFactoryInterface;
-use Bdf\Queue\Connection\ManageableQueueInterface;
-use Bdf\Queue\Connection\PeekableQueueDriverInterface;
 use Bdf\Queue\Consumer\Receiver\Builder\ReceiverBuilder;
 use Bdf\Queue\Consumer\Receiver\Builder\ReceiverLoader;
 use Bdf\Queue\Consumer\Receiver\MessageCountLimiterReceiver;
 use Bdf\Queue\Consumer\Receiver\StopWhenEmptyReceiver;
 use Bdf\Queue\Destination\DestinationInterface;
 use Bdf\Queue\Destination\DestinationManager;
+use Bdf\Queue\Destination\ReadableDestinationInterface;
+use LogicException;
 use Psr\Container\ContainerInterface;
 
 /**
@@ -37,18 +37,21 @@ class QueueHelper
     /**
      * Initialize destinations for message reception
      *
-     * @param string|null $connectionName
-     * @param string $queue
+     * @param string $destination
      *
      * @return $this
      */
-    public function init(string $connectionName = null, string $queue = 'queue'): QueueHelper
+    public function init(string $destination = null): QueueHelper
     {
-        $connection = $this->connection($connectionName);
+        if (func_num_args() > 1) {
+            @trigger_error("Since 1.2: use destination or 'connectionName::queue' syntax instead of. Will be removed in 2.0", \E_USER_DEPRECATED);
 
-        if ($connection instanceof ManageableQueueInterface) {
-            $connection->declareQueue($queue);
+            $destination = "$destination::".func_get_arg(1);
+        } elseif ($destination === null) {
+            @trigger_error("Since 1.2: the destination parameter can not be null. Will be removed in 2.0", \E_USER_DEPRECATED);
         }
+
+        $this->destination($destination)->declare();
 
         return $this;
     }
@@ -56,36 +59,66 @@ class QueueHelper
     /**
      * Assert queue number rows
      *
-     * @param string $queue
-     * @param string $connectionName
+     * @param string $destination
      *
      * @return int
      *
      */
-    public function count(string $queue, string $connectionName = null): int
+    public function count(string $destination): int
     {
-        return $this->connection($connectionName)->queue()->count($queue) ?? 0;
+        if (func_num_args() > 1) {
+            @trigger_error("Since 1.2: use destination or 'connectionName::queue' syntax instead of. Will be removed in 2.0", \E_USER_DEPRECATED);
+
+            $destination = func_get_arg(1)."::$destination";
+        }
+
+        try {
+            $destination = $this->destination($destination);
+        } catch (\Exception $exception) {
+            $destination = $this->destination("::$destination");
+
+            @trigger_error("Since 1.2: the queue parameter is deprecated. Use destination or 'connectionName::queue' syntax instead of. Will be removed in 2.0", \E_USER_DEPRECATED);
+        }
+
+        if (!$destination instanceof ReadableDestinationInterface) {
+            throw new LogicException(__METHOD__.' works only with countable destination.');
+        }
+
+        return $destination->count();
     }
 
     /**
      * Assert queue contains value in raw
      *
      * @param string $expected  The expected string
-     * @param string $queueName
-     * @param string $connectionName
+     * @param string $destination
      *
      * @return bool
+     *
+     * @throws LogicException If the destination is not readable
      */
-    public function contains(string $expected, string $queueName, string $connectionName = null): bool
+    public function contains(string $expected, string $destination): bool
     {
-        $queue = $this->connection($connectionName)->queue();
+        if (func_num_args() > 2) {
+            @trigger_error("Since 1.2: use destination or 'connectionName::queue' syntax instead of. Will be removed in 2.0", \E_USER_DEPRECATED);
 
-        if (!$queue instanceof PeekableQueueDriverInterface) {
-            throw new \LogicException(__METHOD__.' works only with peekable connection.');
+            $destination = func_get_arg(2)."::$destination";
+        }
+
+        try {
+            $destination = $this->destination($destination);
+        } catch (\Exception $exception) {
+            $destination = $this->destination("::$destination");
+
+            @trigger_error("Since 1.2: the queue parameter is deprecated. Use destination or 'connectionName::queue' syntax instead of. Will be removed in 2.0", \E_USER_DEPRECATED);
+        }
+
+        if (!$destination instanceof ReadableDestinationInterface) {
+            throw new LogicException(__METHOD__.' works only with peekable destination.');
         }
 
         $page = 1;
-        while ($messages = $queue->peek($queueName, 20, $page)) {
+        while ($messages = $destination->peek(20, $page)) {
             foreach ($messages as $message) {
                 if (strpos($message->raw(), $expected) !== false) {
                     return true;
@@ -101,20 +134,33 @@ class QueueHelper
      * Get the queue jobs
      *
      * @param int $number
-     * @param string $queueName
-     * @param string $connectionName
+     * @param string $destination
      *
      * @return array
+     *
+     * @throws LogicException If the destination is not readable
      */
-    public function peek(int $number, string $queueName, string $connectionName = null): array
+    public function peek(int $number, string $destination): array
     {
-        $queue = $this->connection($connectionName)->queue();
+        if (func_num_args() > 2) {
+            @trigger_error("Since 1.2: use destination or 'connectionName::queue' syntax instead of. Will be removed in 2.0", \E_USER_DEPRECATED);
 
-        if (!$queue instanceof PeekableQueueDriverInterface) {
+            $destination = func_get_arg(2)."::$destination";
+        }
+
+        try {
+            $destination = $this->destination($destination);
+        } catch (\Exception $exception) {
+            $destination = $this->destination("::$destination");
+
+            @trigger_error("Since 1.2: the queue parameter is deprecated. Use destination or 'connectionName::queue' syntax instead of. Will be removed in 2.0", \E_USER_DEPRECATED);
+        }
+
+        if (!$destination instanceof ReadableDestinationInterface) {
             throw new \LogicException(__METHOD__.' works only with peekable connection.');
         }
 
-        return $queue->peek($queueName, $number);
+        return $destination->peek($number);
     }
 
     /**
@@ -124,30 +170,42 @@ class QueueHelper
      *
      * @param int $number  Number of loop before stopping the worker
      * @param DestinationInterface|string $destination
-     * @param string|array $queue
-     * @param \Closure $configurator
+     * @param \Closure|null $configurator
      */
-    public function consume(int $number = 1, $destination = null, $queue = null, \Closure $configurator = null)
+    public function consume(int $number = 1, $destination = null, /*\Closure*/ $configurator = null): void
     {
         /** @var ReceiverBuilder $builder */
         $builder = $this->container->get(ReceiverLoader::class)->load(is_string($destination) ? $destination : '');
 
-        // Cannot add receivers here, because it will be added before configurator
-        $extension = $builder
-            //->stopWhenEmpty()
-            //->max($number)
-            ->build()
-        ;
+        if (is_string($configurator)) {
+            @trigger_error("Since 1.2: parameter queue is deprecated. Use destination or 'connectionName::queue' syntax. Will be removed in 2.0", \E_USER_DEPRECATED);
 
-        if ($configurator !== null) {
-            $extension = $configurator($extension);
+            $destination = "$destination::$configurator";
+            $configurator = null;
         }
 
-        $extension = new StopWhenEmptyReceiver($extension);
-        $extension = new MessageCountLimiterReceiver($extension, $number);
+        if (func_num_args() === 4) {
+            @trigger_error("Since 1.2: the queue parameter is deprecated. Use destination or 'connectionName::queue' syntax. The configuration will receive a builder instand of extension instance. Will be removed in 2.0", \E_USER_DEPRECATED);
+
+            $configurator = func_get_arg(3);
+
+            // Cannot add receivers here, because it will be added before configurator
+            $extension = $configurator($builder->build());
+            $extension = new StopWhenEmptyReceiver($extension);
+            $extension = new MessageCountLimiterReceiver($extension, $number);
+        } else {
+            if ($configurator !== null) {
+                $configurator($builder);
+            }
+
+            $extension = $builder
+                ->stopWhenEmpty()
+                ->max($number)
+                ->build();
+        }
 
         if (!$destination instanceof DestinationInterface) {
-            $destination = $this->destination()->queue($destination, $queue);
+            $destination = $this->destination($destination);
         }
 
         $destination->consumer($extension)->consume(0);
@@ -168,9 +226,28 @@ class QueueHelper
     /**
      * Returns the destination manager
      *
+     * @param string|null $destination
+     *
+     * @return DestinationInterface|DestinationManager
+     * @psalm-return (func_num_args() is 0 ? DestinationManager : DestinationInterface)
+     */
+    public function destination(string $destination = null)/*: DestinationInterface*/
+    {
+        if (func_num_args() === 0) {
+            @trigger_error("Since 1.2: destination manager should be get with destinations() method. Will be removed in 2.0", \E_USER_DEPRECATED);
+
+            return $this->destinations();
+        }
+
+        return $this->destinations()->guess($destination);
+    }
+
+    /**
+     * Returns the destination manager
+     *
      * @return DestinationManager
      */
-    public function destination(): DestinationManager
+    public function destinations(): DestinationManager
     {
         return $this->container->get(DestinationManager::class);
     }

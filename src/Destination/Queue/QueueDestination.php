@@ -4,7 +4,9 @@ namespace Bdf\Queue\Destination\Queue;
 
 use Bdf\Dsn\DsnRequest;
 use Bdf\Queue\Connection\ConnectionDriverInterface;
+use Bdf\Queue\Connection\CountableQueueDriverInterface;
 use Bdf\Queue\Connection\ManageableQueueInterface;
+use Bdf\Queue\Connection\PeekableQueueDriverInterface;
 use Bdf\Queue\Connection\QueueDriverInterface;
 use Bdf\Queue\Consumer\ConsumerInterface;
 use Bdf\Queue\Consumer\QueueConsumer;
@@ -15,12 +17,13 @@ use Bdf\Queue\Consumer\ReceiverInterface;
 use Bdf\Queue\Destination\DestinationInterface;
 use Bdf\Queue\Destination\Promise\NullPromise;
 use Bdf\Queue\Destination\Promise\PromiseInterface;
+use Bdf\Queue\Destination\ReadableDestinationInterface;
 use Bdf\Queue\Message\Message;
 
 /**
  * Destination for simple queue
  */
-final class QueueDestination implements DestinationInterface
+final class QueueDestination implements DestinationInterface, ReadableDestinationInterface
 {
     /**
      * @var QueueDriverInterface
@@ -111,6 +114,34 @@ final class QueueDestination implements DestinationInterface
         if ($connection instanceof ManageableQueueInterface) {
             $connection->deleteQueue($this->queue);
         }
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function count(): int
+    {
+        $queue = $this->driver->connection()->queue();
+
+        if (!$queue instanceof CountableQueueDriverInterface) {
+            throw new \BadMethodCallException(__METHOD__.' works only with countable connection.');
+        }
+
+        return $queue->count($this->queue);
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function peek(int $rowCount = 20, int $page = 1): array
+    {
+        $queue = $this->driver->connection()->queue();
+
+        if (!$queue instanceof PeekableQueueDriverInterface) {
+            throw new \BadMethodCallException(__METHOD__.' works only with peekable connection.');
+        }
+
+        return $queue->peek($this->queue, $rowCount, $page);
     }
 
     /**

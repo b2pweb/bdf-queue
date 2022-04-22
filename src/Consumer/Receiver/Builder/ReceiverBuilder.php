@@ -23,6 +23,7 @@ use Bdf\Queue\Processor\JobHintProcessorResolver;
 use Bdf\Queue\Processor\MapProcessorResolver;
 use Bdf\Queue\Processor\ProcessorInterface;
 use Bdf\Queue\Processor\SingleProcessorResolver;
+use Bdf\Queue\Testing\MessageWatcherReceiver;
 use Bdf\Serializer\SerializerInterface;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
@@ -202,9 +203,9 @@ class ReceiverBuilder
      *
      * @see MemoryLimiterReceiver
      */
-    public function memory(int $bytes): ReceiverBuilder
+    public function memory(int $bytes, callable $memoryResolver = null): ReceiverBuilder
     {
-        return $this->add(MemoryLimiterReceiver::class, [$bytes]);
+        return $this->add(MemoryLimiterReceiver::class, [$bytes, $memoryResolver]);
     }
 
     /**
@@ -330,6 +331,18 @@ class ReceiverBuilder
                 $validator
             )
         );
+    }
+
+    /**
+     * Add a watcher on the middleware stack
+     *
+     * @param callable $callable Receive the message and the consumer in parameters. The message is null in case of timeout
+     *
+     * @return $this
+     */
+    public function watch(callable $callable): ReceiverBuilder
+    {
+        return $this->add(MessageWatcherReceiver::class, [$callable]);
     }
 
     /**

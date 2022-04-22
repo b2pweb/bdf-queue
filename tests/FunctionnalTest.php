@@ -10,16 +10,14 @@ use Bdf\Queue\Connection\QueueDriverInterface;
 use Bdf\Queue\Consumer\Reader\BufferedReader;
 use Bdf\Queue\Consumer\Receiver\Builder\ReceiverBuilder;
 use Bdf\Queue\Consumer\Receiver\Builder\ReceiverLoader;
-use Bdf\Queue\Consumer\Receiver\MemoryLimiterReceiver;
 use Bdf\Queue\Consumer\Receiver\MessageCountLimiterReceiver;
 use Bdf\Queue\Consumer\Receiver\MessageLoggerReceiver;
-use Bdf\Queue\Consumer\Receiver\MessageStoreReceiver;
 use Bdf\Queue\Consumer\Receiver\ProcessorReceiver;
-use Bdf\Queue\Consumer\Receiver\RetryMessageReceiver;
 use Bdf\Queue\Consumer\Receiver\StopWhenEmptyReceiver;
 use Bdf\Queue\Consumer\ReceiverInterface;
 use Bdf\Queue\Destination\DestinationManager;
 use Bdf\Queue\Exception\SerializationException;
+use Bdf\Queue\Failer\FailedJobStorageInterface;
 use Bdf\Queue\Failer\MemoryFailedJobRepository;
 use Bdf\Queue\Message\EnvelopeInterface;
 use Bdf\Queue\Message\ErrorMessage;
@@ -27,6 +25,7 @@ use Bdf\Queue\Message\Message;
 use Bdf\Queue\Message\QueuedMessage;
 use Bdf\Queue\Processor\CallbackProcessor;
 use Bdf\Queue\Processor\MapProcessorResolver;
+use Bdf\Queue\Testing\MessageStacker;
 use Bdf\Queue\Testing\MessageWatcherReceiver;
 use Bdf\Queue\Testing\QueueHelper;
 use Bdf\Queue\Testing\StackMessagesReceiver;
@@ -67,7 +66,7 @@ class FunctionnalTest extends TestCase
      */
     public function test_queue_method()
     {
-        $message = Message::createFromJob(QueueHandler::class, 'test_queue_method');
+        $message = Message::createFromJob(QueueHandler::class, 'test_queue_method')->setDestination('test::test');
 
         $destination = $this->manager->for($message);
         $destination->send($message);
@@ -91,7 +90,7 @@ class FunctionnalTest extends TestCase
      */
     public function test_queue_with_data_object()
     {
-        $message = Message::createFromJob(QueueHandler::class, new QueueMessage('test_queue_with_data_object'));
+        $message = Message::createFromJob(QueueHandler::class, new QueueMessage('test_queue_with_data_object'))->setDestination('test::test');
 
         $destination = $this->manager->for($message);
         $destination->send($message);
@@ -112,7 +111,7 @@ class FunctionnalTest extends TestCase
      */
     public function test_push_message_on_queue_should_set_the_queue_name_on_the_message()
     {
-        $message = Message::create('test_queue_method', 'my-queue');
+        $message = Message::create('test_queue_method')->setDestination('test::my-queue');
 
         $destination = $this->manager->for($message);
         $destination->send($message);
@@ -217,22 +216,20 @@ class FunctionnalTest extends TestCase
      */
     public function test_worker_consume_job()
     {
-
-        /** @var MessageWatcherReceiver $watcher */
-        $watcher = null;
-        $message = Message::createFromJob(QueueHandler::class, 'test message');
+        $watcher = new MessageStacker();
+        $message = Message::createFromJob(QueueHandler::class, 'test message')->setDestination('test::test');
 
         $destination = $this->manager->for($message);
         $destination->send($message);
 
         $helper = new QueueHelper($this->container);
-        $helper->consume(1, $destination, null, function(ReceiverInterface $extension) use(&$watcher) {
-            return $watcher = new MessageWatcherReceiver($extension);
+        $helper->consume(1, $destination, function(ReceiverBuilder $builder) use($watcher) {
+            $builder->watch($watcher);
         });
 
         $this->assertEquals($message->data(), QueueObserver::$data);
-        $this->assertFalse($watcher->getLastMessage()->isRejected());
-        $this->assertTrue($watcher->getLastMessage()->isDeleted());
+        $this->assertFalse($watcher->last()->isRejected());
+        $this->assertTrue($watcher->last()->isDeleted());
     }
 
     /**
@@ -243,7 +240,7 @@ class FunctionnalTest extends TestCase
         $lastMessage = null;
         $lastJob = null;
 
-        $message = Message::create('Hello world', 'queue');
+        $message = Message::create('Hello world')->setDestination('test::queue');
         $destination = $this->manager->for($message);
         $destination->send($message);
 
@@ -274,8 +271,8 @@ class FunctionnalTest extends TestCase
         $lastJob = false;
 
         $helper = new QueueHelper($this->container);
-        $helper->consume(1, $this->defaultQueue, null, function(ReceiverInterface $extension) use(&$lastJob) {
-            return new MessageWatcherReceiver($extension, function($envelope) use(&$lastJob) {$lastJob = $envelope;});
+        $helper->consume(1, $this->defaultQueue, function(ReceiverBuilder $builder) use(&$lastJob) {
+            $builder->watch(function($envelope) use(&$lastJob) {$lastJob = $envelope;});
         });
 
         $this->assertNull($lastJob);
@@ -286,13 +283,13 @@ class FunctionnalTest extends TestCase
      */
     public function test_worker_consume_many_queues()
     {
-        $message = Message::createFromJob(QueueHandler::class, 'test message', 'test2');
+        $message = Message::createFromJob(QueueHandler::class, 'test message')->setDestination('test::test2');
 
         $destination = $this->manager->for($message);
         $destination->send($message);
 
         $helper = new QueueHelper($this->container);
-        $helper->consume(1, $destination, 'test1,test2');
+        $helper->consume(1, 'test::test1,test2');
 
         $this->assertEquals($message->data(), QueueObserver::$data);
     }
@@ -302,7 +299,7 @@ class FunctionnalTest extends TestCase
      */
     public function test_release_all_prefetched_jobs()
     {
-        $message = Message::createFromJob(QueueHandler::class, 'test message', 'test');
+        $message = Message::createFromJob(QueueHandler::class, 'test message')->setDestination('test::test');
 
         $destination = $this->manager->for($message);
         $destination->send($message);
@@ -310,7 +307,7 @@ class FunctionnalTest extends TestCase
         $destination->send($message);
 
         $helper = new QueueHelper($this->container);
-        $helper->consume(1, $destination, 'test');
+        $helper->consume(1, $destination);
 
         /** @var QueueDriverInterface $queue */
         $queue = $this->container->get(ConnectionDriverFactoryInterface::class)->create($this->defaultQueue)->queue();
@@ -322,7 +319,7 @@ class FunctionnalTest extends TestCase
      */
     public function test_worker_fail_job()
     {
-        $message = Message::createFromJob(QueueHandler::class.'@error', 'test_queue_failed');
+        $message = Message::createFromJob(QueueHandler::class.'@error', 'test_queue_failed')->setDestination('test::test');
 
         $destination = $this->manager->for($message);
         $destination->send($message);
@@ -345,25 +342,24 @@ class FunctionnalTest extends TestCase
      */
     public function test_worker_retry_job()
     {
-        /** @var MessageWatcherReceiver $watcher */
-        $watcher = null;
-        $message = Message::createFromJob(QueueHandler::class.'@error', 'test_queue_failed');
+        $watcher = new MessageStacker();
+        $message = Message::createFromJob(QueueHandler::class.'@error', 'test_queue_failed')->setDestination('test::test');
 
         $destination = $this->manager->for($message);
         $destination->send($message);
 
         $helper = new QueueHelper($this->container);
-        $helper->consume(1, $destination, null, function(ReceiverInterface $extension) use(&$watcher) {
-            $extension = new RetryMessageReceiver($extension, $this->createMock(LoggerInterface::class));
-            return $watcher = new MessageWatcherReceiver($extension);
+        $helper->consume(1, $destination, function(ReceiverBuilder $builder) use($watcher) {
+            $builder->retry(3);
+            $builder->watch($watcher);
         });
 
         /** @var QueueDriverInterface $queue */
         $queue = $this->container->get(ConnectionDriverFactoryInterface::class)->create($this->defaultQueue)->queue();
 
         $this->assertEquals(1, $queue->count($this->defaultQueue));
-        $this->assertTrue($watcher->getLastMessage()->isRejected());
-        $this->assertEquals(2, $watcher->getLastMessage()->message()->attempts());
+        $this->assertTrue($watcher->last()->isRejected());
+        $this->assertEquals(2, $watcher->last()->message()->attempts());
     }
 
     /**
@@ -371,18 +367,17 @@ class FunctionnalTest extends TestCase
      */
     public function test_max_try()
     {
-        /** @var MessageWatcherReceiver $watcher */
-        $watcher = null;
-        $message = Message::createFromJob(QueueHandler::class.'@error', 'test_queue_failed');
+        $watcher = new MessageStacker();
+        $message = Message::createFromJob(QueueHandler::class.'@error', 'test_queue_failed')->setDestination('test::test');
 
         $destination = $this->manager->for($message);
         $destination->send($message);
 
         try {
             $helper = new QueueHelper($this->container);
-            $helper->consume(1, $destination, null, function(ReceiverInterface $extension) use(&$watcher) {
-                $extension = new RetryMessageReceiver($extension, $this->createMock(LoggerInterface::class), 1, 0);
-                return $watcher = new MessageWatcherReceiver($extension);
+            $helper->consume(1, $destination, function(ReceiverBuilder $builder) use($watcher) {
+                $builder->retry(1, 0);
+                $builder->watch($watcher);
             });
         } catch (\Exception $exception) {
 
@@ -392,23 +387,24 @@ class FunctionnalTest extends TestCase
         $queue = $this->container->get(ConnectionDriverFactoryInterface::class)->create($this->defaultQueue)->queue();
 
         $this->assertEquals(1, $queue->count($this->defaultQueue));
-        $this->assertTrue($watcher->getLastMessage()->isRejected());
-        $this->assertEquals(2, $watcher->getLastMessage()->message()->attempts());
+        $this->assertTrue($watcher->last()->isRejected());
+        $this->assertEquals(2, $watcher->last()->message()->attempts());
 
-        $watcher = null;
+        $watcher->clear();
+
         try {
             $helper = new QueueHelper($this->container);
-            $helper->consume(1, $destination, null, function (ReceiverInterface $extension) use (&$watcher) {
-                $extension = new RetryMessageReceiver($extension, $this->createMock(LoggerInterface::class), 1, 0);
-                return $watcher = new MessageWatcherReceiver($extension);
+            $helper->consume(1, $destination, function (ReceiverBuilder $builder) use ($watcher) {
+                $builder->retry(1, 0);
+                $builder->watch($watcher);
             });
         } catch (\Exception $exception) {
 
         }
 
         $this->assertEquals(0, $queue->count($this->defaultQueue));
-        $this->assertTrue($watcher->getLastMessage()->isRejected());
-        $this->assertEquals(2, $watcher->getLastMessage()->message()->attempts());
+        $this->assertTrue($watcher->last()->isRejected());
+        $this->assertEquals(2, $watcher->last()->message()->attempts());
     }
 
     /**
@@ -416,9 +412,8 @@ class FunctionnalTest extends TestCase
      */
     public function test_disable_max_try()
     {
-        /** @var MessageWatcherReceiver $watcher */
-        $watcher = null;
-        $message = Message::createFromJob(QueueHandler::class.'@error', 'test_queue_failed');
+        $watcher = new MessageStacker();
+        $message = Message::createFromJob(QueueHandler::class.'@error', 'test_queue_failed')->setDestination('test::test');
         $message->setMaxTries(-1);
 
         $destination = $this->manager->for($message);
@@ -426,9 +421,9 @@ class FunctionnalTest extends TestCase
 
         try {
             $helper = new QueueHelper($this->container);
-            $helper->consume(1, $destination, null, function (ReceiverInterface $extension) use (&$watcher) {
-                $extension = new RetryMessageReceiver($extension, $this->createMock(LoggerInterface::class), 1, 0);
-                return $watcher = new MessageWatcherReceiver($extension);
+            $helper->consume(1, $destination, function (ReceiverBuilder $builder) use ($watcher) {
+                $builder->retry(1, 0);
+                $builder->watch($watcher);
             });
         } catch (\Exception $exception) {
 
@@ -437,8 +432,8 @@ class FunctionnalTest extends TestCase
         /** @var QueueDriverInterface $queue */
         $queue = $this->container->get(ConnectionDriverFactoryInterface::class)->create($this->defaultQueue)->queue();
 
-        $this->assertTrue($watcher->getLastMessage()->isRejected());
-        $this->assertEquals(1, $watcher->getLastMessage()->message()->attempts());
+        $this->assertTrue($watcher->last()->isRejected());
+        $this->assertEquals(1, $watcher->last()->message()->attempts());
         $this->assertEquals(0, $queue->count($this->defaultQueue));
     }
 
@@ -447,15 +442,15 @@ class FunctionnalTest extends TestCase
      */
     public function test_memory_limit_reached()
     {
-        $message = Message::createFromJob(QueueHandler::class, 'test_queue');
+        $message = Message::createFromJob(QueueHandler::class, 'test_queue')->setDestination('test::test');
 
         $destination = $this->manager->for($message);
         $destination->send($message);
         $destination->send($message);
 
         $helper = new QueueHelper($this->container);
-        $helper->consume(2, $destination, null, function(ReceiverInterface $extension) use(&$lastJob) {
-            return new MemoryLimiterReceiver($extension, 1);
+        $helper->consume(2, $destination, function(ReceiverBuilder $builder) {
+            $builder->memory(1);
         });
 
         /** @var QueueDriverInterface $queue */
@@ -468,24 +463,23 @@ class FunctionnalTest extends TestCase
      */
     public function test_memory_limit()
     {
-        /** @var MessageWatcherReceiver $watcher */
-        $watcher = null;
-        $message = Message::createFromJob(QueueHandler::class, 'test_queue');
+        $watcher = new MessageStacker();
+        $message = Message::createFromJob(QueueHandler::class, 'test_queue')->setDestination('test::test');
 
         $destination = $this->manager->for($message);
         $destination->send($message);
 
         $helper = new QueueHelper($this->container);
-        $helper->consume(1, $destination, null, function(ReceiverInterface $extension) use(&$watcher) {
-            $extension = new MemoryLimiterReceiver($extension, 1, null, function() {return 0;});
-            return $watcher = new MessageWatcherReceiver($extension);
+        $helper->consume(1, $destination, function(ReceiverBuilder $builder) use($watcher) {
+            $builder->memory(1, function() {return 0;});
+            $builder->watch($watcher);
         });
 
         /** @var QueueDriverInterface $queue */
         $queue = $this->container->get(ConnectionDriverFactoryInterface::class)->create($this->defaultQueue)->queue();
         $this->assertEquals(0, $queue->count($this->defaultQueue));
         $this->assertEquals($message->data(), QueueObserver::$data);
-        $this->assertFalse($watcher->getLastMessage()->isRejected());
+        $this->assertFalse($watcher->last()->isRejected());
     }
 
     /**
@@ -537,8 +531,9 @@ class FunctionnalTest extends TestCase
     public function test_failure()
     {
         $failer = new MemoryFailedJobRepository();
+        $this->container->add(FailedJobStorageInterface::class, $failer);
 
-        $message = QueuedMessage::createFromJob(QueueHandler::class.'@error', 'test_queue_failed');
+        $message = QueuedMessage::createFromJob(QueueHandler::class.'@error', 'test_queue_failed')->setDestination('test::test');
         $message->setAttempts(3);
 
         $destination = $this->manager->for($message);
@@ -546,8 +541,8 @@ class FunctionnalTest extends TestCase
 
         try {
             $helper = new QueueHelper($this->container);
-            $helper->consume(1, $destination, null, function(ReceiverInterface $extension) use($failer) {
-                return new MessageStoreReceiver($extension, $failer, $this->createMock(LoggerInterface::class));
+            $helper->consume(1, $destination, function(ReceiverBuilder $builder) {
+                $builder->store();
             });
         } catch (\Exception $exception) {
 
@@ -578,7 +573,7 @@ class FunctionnalTest extends TestCase
      */
     public function test_rpc_received_wrong_job()
     {
-        $message = Message::createFromJob(QueueHandler::class, 'test message');
+        $message = Message::createFromJob(QueueHandler::class, 'test message')->setDestination('test::test');
         $message->setNeedsReply(true);
 
         $destination = $this->manager->for($message);

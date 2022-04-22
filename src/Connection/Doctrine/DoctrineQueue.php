@@ -3,6 +3,7 @@
 namespace Bdf\Queue\Connection\Doctrine;
 
 use Bdf\Queue\Connection\ConnectionDriverInterface;
+use Bdf\Queue\Connection\CountableQueueDriverInterface;
 use Bdf\Queue\Connection\Extension\QueueEnvelopeHelper;
 use Bdf\Queue\Connection\PeekableQueueDriverInterface;
 use Bdf\Queue\Connection\QueueDriverInterface;
@@ -18,7 +19,7 @@ use Ramsey\Uuid\Uuid;
 /**
  * Queue driver for PrimeConnection
  */
-class DoctrineQueue implements QueueDriverInterface, ReservableQueueDriverInterface, PeekableQueueDriverInterface
+class DoctrineQueue implements QueueDriverInterface, ReservableQueueDriverInterface, PeekableQueueDriverInterface, CountableQueueDriverInterface
 {
     use QueueEnvelopeHelper;
 
@@ -201,13 +202,13 @@ class DoctrineQueue implements QueueDriverInterface, ReservableQueueDriverInterf
     /**
      * {@inheritdoc}
      */
-    public function count(string $queue): ?int
+    public function count(string $queueName): int
     {
         $query = $this->connection->connection()->createQueryBuilder()
             ->select('COUNT(*)')
             ->from($this->connection->table())
             ->andWhere('queue = :queue')
-            ->setParameter('queue', $queue);
+            ->setParameter('queue', $queueName);
 
         $result = method_exists($query, 'executeQuery') ? $query->executeQuery() : $query->execute();
 
