@@ -48,7 +48,7 @@ class QueueHelperTest extends TestCase
     {
         $this->helper->init('test', 'legacy');
 
-        $this->helper->destination()->send(Message::createFromJob(TestQueueAssertionHandler::class.'@handle', 'data', 'legacy'));
+        $this->helper->destinations()->send(Message::createFromJob(TestQueueAssertionHandler::class.'@handle', 'data', 'legacy')->setConnection('test'));
 
         $this->assertSame(1, $this->helper->count('legacy'));
         $this->assertSame(1, $this->helper->count('legacy', 'test'));
@@ -91,7 +91,7 @@ class QueueHelperTest extends TestCase
      */
     public function test_assertion_job()
     {
-        $this->helper->destination()->send(Message::createFromJob('handler@handle', 'data')->setDestination('test::myQueue'));
+        $this->helper->destinations()->send(Message::createFromJob('handler@handle', 'data')->setDestination('test::myQueue'));
 
         $this->assertSame(1, $this->helper->count('test::myQueue'));
         $this->assertTrue($this->helper->contains('@handle', 'test::myQueue'));
@@ -108,8 +108,8 @@ class QueueHelperTest extends TestCase
     public function test_consume()
     {
         TestQueueAssertionHandler::$count = 0;
-        $this->helper->destination()->send(Message::createFromJob(TestQueueAssertionHandler::class, 'data1')->setDestination('test::myQueue'));
-        $this->helper->destination()->send(Message::createFromJob(TestQueueAssertionHandler::class, 'data2')->setDestination('test::myQueue'));
+        $this->helper->destinations()->send(Message::createFromJob(TestQueueAssertionHandler::class, 'data1')->setDestination('test::myQueue'));
+        $this->helper->destinations()->send(Message::createFromJob(TestQueueAssertionHandler::class, 'data2')->setDestination('test::myQueue'));
 
         $this->helper->consume(2, 'test::myQueue');
 
@@ -123,8 +123,8 @@ class QueueHelperTest extends TestCase
     public function test_consume_one()
     {
         TestQueueAssertionHandler::$count = 0;
-        $this->helper->destination()->send(Message::createFromJob(TestQueueAssertionHandler::class, 'data1')->setDestination('test::myQueue'));
-        $this->helper->destination()->send(Message::createFromJob(TestQueueAssertionHandler::class, 'data2')->setDestination('test::myQueue'));
+        $this->helper->destinations()->send(Message::createFromJob(TestQueueAssertionHandler::class, 'data1')->setDestination('test::myQueue'));
+        $this->helper->destinations()->send(Message::createFromJob(TestQueueAssertionHandler::class, 'data2')->setDestination('test::myQueue'));
 
         $this->helper->consume(1, 'test::myQueue');
 
@@ -138,9 +138,9 @@ class QueueHelperTest extends TestCase
     public function test_consume_many()
     {
         TestQueueAssertionHandler::$count = 0;
-        $this->helper->destination()->send(Message::createFromJob(TestQueueAssertionHandler::class, 'data1')->setDestination('test::myQueue'));
-        $this->helper->destination()->send(Message::createFromJob(TestQueueAssertionHandler::class, 'data2')->setDestination('test::myQueue'));
-        $this->helper->destination()->send(Message::createFromJob(TestQueueAssertionHandler::class, 'data2')->setDestination('test::myQueue'));
+        $this->helper->destinations()->send(Message::createFromJob(TestQueueAssertionHandler::class, 'data1')->setDestination('test::myQueue'));
+        $this->helper->destinations()->send(Message::createFromJob(TestQueueAssertionHandler::class, 'data2')->setDestination('test::myQueue'));
+        $this->helper->destinations()->send(Message::createFromJob(TestQueueAssertionHandler::class, 'data2')->setDestination('test::myQueue'));
         $this->helper->consume(2, 'test::myQueue');
 
         $this->assertSame(1, $this->helper->count('test::myQueue'));
@@ -154,9 +154,9 @@ class QueueHelperTest extends TestCase
     {
         TestQueueAssertionHandler::$count = 0;
 
-        $this->helper->destination()->send(Message::createFromJob(TestQueueAssertionHandler::class, 'data1')->setDestination('test::myQueue'));
-        $this->helper->destination()->send(Message::createFromJob(TestQueueAssertionHandler::class, 'data2')->setDestination('test::myQueue'));
-        $this->helper->destination()->send(Message::createFromJob(TestQueueAssertionHandler::class, 'data3')->setDestination('test::myQueue'));
+        $this->helper->destinations()->send(Message::createFromJob(TestQueueAssertionHandler::class, 'data1')->setDestination('test::myQueue'));
+        $this->helper->destinations()->send(Message::createFromJob(TestQueueAssertionHandler::class, 'data2')->setDestination('test::myQueue'));
+        $this->helper->destinations()->send(Message::createFromJob(TestQueueAssertionHandler::class, 'data3')->setDestination('test::myQueue'));
 
         $this->helper->consume(2, 'test::myQueue', function(ReceiverBuilder $builder) {
             $builder->watch(function() {

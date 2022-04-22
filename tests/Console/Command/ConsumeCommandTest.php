@@ -85,7 +85,7 @@ class ConsumeCommandTest extends TestCase
      */
     public function test_consume_queues()
     {
-        $message = Message::createFromJob([QueueObserver::class, 'handleOk'], 'foo', 'test2');
+        $message = Message::createFromJob([QueueObserver::class, 'handleOk'], 'foo', 'test2')->setConnection('test');
         $this->manager->send($message);
 
         $command = new ConsumeCommand($this->manager, $this->container->get(ReceiverLoader::class));

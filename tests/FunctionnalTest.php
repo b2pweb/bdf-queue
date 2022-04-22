@@ -71,18 +71,18 @@ class FunctionnalTest extends TestCase
         $destination = $this->manager->for($message);
         $destination->send($message);
 
+        $watcher = new MessageStacker();
         $builder = new ReceiverBuilder($this->container);
         $builder
             ->stopWhenEmpty()
             ->max(1)
+            ->watch($watcher)
         ;
 
-        $extension = $builder->build();
-        $extension = $watcher = new MessageWatcherReceiver($extension);
-        $destination->consumer($extension)->consume(0);
+        $destination->consumer($builder->build())->consume(0);
 
         $this->assertEquals($message->data(), QueueObserver::$data);
-        $this->assertEquals(0, $watcher->getLastMessage()->connection()->queue()->count($message->queue()));
+        $this->assertEquals(0, $watcher->last()->connection()->queue()->count($message->queue()));
     }
 
     /**

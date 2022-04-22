@@ -10,7 +10,7 @@ use InvalidArgumentException;
  * Store FailedJob search filters
  * The criteria supports only on filter per field
  *
- * @see FailedJobStorageInterface::search()
+ * @see FailedJobRepositoryInterface::search()
  */
 final class FailedJobCriteria
 {

@@ -6,6 +6,8 @@ use Bdf\Queue\Consumer\ConsumerInterface;
 use Bdf\Queue\Consumer\DelegateHelper;
 use Bdf\Queue\Consumer\ReceiverInterface;
 use Bdf\Queue\Failer\FailedJob;
+use Bdf\Queue\Failer\FailedJobRepositoryAdapter;
+use Bdf\Queue\Failer\FailedJobRepositoryInterface;
 use Bdf\Queue\Failer\FailedJobStorageInterface;
 use Bdf\Queue\Message\EnvelopeInterface;
 use Psr\Log\LoggerInterface;
@@ -28,9 +30,9 @@ class MessageStoreReceiver implements ReceiverInterface
     private $logger;
 
     /**
-     * @var FailedJobStorageInterface
+     * @var FailedJobRepositoryInterface
      */
-    private $storage;
+    private $repository;
 
     /**
      * StopWhenEmptyReceiver constructor.
@@ -42,7 +44,7 @@ class MessageStoreReceiver implements ReceiverInterface
     public function __construct(ReceiverInterface $delegate, FailedJobStorageInterface $storage, LoggerInterface $logger)
     {
         $this->delegate = $delegate;
-        $this->storage = $storage;
+        $this->repository = FailedJobRepositoryAdapter::adapt($storage);
         $this->logger = $logger;
     }
 
@@ -59,7 +61,7 @@ class MessageStoreReceiver implements ReceiverInterface
             if ($message->message()->noStore() !== true) {
                 $this->logger->info('Storing the job "'.$message->message()->name().'".');
 
-                $this->storage->store(FailedJob::create($message->message(), $exception));
+                $this->repository->store(FailedJob::create($message->message(), $exception));
             }
 
             throw $exception;
