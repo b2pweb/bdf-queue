@@ -10,6 +10,8 @@ use Bdf\Queue\Message\Message;
 use Bdf\Queue\Tests\QueueServiceProvider;
 use League\Container\Container;
 use PHPUnit\Framework\TestCase;
+use Symfony\Component\Console\Application;
+use Symfony\Component\Console\Tester\CommandCompletionTester;
 use Symfony\Component\Console\Tester\CommandTester;
 
 /**
@@ -101,5 +103,38 @@ Server: test
 EOF;
 
         $this->assertSame($expected, $tester->getDisplay());
+    }
+
+    /**
+     * @dataProvider provideCompletionSuggestions
+     */
+    public function test_complete(array $input, array $expectedSuggestions)
+    {
+        $command = new InfoCommand($this->container->get(ConnectionDriverFactoryInterface::class));
+        $application = new Application();
+        $application->add($command);
+
+        $tester = new CommandCompletionTester($application->get('queue:info'));
+        $suggestions = $tester->complete($input);
+
+        $this->assertSame($expectedSuggestions, $suggestions);
+    }
+
+    public function provideCompletionSuggestions()
+    {
+        yield 'namespace' => [
+            [''],
+            ['test'],
+        ];
+
+        yield 'namespace started' => [
+            ['t'],
+            ['test'],
+        ];
+
+        yield 'filter option' => [
+            ['--filter'],
+            ['queues', 'workers'],
+        ];
     }
 }

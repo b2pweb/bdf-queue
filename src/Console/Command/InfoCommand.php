@@ -5,6 +5,8 @@ namespace Bdf\Queue\Console\Command;
 use Bdf\Queue\Connection\ConnectionDriverInterface;
 use Bdf\Queue\Connection\Factory\ConnectionDriverFactoryInterface;
 use Symfony\Component\Console\Command\Command;
+use Symfony\Component\Console\Completion\CompletionInput;
+use Symfony\Component\Console\Completion\CompletionSuggestions;
 use Symfony\Component\Console\Helper\Table;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
@@ -42,7 +44,7 @@ class InfoCommand extends Command
     {
         $this
             ->setDescription('Display queue info')
-            ->addArgument('connection', InputArgument::REQUIRED | InputArgument::IS_ARRAY, 'Queue connections separate by comma.')
+            ->addArgument('connection', InputArgument::REQUIRED | InputArgument::IS_ARRAY, 'Queue connections.')
             ->addOption('filter', 'f', InputOption::VALUE_REQUIRED, 'This will display only the report filtered by its name. The list of reports depends of each driver.')
         ;
     }
@@ -85,5 +87,19 @@ class InfoCommand extends Command
         }
 
         return 0;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function complete(CompletionInput $input, CompletionSuggestions $suggestions): void
+    {
+        if ($input->mustSuggestArgumentValuesFor('connection')) {
+            $suggestions->suggestValues($this->connectionFactory->connectionNames());
+        }
+
+        if ($input->mustSuggestOptionValuesFor('filter')) {
+            $suggestions->suggestValues(['queues', 'workers']);
+        }
     }
 }

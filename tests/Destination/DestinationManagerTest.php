@@ -233,4 +233,20 @@ class DestinationManagerTest extends TestCase
     {
         $this->assertNull($this->manager->call($message = (new Message('Hello World !'))->setConnection('other')->setQueue('foo')));
     }
+
+    /**
+     *
+     */
+    public function test_connection_names()
+    {
+        $this->assertSame(['test', 'other', 'prefetched'], $this->manager->connectionNames());
+    }
+
+    /**
+     *
+     */
+    public function test_destination_names()
+    {
+        $this->assertSame(['d1'], $this->manager->destinationNames());
+    }
 }

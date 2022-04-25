@@ -48,4 +48,17 @@ class ConfigurationDestinationFactoryTest extends TestCase
         $destination = $factory->create('dest');
         $this->assertEquals($destination, $this->innerFactory->create('queue://test/my-queue'));
     }
+
+    /**
+     *
+     */
+    public function test_getting_destination_names()
+    {
+        $factory = new ConfigurationDestinationFactory([
+            'test1' => 'queue://test/my-queue',
+            'test2' => 'queue://test/your-queue',
+        ], $this->innerFactory);
+
+        $this->assertSame(['test1', 'test2'], $factory->destinationNames());
+    }
 }

@@ -5,6 +5,8 @@ namespace Bdf\Queue\Console\Command;
 use Bdf\Queue\Connection\AmqpLib\AmqpLibConnection;
 use Bdf\Queue\Connection\Factory\ConnectionDriverFactoryInterface;
 use Symfony\Component\Console\Command\Command;
+use Symfony\Component\Console\Completion\CompletionInput;
+use Symfony\Component\Console\Completion\CompletionSuggestions;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -67,5 +69,15 @@ class BindCommand extends Command
         ));
 
         return 0;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function complete(CompletionInput $input, CompletionSuggestions $suggestions): void
+    {
+        if ($input->mustSuggestArgumentValuesFor('connection')) {
+            $suggestions->suggestValues($this->connectionFactory->connectionNames());
+        }
     }
 }

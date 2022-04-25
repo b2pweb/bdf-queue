@@ -39,4 +39,12 @@ final class CachedDestinationFactory implements DestinationFactoryInterface
 
         return $this->cache[$destination] = $this->factory->create($destination);
     }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function destinationNames(): array
+    {
+        return $this->factory->destinationNames();
+    }
 }

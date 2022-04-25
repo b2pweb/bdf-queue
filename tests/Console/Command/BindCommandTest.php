@@ -6,6 +6,8 @@ use Bdf\Queue\Connection\AmqpLib\AmqpLibConnection;
 use Bdf\Queue\Connection\ConnectionDriverInterface;
 use Bdf\Queue\Connection\Factory\ConnectionDriverFactoryInterface;
 use PHPUnit\Framework\TestCase;
+use Symfony\Component\Console\Application;
+use Symfony\Component\Console\Tester\CommandCompletionTester;
 use Symfony\Component\Console\Tester\CommandTester;
 
 /**
@@ -57,5 +59,36 @@ class BindCommandTest extends TestCase
         ]);
 
         $this->assertRegExp('/^The connection "foo" does not manage binding route/', $tester->getDisplay());
+    }
+
+    /**
+     * @dataProvider provideCompletionSuggestions
+     */
+    public function test_complete(array $input, array $expectedSuggestions)
+    {
+        $factory = $this->createMock(ConnectionDriverFactoryInterface::class);
+        $factory->expects($this->any())->method('connectionNames')->willReturn(['foo', 'bar']);
+
+        $command = new BindCommand($factory);
+        $application = new Application();
+        $application->add($command);
+
+        $tester = new CommandCompletionTester($application->get('queue:bind'));
+        $suggestions = $tester->complete($input);
+
+        $this->assertSame($expectedSuggestions, $suggestions);
+    }
+
+    public function provideCompletionSuggestions()
+    {
+        yield 'namespace' => [
+            [''],
+            ['foo', 'bar'],
+        ];
+
+        yield 'namespace started' => [
+            ['f'],
+            ['foo', 'bar'],
+        ];
     }
 }

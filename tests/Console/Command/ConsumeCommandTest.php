@@ -15,6 +15,8 @@ use Bdf\Queue\Tests\QueueServiceProvider;
 use League\Container\Container;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
+use Symfony\Component\Console\Application;
+use Symfony\Component\Console\Tester\CommandCompletionTester;
 use Symfony\Component\Console\Tester\CommandTester;
 
 /**
@@ -374,6 +376,39 @@ class ConsumeCommandTest extends TestCase
         $this->assertEquals('triggered', QueueObserver::$data);
         $this->assertStringContainsString('[test::bar] "Bdf\Queue\Console\Command\QueueObserver@handleOk" starting', $logs[0]['message']);
         $this->assertStringContainsString('The worker will stop for no consuming job', end($logs)['message']);
+    }
+
+    /**
+     * @dataProvider provideCompletionSuggestions
+     */
+    public function test_complete(array $input, array $expectedSuggestions)
+    {
+        $command = new ConsumeCommand($this->manager, $this->container->get(ReceiverLoader::class));
+        $application = new Application();
+        $application->add($command);
+
+        $tester = new CommandCompletionTester($application->get('queue:consume'));
+        $suggestions = $tester->complete($input);
+
+        $this->assertSame($expectedSuggestions, $suggestions);
+    }
+
+    public function provideCompletionSuggestions()
+    {
+        yield 'namespace' => [
+            [''],
+            ['foo', 'test'],
+        ];
+
+        yield 'namespace started' => [
+            ['f'],
+            ['foo', 'test'],
+        ];
+
+        yield 'logger option' => [
+            ['--logger'],
+            ['default', 'stdout', 'null'],
+        ];
     }
 }
 

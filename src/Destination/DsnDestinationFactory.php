@@ -72,6 +72,14 @@ final class DsnDestinationFactory implements DestinationFactoryInterface
     }
 
     /**
+     * {@inheritdoc}
+     */
+    public function destinationNames(): array
+    {
+        return [];
+    }
+
+    /**
      * @return callable[]
      */
     private function defaultFactories()

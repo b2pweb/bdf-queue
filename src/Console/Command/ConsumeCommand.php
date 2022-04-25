@@ -10,6 +10,8 @@ use Bdf\Queue\Worker;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Symfony\Component\Console\Command\Command;
+use Symfony\Component\Console\Completion\CompletionInput;
+use Symfony\Component\Console\Completion\CompletionSuggestions;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Logger\ConsoleLogger;
@@ -194,5 +196,17 @@ class ConsumeCommand extends Command
         }
 
         return $this->logger;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function complete(CompletionInput $input, CompletionSuggestions $suggestions): void
+    {
+        $this->createAutocomplete($this->manager, $input, $suggestions);
+
+        if ($input->mustSuggestOptionValuesFor('logger')) {
+            $suggestions->suggestValues(['default', 'stdout', 'null']);
+        }
     }
 }

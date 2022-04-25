@@ -5,6 +5,8 @@ namespace Bdf\Queue\Console\Command;
 use Bdf\Queue\Console\Command\Extension\DestinationExtension;
 use Bdf\Queue\Destination\DestinationManager;
 use Symfony\Component\Console\Command\Command;
+use Symfony\Component\Console\Completion\CompletionInput;
+use Symfony\Component\Console\Completion\CompletionSuggestions;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -66,5 +68,13 @@ class SetupCommand extends Command
         }
 
         return 0;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function complete(CompletionInput $input, CompletionSuggestions $suggestions): void
+    {
+        $this->createAutocomplete($this->manager, $input, $suggestions);
     }
 }

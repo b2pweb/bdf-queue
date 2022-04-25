@@ -6,8 +6,6 @@ use Bdf\Queue\Destination\DestinationManager;
 use Bdf\Queue\Failer\FailedJob;
 use Bdf\Queue\Failer\FailedJobCriteria;
 use Bdf\Queue\Failer\FailedJobStorageInterface;
-use Symfony\Component\Console\Command\Command;
-use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 

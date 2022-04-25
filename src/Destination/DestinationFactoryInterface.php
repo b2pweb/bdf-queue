@@ -17,4 +17,11 @@ interface DestinationFactoryInterface
      * @throws \InvalidArgumentException If the destination cannot be found, or is invalid
      */
     public function create(string $destination): DestinationInterface;
+
+    /**
+     * List all available definition names
+     *
+     * @return string[]
+     */
+    public function destinationNames(): array;
 }

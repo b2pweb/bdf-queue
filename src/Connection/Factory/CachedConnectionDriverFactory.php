@@ -61,4 +61,12 @@ final class CachedConnectionDriverFactory implements ConnectionDriverFactoryInte
     {
         return $this->create($this->defaultConnectionName());
     }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function connectionNames(): array
+    {
+        return $this->factory->connectionNames();
+    }
 }

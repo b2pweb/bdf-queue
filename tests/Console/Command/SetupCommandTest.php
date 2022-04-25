@@ -10,6 +10,8 @@ use Bdf\Queue\Destination\DestinationManager;
 use Bdf\Queue\Tests\QueueServiceProvider;
 use League\Container\Container;
 use PHPUnit\Framework\TestCase;
+use Symfony\Component\Console\Application;
+use Symfony\Component\Console\Tester\CommandCompletionTester;
 use Symfony\Component\Console\Tester\CommandTester;
 
 /**
@@ -112,5 +114,33 @@ class SetupCommandTest extends TestCase
 
         $this->assertRegExp('/^The destination "foo" has been deleted/', $tester->getDisplay());
         $this->assertArrayNotHasKey('bar', $this->connection->storage()->queues);
+    }
+
+    /**
+     * @dataProvider provideCompletionSuggestions
+     */
+    public function test_complete(array $input, array $expectedSuggestions)
+    {
+        $command = new SetupCommand($this->manager);
+        $application = new Application();
+        $application->add($command);
+
+        $tester = new CommandCompletionTester($application->get('queue:setup'));
+        $suggestions = $tester->complete($input);
+
+        $this->assertSame($expectedSuggestions, $suggestions);
+    }
+
+    public function provideCompletionSuggestions()
+    {
+        yield 'namespace' => [
+            [''],
+            ['foo', 'test'],
+        ];
+
+        yield 'namespace started' => [
+            ['f'],
+            ['foo', 'test'],
+        ];
     }
 }
