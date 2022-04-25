@@ -110,6 +110,10 @@ EOF;
      */
     public function test_complete(array $input, array $expectedSuggestions)
     {
+        if (!class_exists(CommandCompletionTester:: class)) {
+            $this->markTestSkipped();
+        }
+
         $command = new InfoCommand($this->container->get(ConnectionDriverFactoryInterface::class));
         $application = new Application();
         $application->add($command);

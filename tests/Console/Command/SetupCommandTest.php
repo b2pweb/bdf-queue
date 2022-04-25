@@ -121,6 +121,10 @@ class SetupCommandTest extends TestCase
      */
     public function test_complete(array $input, array $expectedSuggestions)
     {
+        if (!class_exists(CommandCompletionTester:: class)) {
+            $this->markTestSkipped();
+        }
+
         $command = new SetupCommand($this->manager);
         $application = new Application();
         $application->add($command);

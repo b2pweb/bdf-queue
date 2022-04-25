@@ -66,6 +66,10 @@ class BindCommandTest extends TestCase
      */
     public function test_complete(array $input, array $expectedSuggestions)
     {
+        if (!class_exists(CommandCompletionTester:: class)) {
+            $this->markTestSkipped();
+        }
+
         $factory = $this->createMock(ConnectionDriverFactoryInterface::class);
         $factory->expects($this->any())->method('connectionNames')->willReturn(['foo', 'bar']);
 
