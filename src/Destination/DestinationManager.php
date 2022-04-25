@@ -189,7 +189,9 @@ final class DestinationManager implements DestinationFactoryInterface
     }
 
     /**
-     * {@inheritdoc}
+     * List all available connection names
+     *
+     * @return string[]
      */
     public function connectionNames(): array
     {
