@@ -4,6 +4,8 @@ namespace Bdf\Queue\Console\Command\Extension;
 
 use Bdf\Queue\Destination\DestinationManager;
 use Bdf\Queue\Destination\DestinationInterface;
+use Symfony\Component\Console\Completion\CompletionInput;
+use Symfony\Component\Console\Completion\CompletionSuggestions;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputDefinition;
 use Symfony\Component\Console\Input\InputInterface;
@@ -47,5 +49,22 @@ trait DestinationExtension
         $definition->addArgument(new InputArgument('connection', InputArgument::REQUIRED, 'The name of connection'));
         $definition->addOption(new InputOption('queue', null, InputOption::VALUE_REQUIRED, 'The queues to listen on. can be separated by comma (only for reading).'));
         $definition->addOption(new InputOption('topic', null, InputOption::VALUE_REQUIRED, 'The topic to subscribe.'));
+    }
+
+    /**
+     * Create the autocompletion for the argument connection
+     *
+     * @param DestinationManager $destinationManager
+     * @param CompletionInput $input
+     * @param CompletionSuggestions $suggestions
+     *
+     * @return void
+     */
+    public function createAutocomplete(DestinationManager $destinationManager, CompletionInput $input, CompletionSuggestions $suggestions): void
+    {
+        if ($input->mustSuggestArgumentValuesFor('connection')) {
+            $suggestions->suggestValues($destinationManager->destinationNames());
+            $suggestions->suggestValues($destinationManager->connectionNames());
+        }
     }
 }

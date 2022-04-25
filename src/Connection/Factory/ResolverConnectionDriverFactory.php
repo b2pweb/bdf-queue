@@ -84,6 +84,14 @@ final class ResolverConnectionDriverFactory implements ConnectionDriverFactoryIn
     }
 
     /**
+     * {@inheritdoc}
+     */
+    public function connectionNames(): array
+    {
+        return array_keys($this->configs);
+    }
+
+    /**
      * Get the config connection
      * 
      * @param string $name

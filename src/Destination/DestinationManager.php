@@ -179,4 +179,22 @@ final class DestinationManager implements DestinationFactoryInterface
     {
         return $this->send($message->setNeedsReply())->await($timeout);
     }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function destinationNames(): array
+    {
+        return $this->destinationFactory->destinationNames();
+    }
+
+    /**
+     * List all available connection names
+     *
+     * @return string[]
+     */
+    public function connectionNames(): array
+    {
+        return $this->connectionFactory->connectionNames();
+    }
 }

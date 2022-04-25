@@ -11,6 +11,8 @@ use Bdf\Queue\Destination\DestinationManager;
 use Bdf\Queue\Tests\QueueServiceProvider;
 use League\Container\Container;
 use PHPUnit\Framework\TestCase;
+use Symfony\Component\Console\Application;
+use Symfony\Component\Console\Tester\CommandCompletionTester;
 use Symfony\Component\Console\Tester\CommandTester;
 
 /**
@@ -141,5 +143,37 @@ class ProduceCommandTest extends TestCase
         $this->assertStringContainsString('Message has been sent.', $tester->getDisplay());
         $this->assertEquals(1, $queue->count('queue-foo'));
         $this->assertEquals('foo', $queue->pop('queue-foo', 0)->message()->raw());
+    }
+
+    /**
+     * @dataProvider provideCompletionSuggestions
+     */
+    public function test_complete(array $input, array $expectedSuggestions)
+    {
+        if (!class_exists(CommandCompletionTester:: class)) {
+            $this->markTestSkipped();
+        }
+
+        $command = new ProduceCommand($this->manager);
+        $application = new Application();
+        $application->add($command);
+
+        $tester = new CommandCompletionTester($application->get('queue:produce'));
+        $suggestions = $tester->complete($input);
+
+        $this->assertSame($expectedSuggestions, $suggestions);
+    }
+
+    public function provideCompletionSuggestions()
+    {
+        yield 'namespace' => [
+            [''],
+            ['foo', 'bar', 'test'],
+        ];
+
+        yield 'namespace started' => [
+            ['t'],
+            ['foo', 'bar', 'test'],
+        ];
     }
 }

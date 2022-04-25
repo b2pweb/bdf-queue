@@ -109,4 +109,15 @@ class DsnDestinationFactoryTest extends TestCase
 
         $this->assertSame($expected, $factory->create('test:'));
     }
+
+    /**
+     *
+     */
+    public function test_getting_destination_names()
+    {
+        $factory = new DsnDestinationFactory($this->connectionFactory);
+        $factory->register('test', function() {});
+
+        $this->assertSame([], $factory->destinationNames());
+    }
 }

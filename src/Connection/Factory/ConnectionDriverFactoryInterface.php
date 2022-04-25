@@ -41,4 +41,11 @@ interface ConnectionDriverFactoryInterface
      * @deprecated Do not use : only for backward compatibility purpose
      */
     public function defaultConnection(): ConnectionDriverInterface;
+
+    /**
+     * List all available connection names
+     *
+     * @return string[]
+     */
+    public function connectionNames(): array;
 }

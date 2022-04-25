@@ -43,4 +43,17 @@ class CachedConnectionDriverFactoryTest extends TestCase
         $this->assertSame($factory->create('my-connection'), $factory->defaultConnection());
         $this->assertEquals('my-connection', $factory->defaultConnectionName());
     }
+
+    /**
+     *
+     */
+    public function test_connection_names()
+    {
+        $inner = $this->createMock(ConnectionDriverFactoryInterface::class);
+        $inner->expects($this->any())->method('connectionNames')->willReturn(['foo']);
+
+        $factory = new CachedConnectionDriverFactory($inner);
+
+        $this->assertSame(['foo'], $factory->connectionNames());
+    }
 }

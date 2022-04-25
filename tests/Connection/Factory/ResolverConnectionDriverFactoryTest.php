@@ -177,4 +177,16 @@ class ResolverConnectionDriverFactoryTest extends TestCase
         $factory->defaultConnection();
     }
 
+    /**
+     *
+     */
+    public function test_getting_connection_names()
+    {
+        $factory = new ResolverConnectionDriverFactory([
+            'test1' => 'test://localhost:1552/test?foo=bar',
+            'test2' => 'test://localhost:1553/test/?foo=bar',
+        ]);
+
+        $this->assertSame(['test1', 'test2'], $factory->connectionNames());
+    }
 }

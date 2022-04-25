@@ -41,4 +41,12 @@ final class ConfigurationDestinationFactory implements DestinationFactoryInterfa
 
         return $this->factory->create($this->config[$destination]);
     }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function destinationNames(): array
+    {
+        return array_merge($this->factory->destinationNames(), array_keys($this->config));
+    }
 }
