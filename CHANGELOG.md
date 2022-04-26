@@ -1,3 +1,13 @@
+v1.2.0
+------
+
+* Adding support of completion in cli commands (#10)
+* Adding support of destination in queue helper (#8) (#9)
+* Adding compatibillity with doctrine 3 (#7)
+* Adding compatibillity to symfony 6 and PHP 8.1
+* BC Breaks: Add method on interface DestinationFactoryInterface::destinationNames() and ConnectionDriverFactoryInterface::connectionNames()
+
+
 v1.1.0
 ------
 
