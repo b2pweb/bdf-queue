@@ -114,6 +114,18 @@ class ReceiverBuilderTest extends TestCase
     /**
      *
      */
+    public function test_remove()
+    {
+        $this->builder->outlet($outlet = $this->createMock(ReceiverInterface::class));
+        $this->builder->add(MyReceiver::class, ['bar']);
+        $this->builder->remove(MyReceiver::class);
+
+        $this->assertSame($outlet, $this->builder->build());
+    }
+
+    /**
+     *
+     */
     public function test_add_same_receiver_should_overrides_parameters_and_keep_same_position()
     {
         $this->builder

@@ -129,6 +129,20 @@ class ReceiverBuilder
     }
 
     /**
+     * Remove a declared middleware receiver
+     *
+     * @param string $receiver The receiver class name, or container id
+     *
+     * @return $this
+     */
+    public function remove(string $receiver): ReceiverBuilder
+    {
+        unset($this->stack[$receiver]);
+
+        return $this;
+    }
+
+    /**
      * Add logger middleware
      *
      * @param LoggerInterface|null $logger
