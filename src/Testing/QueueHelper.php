@@ -6,6 +6,7 @@ use Bdf\Queue\Connection\ConnectionDriverInterface;
 use Bdf\Queue\Connection\Factory\ConnectionDriverFactoryInterface;
 use Bdf\Queue\Consumer\Receiver\Builder\ReceiverBuilder;
 use Bdf\Queue\Consumer\Receiver\Builder\ReceiverLoader;
+use Bdf\Queue\Consumer\Receiver\Builder\ReceiverLoaderInterface;
 use Bdf\Queue\Consumer\Receiver\MessageCountLimiterReceiver;
 use Bdf\Queue\Consumer\Receiver\StopWhenEmptyReceiver;
 use Bdf\Queue\Destination\DestinationInterface;
@@ -175,7 +176,13 @@ class QueueHelper
     public function consume(int $number = 1, $destination = null, /*\Closure*/ $configurator = null): void
     {
         /** @var ReceiverBuilder $builder */
-        $builder = $this->container->get(ReceiverLoader::class)->load(is_string($destination) ? $destination : '');
+        if ($this->container->has(ReceiverLoaderInterface::class)) {
+            $builder = $this->container->get(ReceiverLoaderInterface::class)->load(is_string($destination) ? $destination : '');
+        } else {
+            @trigger_error("Since 1.2: ReceiverLoaderInterface has to be declared into your container. Accessing loader by ReceiverLoader will be removed in 2.0", \E_USER_DEPRECATED);
+
+            $builder = $this->container->get(ReceiverLoader::class)->load(is_string($destination) ? $destination : '');
+        }
 
         if (is_string($configurator)) {
             @trigger_error("Since 1.2: parameter queue is deprecated. Use destination or 'connectionName::queue' syntax. Will be removed in 2.0", \E_USER_DEPRECATED);

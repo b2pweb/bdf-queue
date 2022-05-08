@@ -16,6 +16,7 @@ use Bdf\Queue\Connection\RdKafka\RdKafkaConnection;
 use Bdf\Queue\Connection\Redis\RedisConnection;
 use Bdf\Queue\Consumer\Receiver\Builder\ReceiverFactory;
 use Bdf\Queue\Consumer\Receiver\Builder\ReceiverLoader;
+use Bdf\Queue\Consumer\Receiver\Builder\ReceiverLoaderInterface;
 use Bdf\Queue\Destination\CachedDestinationFactory;
 use Bdf\Queue\Destination\ConfigurationDestinationFactory;
 use Bdf\Queue\Destination\DestinationManager;
@@ -78,12 +79,16 @@ class QueueServiceProvider
             return new ReceiverFactory($container);
         });
 
-        $container->share(ReceiverLoader::class, function() use($container) {
+        $container->share(ReceiverLoaderInterface::class, function() use($container) {
             return new ReceiverLoader(
                 $container,
                 $container->has('queue.consumer.config') ? require $container->get('queue.consumer.config') : [],
                 $container->get(ReceiverFactory::class)
             );
+        });
+
+        $container->share(ReceiverLoader::class, function() use($container) {
+            return $container->get(ReceiverLoaderInterface::class);
         });
     }
 

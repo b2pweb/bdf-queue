@@ -4,6 +4,7 @@ namespace Bdf\Queue\Testing;
 
 use Bdf\Queue\Consumer\Receiver\Builder\ReceiverBuilder;
 use Bdf\Queue\Consumer\Receiver\Builder\ReceiverLoader;
+use Bdf\Queue\Consumer\Receiver\Builder\ReceiverLoaderInterface;
 use Bdf\Queue\Consumer\TopicConsumer;
 use Bdf\Queue\Destination\DestinationInterface;
 use Bdf\Queue\Destination\DestinationManager;
@@ -233,15 +234,15 @@ class TopicHelper
         }
 
         /** @var ReceiverBuilder $builder */
-        $builder = $this->container->get(ReceiverLoader::class)->load($destination);
+        $builder = $this->container->get(ReceiverLoaderInterface::class)->load($destination);
 
         $builder
             ->stopWhenEmpty()
-            ->add(MessageWatcherReceiver::class, [function ($message) use($destination) {
+            ->watch(function ($message) use($destination) {
                 if ($message !== null) {
                     $this->received[$destination][] = $message;
                 }
-            }])
+            })
         ;
 
         $consumer = $this->destination($destination)->consumer($builder->build());

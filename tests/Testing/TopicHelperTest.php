@@ -5,7 +5,7 @@ namespace Bdf\Queue\Testing;
 use Bdf\Instantiator\Instantiator;
 use Bdf\Instantiator\InstantiatorInterface;
 use Bdf\Queue\Consumer\Receiver\Builder\ReceiverBuilder;
-use Bdf\Queue\Consumer\Receiver\Builder\ReceiverLoader;
+use Bdf\Queue\Consumer\Receiver\Builder\ReceiverLoaderInterface;
 use Bdf\Queue\Consumer\Receiver\ProcessorReceiver;
 use Bdf\Queue\Destination\DestinationManager;
 use Bdf\Queue\Message\Message;
@@ -58,10 +58,10 @@ class TopicHelperTest extends TestCase
             'job' => $this->processor = $this->createMock(ProcessorInterface::class),
         ], null, function () { return 'job'; }));
 
-        $container->get(ReceiverLoader::class)->register('foo', function (ReceiverBuilder $builder) use($processor) {
+        $container->get(ReceiverLoaderInterface::class)->register('foo', function (ReceiverBuilder $builder) use($processor) {
             $builder->outlet($processor);
         });
-        $container->get(ReceiverLoader::class)->register('bar', function (ReceiverBuilder $builder) use($processor) {
+        $container->get(ReceiverLoaderInterface::class)->register('bar', function (ReceiverBuilder $builder) use($processor) {
             $builder->outlet($processor);
         });
 
