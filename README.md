@@ -223,12 +223,13 @@ or register your handlers on a specific destination with the receiver builder:
 
 use Bdf\Queue\Consumer\Receiver\Builder\ReceiverBuilder;
 use Bdf\Queue\Consumer\Receiver\Builder\ReceiverLoader;
+use Bdf\Queue\Consumer\Receiver\Builder\ReceiverLoaderInterface;
 use Psr\Container\ContainerInterface;
 
 /** @var ContainerInterface $container */
 /** @var Bdf\Queue\Destination\DestinationManager $manager */
 
-$container->set(ReceiverLoader::class, function (ContainerInterface $container) {
+$container->set(ReceiverLoaderInterface::class, function (ContainerInterface $container) {
     return new ReceiverLoader(
         $container,
         [
@@ -268,7 +269,7 @@ $container->set(ReceiverLoader::class, function (ContainerInterface $container) 
     );
 });
 
-$receiver = $container->get(ReceiverLoader::class)->load('destination_name or connection_name')->build();
+$receiver = $container->get(ReceiverLoaderInterface::class)->load('destination_name or connection_name')->build();
 
 $manager->create('queue://foo')->consumer($receiver)->consume(0);
 ```
