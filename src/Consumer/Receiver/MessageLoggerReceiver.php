@@ -70,7 +70,7 @@ class MessageLoggerReceiver implements ReceiverInterface
 
     /**
      * Get string representation
-     * 
+     *
      * @param QueuedMessage $message
      * @param string $additionals
      *

@@ -98,7 +98,7 @@ class TopicConsumer implements ConsumerInterface
         }
 
         // Subscribe to channels: send envelope to receiver
-        $this->topic->subscribe($this->channels, function(EnvelopeInterface $envelope) {
+        $this->topic->subscribe($this->channels, function (EnvelopeInterface $envelope) {
             $this->receiver->receive($envelope, $this);
 
             pcntl_signal_dispatch();

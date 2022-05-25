@@ -14,7 +14,7 @@ use RuntimeException;
 
 /**
  * GearmanDriver
- * 
+ *
  * @package Bdf\Queue\Driver
  */
 class GearmanQueue implements QueueDriverInterface, CountableQueueDriverInterface
@@ -91,16 +91,16 @@ class GearmanQueue implements QueueDriverInterface, CountableQueueDriverInterfac
     public function count(string $queueName): int
     {
         $queues = $this->queuesInfo();
-        
+
         foreach ($queues as $info) {
             if ($info['queue'] === $queueName) {
                 return $info['jobs in queue'];
             }
         }
-        
+
         return 0;
     }
-    
+
     /**
      * {@inheritdoc}
      */
@@ -111,16 +111,16 @@ class GearmanQueue implements QueueDriverInterface, CountableQueueDriverInterfac
             'workers' => $this->workersInfo(),
         ];
     }
-    
+
     /**
      * Get queues info
-     * 
+     *
      * @return array
      */
     private function queuesInfo()
     {
         $result = [];
-        
+
         foreach ($this->connection->command(GearmanCommand::STATUS) as $host => $buffer) {
             foreach ($buffer as $part) {
                 $tmp = explode("\t", $part);
@@ -160,7 +160,7 @@ class GearmanQueue implements QueueDriverInterface, CountableQueueDriverInterfac
 
     /**
      * Get workers info
-     * 
+     *
      * @return array
      */
     private function workersInfo()

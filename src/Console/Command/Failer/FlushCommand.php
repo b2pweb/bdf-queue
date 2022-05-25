@@ -38,7 +38,7 @@ class FlushCommand extends Command
     {
         $this->setDescription('Flush all of the failed queue jobs [deprecated]');
     }
-    
+
     /**
      * {@inheritdoc}
      */

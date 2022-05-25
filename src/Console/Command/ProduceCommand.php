@@ -51,7 +51,8 @@ class ProduceCommand extends Command
             ->addArgument('message', InputArgument::REQUIRED, 'The serialized message to push.')
             ->addOption('delay', null, InputOption::VALUE_REQUIRED, 'Amount of time to delay message.', 0)
             ->addOption('payload', null, InputOption::VALUE_NONE, 'Send message as raw payload.')
-            ->setHelp(<<<EOF
+            ->setHelp(
+                <<<EOF
 The <info>%command.name%</info> command push a serialized message onto a given queue from a connection.
 The message will be push as raw value. The serialization should respect the connection parameter.
 

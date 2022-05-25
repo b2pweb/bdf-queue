@@ -81,7 +81,7 @@ class BdfSerializer implements SerializerInterface
         // in the serialized message.
         // Careful: a valid json with different structure will not return error.
         /** @var M|null $message */
-        $message = $this->serializer->deserialize($raw, new $messageClass, $this->format, $this->options);
+        $message = $this->serializer->deserialize($raw, new $messageClass(), $this->format, $this->options);
 
         if ($message !== null) {
             return $message;
@@ -95,7 +95,8 @@ class BdfSerializer implements SerializerInterface
      *
      * @param array $options
      */
-    public function setOptions(array $options) {
+    public function setOptions(array $options)
+    {
         $this->options = $options + [
             NormalizationContext::META_TYPE => true,
             NormalizationContext::REMOVE_DEFAULT_VALUE => true,

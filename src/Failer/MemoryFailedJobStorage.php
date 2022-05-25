@@ -7,5 +7,4 @@ namespace Bdf\Queue\Failer;
  */
 class MemoryFailedJobStorage extends MemoryFailedJobRepository
 {
-
 }

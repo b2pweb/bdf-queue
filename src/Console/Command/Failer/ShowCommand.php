@@ -59,7 +59,8 @@ class ShowCommand extends AbstractFailerCommand
         $failedAt = $job->failedAt ? $job->failedAt->format('H:i:s d/m/Y') : null;
         $firstFailedAt = $job->firstFailedAt ? $job->firstFailedAt->format('H:i:s d/m/Y') : null;
 
-        $output->writeln(<<<EOF
+        $output->writeln(
+            <<<EOF
 id.............. {$job->id}
 name............ {$job->name}
 connection...... {$job->connection}
@@ -80,14 +81,14 @@ EOF
         }
 
         $cloner = new VarCloner();
-        $cloner->addCasters([\DateTimeInterface::class => function(\DateTimeInterface $date, array $a, Stub $stub) {
+        $cloner->addCasters([\DateTimeInterface::class => function (\DateTimeInterface $date, array $a, Stub $stub) {
             $stub->class = get_class($date);
 
             return ['date' => $date->format('H:i:s d/m/Y')];
         }]);
 
         $dumper = new CliDumper();
-        $dumper->dump($cloner->cloneVar($job->messageContent), function($line, $depth) use ($output) {
+        $dumper->dump($cloner->cloneVar($job->messageContent), function ($line, $depth) use ($output) {
             // A negative depth means "end of dump"
             if ($depth >= 0) {
                 // Adds a two spaces indentation to the line

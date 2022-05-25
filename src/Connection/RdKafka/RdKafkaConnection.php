@@ -30,7 +30,7 @@ class RdKafkaConnection implements ConnectionDriverInterface, ManageableQueueInt
      * @var KafkaProducer
      */
     private $producer;
-    
+
     /**
      * One consumer by queue
      *
@@ -132,7 +132,7 @@ class RdKafkaConnection implements ConnectionDriverInterface, ManageableQueueInt
 
     /**
      * Get the kafka producer
-     * 
+     *
      * @return KafkaProducer
      */
     public function producer()
@@ -140,7 +140,7 @@ class RdKafkaConnection implements ConnectionDriverInterface, ManageableQueueInt
         if ($this->producer === null) {
             $this->producer = new KafkaProducer($this->createKafkaConf());
         }
-        
+
         return $this->producer;
     }
 

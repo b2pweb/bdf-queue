@@ -127,7 +127,7 @@ class GearmanConnection implements ConnectionDriverInterface
                 $this->workers[$queue]->addServer($host, $port);
             }
 
-            $this->workers[$queue]->addFunction($queue, function(GearmanJob $job) {
+            $this->workers[$queue]->addFunction($queue, function (GearmanJob $job) {
                 $this->messages[$job->functionName()] = $this->toQueuedMessage($job->workload(), $job->functionName());
             });
         }

@@ -58,42 +58,42 @@ class ReceiverFactory
         $this->instantiator = $instantiator ?: $container->get(InstantiatorInterface::class);
 
         $this->factories = [
-            MessageLoggerReceiver::class => function(ReceiverFactory $factory, ReceiverInterface $receiver) {
+            MessageLoggerReceiver::class => function (ReceiverFactory $factory, ReceiverInterface $receiver) {
                 return new MessageLoggerReceiver($receiver, $factory->logger());
             },
-            RateLimiterReceiver::class => function(ReceiverFactory $factory, ReceiverInterface $receiver, int $number, int $duration = 3) {
+            RateLimiterReceiver::class => function (ReceiverFactory $factory, ReceiverInterface $receiver, int $number, int $duration = 3) {
                 return new RateLimiterReceiver($receiver, $factory->logger(), $number, $duration);
             },
-            MessageCountLimiterReceiver::class => function(ReceiverFactory $factory, ReceiverInterface $receiver, int $number) {
+            MessageCountLimiterReceiver::class => function (ReceiverFactory $factory, ReceiverInterface $receiver, int $number) {
                 return new MessageCountLimiterReceiver($receiver, $number, $factory->logger());
             },
-            MemoryLimiterReceiver::class => function(ReceiverFactory $factory, ReceiverInterface $receiver, int $bytes, callable $memoryResolver = null) {
+            MemoryLimiterReceiver::class => function (ReceiverFactory $factory, ReceiverInterface $receiver, int $bytes, callable $memoryResolver = null) {
                 return new MemoryLimiterReceiver($receiver, $bytes, $factory->logger(), $memoryResolver);
             },
-            TimeLimiterReceiver::class => function(ReceiverFactory $factory, ReceiverInterface $receiver, int $expire) {
+            TimeLimiterReceiver::class => function (ReceiverFactory $factory, ReceiverInterface $receiver, int $expire) {
                 return new TimeLimiterReceiver($receiver, $expire, $factory->logger());
             },
-            RetryMessageReceiver::class => function(ReceiverFactory $factory, ReceiverInterface $receiver, int $tries, int $delay) {
+            RetryMessageReceiver::class => function (ReceiverFactory $factory, ReceiverInterface $receiver, int $tries, int $delay) {
                 return new RetryMessageReceiver($receiver, $factory->logger(), $tries, $delay);
             },
-            StopWhenEmptyReceiver::class => function(ReceiverFactory $factory, ReceiverInterface $receiver) {
+            StopWhenEmptyReceiver::class => function (ReceiverFactory $factory, ReceiverInterface $receiver) {
                 return new StopWhenEmptyReceiver($receiver, $factory->logger());
             },
-            NoFailureReceiver::class => function(ReceiverFactory $factory, ReceiverInterface $receiver) {
+            NoFailureReceiver::class => function (ReceiverFactory $factory, ReceiverInterface $receiver) {
                 return new NoFailureReceiver($receiver);
             },
-            MessageStoreReceiver::class => function(ReceiverFactory $factory, ReceiverInterface $receiver) {
+            MessageStoreReceiver::class => function (ReceiverFactory $factory, ReceiverInterface $receiver) {
                 return new MessageStoreReceiver($receiver, $this->container->get(FailedJobStorageInterface::class), $factory->logger());
             },
-            BinderReceiver::class => function(ReceiverFactory $factory, ReceiverInterface $receiver, array $binders) {
+            BinderReceiver::class => function (ReceiverFactory $factory, ReceiverInterface $receiver, array $binders) {
                 return new BinderReceiver($receiver, $binders);
             },
-            MessageWatcherReceiver::class => function(ReceiverFactory $factory, ReceiverInterface $receiver, callable $callable = null) {
+            MessageWatcherReceiver::class => function (ReceiverFactory $factory, ReceiverInterface $receiver, callable $callable = null) {
                 return new MessageWatcherReceiver($receiver, $callable);
             },
         ];
 
-        $this->addFactory([BenchReceiver::class, 'bench'], function(ReceiverFactory $factory, ReceiverInterface $receiver, int $maxJobs = 100, int $maxHistory = 10) {
+        $this->addFactory([BenchReceiver::class, 'bench'], function (ReceiverFactory $factory, ReceiverInterface $receiver, int $maxJobs = 100, int $maxHistory = 10) {
             return new BenchReceiver($receiver, $factory->logger(), $maxJobs, $maxHistory);
         });
     }
@@ -132,7 +132,7 @@ class ReceiverFactory
      *
      * @param string $middleware The receiver name
      * @param array $parameters  The parameters to give to the factory
-     * 
+     *
      * @return ReceiverInterface
      */
     public function create(string $middleware, array $parameters = []): ReceiverInterface
@@ -170,7 +170,7 @@ class ReceiverFactory
             $this->container->has(LoggerInterface::class)
                 ? $this->container->get(LoggerInterface::class) : (
                     $this->container->has('logger') ? $this->container->get('logger') : new NullLogger()
-            )
+                )
         ;
     }
 }

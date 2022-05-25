@@ -7,7 +7,7 @@ namespace Bdf\Queue\Connection;
  */
 interface ConnectionDriverInterface
 {
-    const DURATION = 3;
+    public const DURATION = 3;
 
     /**
      * Sets the driver configuration.

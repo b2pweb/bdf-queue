@@ -14,14 +14,14 @@ interface SerializerInterface
      * Create a string from the given message.
      *
      * @param Message $message
-     * 
+     *
      * @return string
      */
     public function serialize(Message $message);
 
     /**
      * Decode data from queue
-     * 
+     *
      * @param string $raw
      * @param class-string<M> $messageClass  The class of the message to deserialize
      *

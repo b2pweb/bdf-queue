@@ -3,7 +3,6 @@
 namespace Bdf\Queue\Testing;
 
 use Bdf\Queue\Consumer\Receiver\Builder\ReceiverBuilder;
-use Bdf\Queue\Consumer\Receiver\Builder\ReceiverLoader;
 use Bdf\Queue\Consumer\Receiver\Builder\ReceiverLoaderInterface;
 use Bdf\Queue\Consumer\TopicConsumer;
 use Bdf\Queue\Destination\DestinationInterface;
@@ -238,7 +237,7 @@ class TopicHelper
 
         $builder
             ->stopWhenEmpty()
-            ->watch(function ($message) use($destination) {
+            ->watch(function ($message) use ($destination) {
                 if ($message !== null) {
                     $this->received[$destination][] = $message;
                 }

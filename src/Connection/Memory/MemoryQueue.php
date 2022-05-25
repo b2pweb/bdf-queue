@@ -70,7 +70,7 @@ class MemoryQueue implements QueueDriverInterface, ReservableQueueDriverInterfac
 
         foreach ($storage as $message) {
             $metadata = $storage[$message];
-            
+
             if (!$metadata['reserved'] && $metadata['delay'] <= time()) {
                 $message->metadata = $metadata;
                 $message->metadata['reserved'] = true;
@@ -79,11 +79,11 @@ class MemoryQueue implements QueueDriverInterface, ReservableQueueDriverInterfac
                 break;
             }
         }
-        
+
         if ($found === null) {
             return null;
         }
-        
+
         return $this->toQueueEnvelope(
             $this->connection->toQueuedMessage($found->raw, $queue, $found)
         );
@@ -187,14 +187,14 @@ class MemoryQueue implements QueueDriverInterface, ReservableQueueDriverInterfac
         foreach ($this->connection->storage()->queues as $name => $queue) {
             $reserved = 0;
             $delayed  = 0;
-            
+
             foreach ($queue as $envelope) {
                 $metadata = $queue[$envelope];
-                
+
                 $reserved += (int)$metadata['reserved'];
                 $delayed  += $metadata['delay'] ? 1 : 0;
             }
-            
+
             $stats[] = [
                 'queue'             => $name,
                 'jobs in queue'     => $queue->count(),
@@ -203,7 +203,7 @@ class MemoryQueue implements QueueDriverInterface, ReservableQueueDriverInterfac
                 'jobs delayed'      => $delayed,
             ];
         }
-        
+
         return ['queues' => $stats];
     }
 }

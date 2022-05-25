@@ -27,17 +27,23 @@ class StackMessagesReceiver implements ReceiverInterface, \ArrayAccess, \Countab
     /**
      * {@inheritdoc}
      */
-    public function receiveTimeout(ConsumerInterface $consumer): void { }
+    public function receiveTimeout(ConsumerInterface $consumer): void
+    {
+    }
 
     /**
      * {@inheritdoc}
      */
-    public function receiveStop(): void { }
+    public function receiveStop(): void
+    {
+    }
 
     /**
      * {@inheritdoc}
      */
-    public function terminate(): void { }
+    public function terminate(): void
+    {
+    }
 
     /**
      * {@inheritdoc}

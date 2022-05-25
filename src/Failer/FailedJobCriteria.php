@@ -14,8 +14,8 @@ use InvalidArgumentException;
  */
 final class FailedJobCriteria
 {
-    const OPERATORS = ['>=', '<=', '>', '=', '<'];
-    const WILDCARD = 'wildcard';
+    public const OPERATORS = ['>=', '<=', '>', '=', '<'];
+    public const WILDCARD = 'wildcard';
 
     /**
      * @var array<string, array{string, mixed}>

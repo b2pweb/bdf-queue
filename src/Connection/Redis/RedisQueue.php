@@ -56,7 +56,7 @@ class RedisQueue implements QueueDriverInterface, CountableQueueDriverInterface
             $redis->rPush($this->connection->queuePrefix().$queue, $raw);
         }
     }
-    
+
     /**
      * {@inheritdoc}
      */

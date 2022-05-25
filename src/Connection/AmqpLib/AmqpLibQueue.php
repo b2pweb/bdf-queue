@@ -125,7 +125,7 @@ class AmqpLibQueue implements QueueDriverInterface
 //        return $this->connection->channel()->queue_declare($queue, true)[1];
         return null;
     }
-    
+
     /**
      * {@inheritdoc}
      */
