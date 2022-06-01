@@ -18,8 +18,8 @@ class RedisConnection implements ConnectionDriverInterface, ManageableQueueInter
     use ConnectionNamed;
     use MessageSerializationTrait;
 
-    const PREFIX = 'queues:';
-    const QUEUE_KEY = 'queues';
+    public const PREFIX = 'queues:';
+    public const QUEUE_KEY = 'queues';
 
     /**
      * The Redis instance.

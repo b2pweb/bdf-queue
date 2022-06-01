@@ -26,22 +26,22 @@ class AmqpLibConnection implements ConnectionDriverInterface, ManageableQueueInt
     use ConnectionNamed;
     use MessageSerializationTrait;
 
-    const FLAG_NOPARAM = 0;
+    public const FLAG_NOPARAM = 0;
 
-    const FLAG_QUEUE_PASSIVE = 1;
-    const FLAG_QUEUE_DURABLE = 2;
-    const FLAG_QUEUE_AUTODELETE = 4;
-    const FLAG_QUEUE_NOWAIT = 8;
-    const FLAG_QUEUE_EXCLUSIVE = 2097152;
-    const FLAG_QUEUE_IFUNUSED = 16;
-    const FLAG_QUEUE_IFEMPTY = 4194304;
+    public const FLAG_QUEUE_PASSIVE = 1;
+    public const FLAG_QUEUE_DURABLE = 2;
+    public const FLAG_QUEUE_AUTODELETE = 4;
+    public const FLAG_QUEUE_NOWAIT = 8;
+    public const FLAG_QUEUE_EXCLUSIVE = 2097152;
+    public const FLAG_QUEUE_IFUNUSED = 16;
+    public const FLAG_QUEUE_IFEMPTY = 4194304;
 
-    const FLAG_TOPIC_INTERNAL = 2048;
+    public const FLAG_TOPIC_INTERNAL = 2048;
 
-    const FLAG_CONSUMER_NOACK = 2;
+    public const FLAG_CONSUMER_NOACK = 2;
 
-    const FLAG_MESSAGE_MANDATORY = 1;
-    const FLAG_MESSAGE_IMMEDIATE = 2;
+    public const FLAG_MESSAGE_MANDATORY = 1;
+    public const FLAG_MESSAGE_IMMEDIATE = 2;
 
     /**
      * @var AbstractConnection
@@ -255,7 +255,7 @@ class AmqpLibConnection implements ConnectionDriverInterface, ManageableQueueInt
 
     /**
      * Declare a delayed queue
-     * 
+     *
      * @param string        $name
      * @param \DateTime|int $delay
      *

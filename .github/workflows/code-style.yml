@@ -1,0 +1,29 @@
+name: Coding Style
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    name: PHP 7.4
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Install PHP
+      uses: shivammathur/setup-php@v2
+      with:
+        php-version: "7.4"
+        extensions: json
+        ini-values: post_max_size=256M
+        coverage: xdebug        
+        tools: php-cs-fixer, phpunit
+
+    - name: Install dependencies
+      run: composer install --prefer-dist --no-progress
+
+    - name: Check code style issues
+      run: composer run-script php-cs-fixer

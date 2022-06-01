@@ -24,10 +24,10 @@ class PheanstalkConnection implements ConnectionDriverInterface
     use MessageSerializationTrait;
 
     /**
-     * @var PheanstalkInterface 
+     * @var PheanstalkInterface
      */
     private $pheanstalk;
-    
+
     /**
      * @var array
      */

@@ -21,7 +21,7 @@ class SingleProcessorResolver implements ProcessorResolverInterface
 
     /**
      * SingleProcessorResolver
-     * 
+     *
      * @param string|callable|ProcessorInterface $endPoint
      * @param InstantiatorInterface $instantiator = null
      */

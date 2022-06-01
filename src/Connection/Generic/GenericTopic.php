@@ -126,7 +126,7 @@ class GenericTopic implements TopicDriverInterface
                 continue;
             }
 
-            list(,$queue) = explode($this->options['group_separator'], $info['queue'], 2);
+            list(, $queue) = explode($this->options['group_separator'], $info['queue'], 2);
 
             // Create the regex pattern if the topic has '*' char.
             if ($queue === $topic) {

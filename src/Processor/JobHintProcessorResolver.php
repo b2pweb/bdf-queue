@@ -39,7 +39,8 @@ class JobHintProcessorResolver implements ProcessorResolverInterface
 
         // Already resolved
         if ($message instanceof ErrorMessage) {
-            return new CallbackProcessor(function() {});
+            return new CallbackProcessor(function () {
+            });
         }
 
         $job = $message->job();

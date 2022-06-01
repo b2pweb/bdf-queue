@@ -11,8 +11,8 @@ class GearmanCommand
 {
     use ConnectionBearer;
 
-    const STATUS = 'STATUS';
-    const WORKERS = 'WORKERS';
+    public const STATUS = 'STATUS';
+    public const WORKERS = 'WORKERS';
 
     /**
      * GearmanQueue constructor.

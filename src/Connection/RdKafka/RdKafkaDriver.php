@@ -188,7 +188,7 @@ class RdKafkaDriver implements QueueDriverInterface, TopicDriverInterface
 
         return 0;
     }
-    
+
     /**
      * {@inheritdoc}
      */

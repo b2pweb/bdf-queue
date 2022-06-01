@@ -58,7 +58,6 @@ class ProcessorReceiver implements ReceiverInterface
      */
     public function receiveTimeout(ConsumerInterface $consumer): void
     {
-
     }
 
     /**
@@ -66,7 +65,6 @@ class ProcessorReceiver implements ReceiverInterface
      */
     public function receiveStop(): void
     {
-
     }
 
     /**
@@ -74,6 +72,5 @@ class ProcessorReceiver implements ReceiverInterface
      */
     public function terminate(): void
     {
-
     }
 }

@@ -40,7 +40,7 @@ class MapProcessorResolver implements ProcessorResolverInterface
 
     /**
      * MapProcessorResolver
-     * 
+     *
      * @param array $map
      * @param ProcessorResolverInterface $delegate
      * @param callable $keyBuilder
@@ -50,7 +50,7 @@ class MapProcessorResolver implements ProcessorResolverInterface
         $this->map = $map;
         $this->delegate = $delegate;
 
-        $this->keyBuilder = $keyBuilder ?: function(EnvelopeInterface $envelope) {
+        $this->keyBuilder = $keyBuilder ?: function (EnvelopeInterface $envelope) {
             return $envelope->message()->queue();
         };
     }

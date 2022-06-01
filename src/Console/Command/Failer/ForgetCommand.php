@@ -42,7 +42,7 @@ class ForgetCommand extends Command
             ->addArgument('id', InputArgument::REQUIRED, 'The ID of the failed job')
         ;
     }
-    
+
     /**
      * {@inheritdoc}
      */

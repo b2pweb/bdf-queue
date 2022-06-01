@@ -19,7 +19,7 @@ class QueueEnvelope implements InteractEnvelopeInterface
      * @var QueueDriverInterface
      */
     private $connection;
-    
+
     /**
      * The message of the job.
      *

@@ -101,7 +101,7 @@ class DoctrineQueue implements QueueDriverInterface, ReservableQueueDriverInterf
               WHERE queue = :queue AND reserved = :reserved AND available_at <= :available_at
               ORDER BY available_at, created_at LIMIT '.((int)$number).' '.$doctrine->getDatabasePlatform()->getForUpdateSql();
 
-        $dbJobs = $doctrine->transactional(function() use($sql, $queue, $doctrine) {
+        $dbJobs = $doctrine->transactional(function () use ($sql, $queue, $doctrine) {
             $dbJobs = $doctrine->executeQuery(
                 $sql,
                 [
@@ -280,7 +280,7 @@ class DoctrineQueue implements QueueDriverInterface, ReservableQueueDriverInterf
         foreach ($result as $row) {
             $queueDelayed[$row['queue']] = (int)$row['nb'];
         }
-        
+
         // Get all job by queue
         $query = $this->connection->connection()->createQueryBuilder()
             ->select('queue, COUNT(*) as nb')
@@ -292,7 +292,7 @@ class DoctrineQueue implements QueueDriverInterface, ReservableQueueDriverInterf
         // build stats result.
         foreach ($result as $row) {
             $queue = $row['queue'];
-            
+
             if (!isset($queueReserved[$queue])) {
                 $queueReserved[$queue] = 0;
             }
@@ -301,22 +301,22 @@ class DoctrineQueue implements QueueDriverInterface, ReservableQueueDriverInterf
             }
 
             $stats[] = [
-                'queue'         => $row['queue'], 
+                'queue'         => $row['queue'],
                 'jobs in queue' => (int)$row['nb'],
                 'jobs awaiting' => $row['nb'] - $queueReserved[$queue] - $queueDelayed[$queue],
                 'jobs running'  => $queueReserved[$queue],
                 'jobs delayed'  => $queueDelayed[$queue],
             ];
         }
-        
+
         return ['queues' => $stats];
     }
 
     /**
      * Internal method. Format the db row on post process
-     * 
+     *
      * @param array $row
-     * 
+     *
      * @return array
      */
     public function postProcessor($row)
@@ -326,7 +326,7 @@ class DoctrineQueue implements QueueDriverInterface, ReservableQueueDriverInterf
         $row['created_at'] = $connection->convertToPHPValue($row['created_at'], Types::DATETIME_MUTABLE);
         $row['available_at'] = $connection->convertToPHPValue($row['available_at'], Types::DATETIME_MUTABLE);
         $row['reserved_at'] = $connection->convertToPHPValue($row['reserved_at'], Types::DATETIME_MUTABLE);
-        
+
         return $row;
     }
 

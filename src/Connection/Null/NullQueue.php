@@ -32,7 +32,6 @@ class NullQueue implements QueueDriverInterface, CountableQueueDriverInterface
      */
     public function push(Message $message): void
     {
-
     }
 
     /**
@@ -40,7 +39,6 @@ class NullQueue implements QueueDriverInterface, CountableQueueDriverInterface
      */
     public function pushRaw($raw, string $queue, int $delay = 0): void
     {
-
     }
 
     /**
@@ -56,7 +54,6 @@ class NullQueue implements QueueDriverInterface, CountableQueueDriverInterface
      */
     public function acknowledge(QueuedMessage $message): void
     {
-
     }
 
     /**
@@ -64,7 +61,6 @@ class NullQueue implements QueueDriverInterface, CountableQueueDriverInterface
      */
     public function release(QueuedMessage $message): void
     {
-
     }
 
     /**

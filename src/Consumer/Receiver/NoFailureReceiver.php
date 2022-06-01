@@ -35,7 +35,6 @@ class NoFailureReceiver implements ReceiverInterface
         try {
             $this->delegate->receive($message, $consumer);
         } catch (\Exception $exception) {
-
         }
     }
 }

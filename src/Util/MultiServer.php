@@ -34,7 +34,6 @@ class MultiServer
 
                 $hosts[$host] = $port;
             }
-
         }
 
         $config['hosts'] = $hosts;

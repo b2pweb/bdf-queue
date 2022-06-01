@@ -57,7 +57,7 @@ class Worker
             return;
         }
 
-        $stop = function() {
+        $stop = function () {
             $this->consumer->stop();
         };
 

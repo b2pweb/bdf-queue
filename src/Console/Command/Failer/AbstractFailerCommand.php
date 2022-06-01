@@ -73,7 +73,7 @@ abstract class AbstractFailerCommand extends Command
      *
      * @return int The command result. 0 for success.
      */
-    protected abstract function handleOne(InputInterface $input, OutputInterface $output, ?FailedJob $job): int;
+    abstract protected function handleOne(InputInterface $input, OutputInterface $output, ?FailedJob $job): int;
 
     /**
      * Handle bulk operation, using a criteria
@@ -84,7 +84,7 @@ abstract class AbstractFailerCommand extends Command
      *
      * @return int The command result. 0 for success.
      */
-    protected abstract function handleCriteria(InputInterface $input, OutputInterface $output, FailedJobCriteria $criteria): int;
+    abstract protected function handleCriteria(InputInterface $input, OutputInterface $output, FailedJobCriteria $criteria): int;
 
     /**
      * Build the criteria from CLI options

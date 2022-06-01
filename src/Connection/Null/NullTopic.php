@@ -29,7 +29,6 @@ class NullTopic implements TopicDriverInterface
      */
     public function publish(Message $message): void
     {
-
     }
 
     /**
@@ -37,7 +36,6 @@ class NullTopic implements TopicDriverInterface
      */
     public function publishRaw(string $topic, $payload): void
     {
-
     }
 
     /**
@@ -53,6 +51,5 @@ class NullTopic implements TopicDriverInterface
      */
     public function subscribe(array $topics, callable $callback): void
     {
-
     }
 }

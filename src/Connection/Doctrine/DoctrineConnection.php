@@ -50,7 +50,7 @@ class DoctrineConnection implements ConnectionDriverInterface, ManageableQueueIn
 
     /**
      * Get the doctrine connection
-     * 
+     *
      * @return Connection
      */
     public function connection(): Connection

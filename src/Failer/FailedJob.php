@@ -113,7 +113,7 @@ class FailedJob
         $message = clone $message;
         $message->resetAttempts();
 
-        $failed = new static;
+        $failed = new static();
         $failed->name = $message->name();
         $failed->connection = $message->connection();
         $failed->queue = $message->queue();

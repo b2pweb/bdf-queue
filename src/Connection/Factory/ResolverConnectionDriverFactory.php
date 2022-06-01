@@ -4,7 +4,6 @@ namespace Bdf\Queue\Connection\Factory;
 
 use Bdf\Dsn\Dsn;
 use Bdf\Queue\Connection\ConnectionDriverInterface;
-use Closure;
 use InvalidArgumentException;
 
 /**
@@ -93,11 +92,11 @@ final class ResolverConnectionDriverFactory implements ConnectionDriverFactoryIn
 
     /**
      * Get the config connection
-     * 
+     *
      * @param string $name
-     * 
+     *
      * @return array
-     * 
+     *
      * @throws InvalidArgumentException  If config is not found
      */
     public function getConfig($name)
@@ -109,11 +108,11 @@ final class ResolverConnectionDriverFactory implements ConnectionDriverFactoryIn
         if (!isset($this->configs[$name])) {
             throw new InvalidArgumentException('No queue config found for '.$name);
         }
-        
+
         $config = $this->configs[$name];
 
         //TODO ne pas reevaluer la config
-        
+
         if (is_string($config)) {
             $config = static::parseDsn($config);
         }

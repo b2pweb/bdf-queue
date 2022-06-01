@@ -114,7 +114,7 @@ class AmqpLibTopic implements TopicDriverInterface
                 (bool) ($flags & AmqpLibConnection::FLAG_CONSUMER_NOACK),
                 (bool) ($flags & AmqpLibConnection::FLAG_QUEUE_EXCLUSIVE),
                 (bool) ($flags & AmqpLibConnection::FLAG_QUEUE_NOWAIT),
-                function(AMQPMessage $message) use($callback, $queue) {
+                function (AMQPMessage $message) use ($callback, $queue) {
                     // The binding queue allows rabbit to consume a message from a queue rather than a topic.
                     // The callback will receive a queue envelope instead of a topic envelope.
                     $callback(

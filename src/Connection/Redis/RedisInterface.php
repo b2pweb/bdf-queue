@@ -2,7 +2,6 @@
 
 namespace Bdf\Queue\Connection\Redis;
 
-
 interface RedisInterface
 {
     /**

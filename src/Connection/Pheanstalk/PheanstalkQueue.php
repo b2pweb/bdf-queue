@@ -56,7 +56,10 @@ class PheanstalkQueue implements QueueDriverInterface, CountableQueueDriverInter
         $pheanstalk = $this->connection->pheanstalk();
 
         $pheanstalk->useTube($queue)->put(
-            $raw, Pheanstalk::DEFAULT_PRIORITY, $delay, $this->connection->timeToRun()
+            $raw,
+            Pheanstalk::DEFAULT_PRIORITY,
+            $delay,
+            $this->connection->timeToRun()
         );
     }
 
@@ -109,7 +112,7 @@ class PheanstalkQueue implements QueueDriverInterface, CountableQueueDriverInter
             return 0;
         }
     }
-    
+
     /**
      * {@inheritdoc}
      */
@@ -130,7 +133,7 @@ class PheanstalkQueue implements QueueDriverInterface, CountableQueueDriverInter
             'workers' => $workersInfo,
         ];
     }
-    
+
     /**
      * Get queues infos
      *

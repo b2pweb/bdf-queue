@@ -29,7 +29,7 @@ interface FailedJobStorageInterface
      * Get a single failed job.
      *
      * @param mixed  $id
-     * 
+     *
      * @return FailedJob
      * @deprecated Use findById() instead
      */
@@ -39,7 +39,7 @@ interface FailedJobStorageInterface
      * Delete a single failed job from storage.
      *
      * @param mixed  $id
-     * 
+     *
      * @return bool
      * @deprecated Use delete() instead
      */
