@@ -2,6 +2,7 @@
 
 namespace Bdf\Queue\Destination\Queue;
 
+use Bdf\Dsn\DsnRequest;
 use Bdf\Queue\Connection\Memory\MemoryConnection;
 use Bdf\Queue\Connection\Null\NullConnection;
 use Bdf\Queue\Connection\QueueDriverInterface;
@@ -182,5 +183,41 @@ class QueueDestinationTest extends TestCase
         $this->assertSame([], $destination->peek());
         $destination->send(new Message());
         $this->assertNotEmpty($destination->peek());
+    }
+
+    /**
+     *
+     */
+    public function test_factory_option_prefetch()
+    {
+        $request = new DsnRequest('queue://my-queue', '');
+        $request->setPath('my-queue');
+        $request->setQuery(['prefetch' => 10]);
+
+        $destination = QueueDestination::createByDsn($this->connection, $request);
+
+        $this->assertEquals(
+            (new QueueDestination($this->driver, 'my-queue', 10)),
+            $destination
+        );
+    }
+
+    /**
+     *
+     */
+    public function test_factory_option_prefetch_from_connection_prefetch()
+    {
+        $request = new DsnRequest('queue://my-queue', '');
+        $request->setPath('my-queue');
+
+        $this->connection = new MemoryConnection();
+        $this->connection->setConfig(['prefetch' => 20]);
+        $this->driver = $this->connection->queue();
+
+        $destination = QueueDestination::createByDsn($this->connection, $request);
+        $this->assertEquals(
+            (new QueueDestination($this->driver, 'my-queue', 20)),
+            $destination
+        );
     }
 }

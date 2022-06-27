@@ -168,6 +168,10 @@ final class QueueDestination implements DestinationInterface, ReadableDestinatio
      */
     public static function createByDsn(ConnectionDriverInterface $connection, DsnRequest $dsn): self
     {
-        return new QueueDestination($connection->queue(), trim($dsn->getPath(), '/'), $dsn->query('prefetch', 0));
+        return new QueueDestination(
+            $connection->queue(),
+            trim($dsn->getPath(), '/'),
+            $dsn->query('prefetch', $connection->config()['prefetch'] ?? 0)
+        );
     }
 }
