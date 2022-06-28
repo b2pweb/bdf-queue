@@ -1,3 +1,9 @@
+v1.3.0
+------
+
+* BC Breaks: Add method on interface ReceiverInterface::start()
+
+
 v1.2.0
 ------
 

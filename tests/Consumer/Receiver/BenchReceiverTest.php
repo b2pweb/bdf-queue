@@ -64,6 +64,17 @@ class BenchReceiverTest extends TestCase
     /**
      *
      */
+    public function test_start()
+    {
+        $this->extension->expects($this->once())->method('start')->with($this->consumer);
+
+        $extension = new BenchReceiver($this->extension, $this->logger, 5);
+        $extension->start($this->consumer);
+    }
+
+    /**
+     *
+     */
     public function test_terminate()
     {
         $this->extension->expects($this->once())->method('terminate');

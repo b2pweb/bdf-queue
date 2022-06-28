@@ -63,6 +63,17 @@ class JobLoggerReceiverTest extends TestCase
     /**
      *
      */
+    public function test_start()
+    {
+        $this->extension->expects($this->once())->method('start')->with($this->consumer);
+
+        $extension = new MessageLoggerReceiver($this->extension, $this->logger);
+        $extension->start($this->consumer);
+    }
+
+    /**
+     *
+     */
     public function test_log()
     {
         $extension = new MessageLoggerReceiver($this->extension, $this->logger);

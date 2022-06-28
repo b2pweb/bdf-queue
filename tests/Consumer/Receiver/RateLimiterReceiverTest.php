@@ -92,4 +92,15 @@ class RateLimiterSubscriberTest extends TestCase
         $receiver->receive('foo', $this->consumer);
         $receiver->receive('foo', $this->consumer);
     }
+
+    /**
+     *
+     */
+    public function test_start()
+    {
+        $this->extension->expects($this->once())->method('start')->with($this->consumer);
+
+        $extension = new RateLimiterReceiver($this->extension, $this->logger, 1);
+        $extension->start($this->consumer);
+    }
 }

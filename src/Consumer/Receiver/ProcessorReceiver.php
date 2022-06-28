@@ -56,6 +56,13 @@ class ProcessorReceiver implements ReceiverInterface
     /**
      * {@inheritdoc}
      */
+    public function start(ConsumerInterface $consumer): void
+    {
+    }
+
+    /**
+     * {@inheritdoc}
+     */
     public function receiveTimeout(ConsumerInterface $consumer): void
     {
     }

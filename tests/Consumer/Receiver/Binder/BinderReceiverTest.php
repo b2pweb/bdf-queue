@@ -73,13 +73,27 @@ class BinderReceiverTest extends TestCase
      */
     public function test_process_with_binder()
     {
-
         $this->destination->send((new Message(['data' => 'bar']))->setName('MyBinderEvent'));
         $envelope = $this->consume([new AliasBinder([
             'MyBinderEvent' => MyBinderEvent::class
         ])]);
 
         $this->assertEquals(new MyBinderEvent('bar'), $envelope->message()->data());
+    }
+
+    /**
+     *
+     */
+    public function test_start()
+    {
+        $inner = $this->createMock(ReceiverInterface::class);
+        $consumer = $this->createMock(ConsumerInterface::class);
+
+        $receiver = new BinderReceiver($inner, []);
+
+        $inner->expects($this->once())->method('start')->with($consumer);
+
+        $receiver->start($consumer);
     }
 
     /**

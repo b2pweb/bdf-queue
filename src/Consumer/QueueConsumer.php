@@ -45,6 +45,8 @@ class QueueConsumer implements ConsumerInterface
      */
     public function consume(int $duration): void
     {
+        $this->receiver->start($this);
+
         // Loop until stop is called
         while (true === $this->running) {
             $envelope = $this->reader->read($duration);

@@ -8,6 +8,11 @@ namespace Bdf\Queue\Consumer;
 interface ReceiverInterface
 {
     /**
+     * Start the middleware when the consumer starts.
+     */
+    public function start(ConsumerInterface $consumer): void;
+
+    /**
      * Receive a message from the consumer.
      *
      * @param object $message

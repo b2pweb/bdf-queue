@@ -3,6 +3,7 @@
 namespace Bdf\Queue\Consumer\Receiver\Binder;
 
 use Bdf\Queue\Consumer\ConsumerInterface;
+use Bdf\Queue\Consumer\DelegateHelper;
 use Bdf\Queue\Consumer\ReceiverInterface;
 use Bdf\Queue\Message\EnvelopeInterface;
 
@@ -14,10 +15,7 @@ use Bdf\Queue\Message\EnvelopeInterface;
  */
 final class BinderReceiver implements ReceiverInterface
 {
-    /**
-     * @var ReceiverInterface
-     */
-    private $next;
+    use DelegateHelper;
 
     /**
      * @var BinderInterface[]
@@ -28,12 +26,12 @@ final class BinderReceiver implements ReceiverInterface
     /**
      * BinderReceiver constructor.
      *
-     * @param ReceiverInterface $next The receiver to call after binding
+     * @param ReceiverInterface $delegate The receiver to call after binding
      * @param BinderInterface[] $binders List of binders to apply to the message
      */
-    public function __construct(ReceiverInterface $next, array $binders)
+    public function __construct(ReceiverInterface $delegate, array $binders)
     {
-        $this->next = $next;
+        $this->delegate = $delegate;
         $this->binders = $binders;
     }
 
@@ -50,30 +48,6 @@ final class BinderReceiver implements ReceiverInterface
             }
         }
 
-        $this->next->receive($message, $consumer);
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function receiveTimeout(ConsumerInterface $consumer): void
-    {
-        $this->next->receiveTimeout($consumer);
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function receiveStop(): void
-    {
-        $this->next->receiveStop();
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function terminate(): void
-    {
-        $this->next->terminate();
+        $this->delegate->receive($message, $consumer);
     }
 }

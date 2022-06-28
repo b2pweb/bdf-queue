@@ -16,6 +16,14 @@ trait DelegateHelper
     /**
      * {@inheritdoc}
      */
+    public function start(ConsumerInterface $consumer): void
+    {
+        $this->delegate->start($consumer);
+    }
+
+    /**
+     * {@inheritdoc}
+     */
     public function receive($message, ConsumerInterface $consumer): void
     {
         $this->delegate->receive($message, $consumer);

@@ -94,4 +94,15 @@ class RetryJobReceiverTest extends TestCase
         $receiver = new RetryMessageReceiver($this->extension, $this->logger, 1);
         $receiver->receive($envelope, $this->consumer);
     }
+
+    /**
+     *
+     */
+    public function test_start()
+    {
+        $this->extension->expects($this->once())->method('start')->with($this->consumer);
+
+        $extension = new RetryMessageReceiver($this->extension, $this->logger, 1);
+        $extension->start($this->consumer);
+    }
 }

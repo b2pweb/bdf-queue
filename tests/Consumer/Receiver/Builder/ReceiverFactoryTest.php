@@ -128,6 +128,7 @@ class MyNoFactoryReceiver implements ReceiverInterface
         $this->foo = $foo;
     }
 
+    public function start(ConsumerInterface $consumer): void {}
     public function receive($message, ConsumerInterface $consumer): void {}
     public function receiveTimeout(ConsumerInterface $consumer): void {}
     public function receiveStop(): void {}

@@ -45,7 +45,16 @@ class TimeLimiterReceiver implements ReceiverInterface
         $this->delegate = $delegate;
         $this->logger = $logger;
         $this->limit = $limit;
-        $this->endTime = $limit + time();
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function start(ConsumerInterface $consumer): void
+    {
+        $this->endTime = $this->limit + time();
+
+        $this->delegate->start($consumer);
     }
 
     /**

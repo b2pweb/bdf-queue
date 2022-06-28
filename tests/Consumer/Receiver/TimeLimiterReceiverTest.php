@@ -31,6 +31,7 @@ class TimeLimiterReceiverTest extends TestCase
             ->with('Receiver stopped due to time limit of {timeLimit}s reached', ['timeLimit' => 1]);
 
         $extension = new TimeLimiterReceiver($decorated, 1, $logger);
+        $extension->start($consumer);
         $extension->receive('message', $consumer);
     }
 }

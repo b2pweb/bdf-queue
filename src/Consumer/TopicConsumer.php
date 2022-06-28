@@ -70,7 +70,6 @@ class TopicConsumer implements ConsumerInterface
     {
         $this->subscribe();
         $this->loop($duration);
-        $this->terminate();
     }
 
     /**
@@ -118,6 +117,8 @@ class TopicConsumer implements ConsumerInterface
      */
     private function loop(int $duration): void
     {
+        $this->receiver->start($this);
+
         while ($this->running) {
             if ($this->topic->consume($duration) === 0) {
                 $this->receiver->receiveTimeout($this);
@@ -125,13 +126,7 @@ class TopicConsumer implements ConsumerInterface
 
             pcntl_signal_dispatch();
         }
-    }
 
-    /**
-     * Terminate the consummation and close the connection
-     */
-    private function terminate(): void
-    {
         $this->topic->connection()->close();
         $this->receiver->terminate();
     }

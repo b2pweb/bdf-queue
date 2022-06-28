@@ -93,4 +93,15 @@ class JobStoreReceiverTest extends TestCase
         $extension = new MessageStoreReceiver($this->extension, $this->createMock(FailedJobStorageInterface::class), $this->logger);
         $extension->receive(null, $this->consumer);
     }
+
+    /**
+     *
+     */
+    public function test_start()
+    {
+        $this->extension->expects($this->once())->method('start')->with($this->consumer);
+
+        $extension = new MessageLoggerReceiver($this->extension, $this->logger);
+        $extension->start($this->consumer);
+    }
 }
