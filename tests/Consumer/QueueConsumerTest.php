@@ -35,6 +35,17 @@ class QueueConsumerTest extends TestCase
     /**
      *
      */
+    public function test_connection()
+    {
+        $receiver = $this->createMock(ReceiverInterface::class);
+        $consumer = new QueueConsumer($this->reader, $receiver);
+
+        $this->assertSame($this->driver->connection(), $consumer->connection());
+    }
+
+    /**
+     *
+     */
     public function test_sending_null()
     {
         $last = false;

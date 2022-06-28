@@ -27,6 +27,17 @@ class TopicConsumerTest extends TestCase
     /**
      *
      */
+    public function test_connection()
+    {
+        $receiver = $this->createMock(ReceiverInterface::class);
+        $consumer = new TopicConsumer($this->driver, $receiver, ['my-topic']);
+
+        $this->assertSame($this->driver->connection(), $consumer->connection());
+    }
+
+    /**
+     *
+     */
     public function test_consume_timeout()
     {
         $receiver = $this->createMock(ReceiverInterface::class);

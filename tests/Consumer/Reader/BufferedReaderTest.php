@@ -25,6 +25,17 @@ class BufferedReaderTest extends TestCase
     /**
      *
      */
+    public function test_connection()
+    {
+        $driver = (new MemoryConnection())->queue();
+        $reader = new BufferedReader($driver, 'my-queue', 10);
+
+        $this->assertSame($driver->connection(), $reader->connection());
+    }
+
+    /**
+     *
+     */
     public function test_read_unit()
     {
         $driver = $this->createMock(ReservableQueueDriverInterface::class);

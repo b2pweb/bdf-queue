@@ -4,6 +4,8 @@ namespace Bdf\Queue\Consumer\Reader;
 
 use Bdf\Queue\Connection\Memory\MemoryConnection;
 use Bdf\Queue\Connection\QueueDriverInterface;
+use Bdf\Queue\Consumer\ReceiverInterface;
+use Bdf\Queue\Consumer\TopicConsumer;
 use Bdf\Queue\Message\Message;
 use PHPUnit\Framework\TestCase;
 
@@ -26,6 +28,14 @@ class QueueReaderTest extends TestCase
     {
         $this->driver = (new MemoryConnection())->queue();
         $this->reader = new QueueReader($this->driver, 'my-queue');
+    }
+
+    /**
+     *
+     */
+    public function test_connection()
+    {
+        $this->assertSame($this->driver->connection(), $this->reader->connection());
     }
 
     /**

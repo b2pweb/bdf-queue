@@ -31,6 +31,14 @@ class MultiQueueReaderTest extends TestCase
     /**
      *
      */
+    public function test_connection()
+    {
+        $this->assertSame($this->driver->connection(), $this->reader->connection());
+    }
+
+    /**
+     *
+     */
     public function test_read_from_empty_queue_should_returns_null()
     {
         $this->assertNull($this->reader->read());
