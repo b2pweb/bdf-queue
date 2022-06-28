@@ -2,6 +2,8 @@
 
 namespace Bdf\Queue\Consumer;
 
+use Bdf\Queue\Connection\ConnectionDriverInterface;
+
 /**
  *
  */
@@ -18,4 +20,9 @@ interface ConsumerInterface
      * Stop receiving some messages.
      */
     public function stop(): void;
+
+    /**
+     * Get the connection driver instance
+     */
+    public function connection(): ConnectionDriverInterface;
 }

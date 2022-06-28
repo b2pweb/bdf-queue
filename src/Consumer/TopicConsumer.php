@@ -2,6 +2,7 @@
 
 namespace Bdf\Queue\Consumer;
 
+use Bdf\Queue\Connection\ConnectionDriverInterface;
 use Bdf\Queue\Connection\TopicDriverInterface;
 use Bdf\Queue\Message\EnvelopeInterface;
 
@@ -80,8 +81,16 @@ class TopicConsumer implements ConsumerInterface
         if ($this->running) {
             $this->running = false;
 
-            $this->receiver->receiveStop();
+            $this->receiver->receiveStop($this);
         }
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function connection(): ConnectionDriverInterface
+    {
+        return $this->topic->connection();
     }
 
     /**
@@ -128,6 +137,6 @@ class TopicConsumer implements ConsumerInterface
         }
 
         $this->topic->connection()->close();
-        $this->receiver->terminate();
+        $this->receiver->terminate($this);
     }
 }

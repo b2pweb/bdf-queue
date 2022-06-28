@@ -102,9 +102,9 @@ class BenchReceiver implements ReceiverInterface
     /**
      * {@inheritdoc}
      */
-    public function terminate(): void
+    public function terminate(ConsumerInterface $consumer): void
     {
-        $this->delegate->terminate();
+        $this->delegate->terminate($consumer);
 
         $this->report();
     }

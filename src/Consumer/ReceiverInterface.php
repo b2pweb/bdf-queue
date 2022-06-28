@@ -29,11 +29,11 @@ interface ReceiverInterface
      * Receiving stop event from consumer.
      * The consumer want to stop the reception.
      */
-    public function receiveStop(): void;
+    public function receiveStop(ConsumerInterface $consumer): void;
 
     /**
      * Ends the middleware.
      * The last event before the consumer ends.
      */
-    public function terminate(): void;
+    public function terminate(ConsumerInterface $consumer): void;
 }

@@ -40,17 +40,17 @@ trait DelegateHelper
     /**
      * {@inheritdoc}
      */
-    public function receiveStop(): void
+    public function receiveStop(ConsumerInterface $consumer): void
     {
-        $this->delegate->receiveStop();
+        $this->delegate->receiveStop($consumer);
     }
 
     /**
      * {@inheritdoc}
      */
-    public function terminate(): void
+    public function terminate(ConsumerInterface $consumer): void
     {
-        $this->delegate->terminate();
+        $this->delegate->terminate($consumer);
     }
 
     /**

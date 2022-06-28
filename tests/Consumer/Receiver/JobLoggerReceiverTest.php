@@ -131,10 +131,10 @@ class JobLoggerReceiverTest extends TestCase
      */
     public function test_on_stopping()
     {
-        $this->extension->expects($this->once())->method('receiveStop');
+        $this->extension->expects($this->once())->method('receiveStop')->with($this->consumer);
 
         $extension = new MessageLoggerReceiver($this->extension, $this->logger);
-        $extension->receiveStop();
+        $extension->receiveStop($this->consumer);
 
         $regex = '/^\[' . str_replace('/', '\\/', date('Y-m-d H:i')) . ':[0-9]{2}\] INFO: stopping worker/';
 

@@ -281,7 +281,7 @@ $ example/consumer.php "connection name OR destination name"
 
 ```
 
-##### Create worker extensions
+##### Create receiver extensions
 
 The consumer use a stack of receivers to extend the reception of messages. 
 See the interface `Bdf\Queue\Consumer\ReceiverInterface` and the trait `Bdf\Queue\Consumer\DelegateHelper`.
@@ -306,7 +306,7 @@ class MyExtension implements \Bdf\Queue\Consumer\ReceiverInterface
     /**
      * {@inheritdoc}
      */
-    public function receiving($message, \Bdf\Queue\Consumer\ConsumerInterface $consumer): void
+    public function receive($message, \Bdf\Queue\Consumer\ConsumerInterface $consumer): void
     {
         // Do something when receiving message
         if ($message->queue() === 'foo') {

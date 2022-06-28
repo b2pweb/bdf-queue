@@ -41,14 +41,14 @@ class StackMessagesReceiver implements ReceiverInterface, \ArrayAccess, \Countab
     /**
      * {@inheritdoc}
      */
-    public function receiveStop(): void
+    public function receiveStop(ConsumerInterface $consumer): void
     {
     }
 
     /**
      * {@inheritdoc}
      */
-    public function terminate(): void
+    public function terminate(ConsumerInterface $consumer): void
     {
     }
 

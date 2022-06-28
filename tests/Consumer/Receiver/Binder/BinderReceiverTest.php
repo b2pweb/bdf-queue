@@ -117,12 +117,13 @@ class BinderReceiverTest extends TestCase
     public function test_receiveStop()
     {
         $inner = $this->createMock(ReceiverInterface::class);
+        $consumer = $this->createMock(ConsumerInterface::class);
 
         $receiver = new BinderReceiver($inner, []);
 
-        $inner->expects($this->once())->method('receiveStop');
+        $inner->expects($this->once())->method('receiveStop')->with($consumer);
 
-        $receiver->receiveStop();
+        $receiver->receiveStop($consumer);
     }
 
     /**
@@ -131,12 +132,13 @@ class BinderReceiverTest extends TestCase
     public function test_terminate()
     {
         $inner = $this->createMock(ReceiverInterface::class);
+        $consumer = $this->createMock(ConsumerInterface::class);
 
         $receiver = new BinderReceiver($inner, []);
 
-        $inner->expects($this->once())->method('terminate');
+        $inner->expects($this->once())->method('terminate')->with($consumer);
 
-        $receiver->terminate();
+        $receiver->terminate($consumer);
     }
 
     /**

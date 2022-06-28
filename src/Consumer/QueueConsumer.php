@@ -2,6 +2,7 @@
 
 namespace Bdf\Queue\Consumer;
 
+use Bdf\Queue\Connection\ConnectionDriverInterface;
 use Bdf\Queue\Consumer\Reader\QueueReaderInterface;
 
 /**
@@ -61,7 +62,7 @@ class QueueConsumer implements ConsumerInterface
         }
 
         $this->reader->stop();
-        $this->receiver->terminate();
+        $this->receiver->terminate($this);
     }
 
     /**
@@ -72,7 +73,15 @@ class QueueConsumer implements ConsumerInterface
         if ($this->running) {
             $this->running = false;
 
-            $this->receiver->receiveStop();
+            $this->receiver->receiveStop($this);
         }
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function connection(): ConnectionDriverInterface
+    {
+        return $this->reader->connection();
     }
 }

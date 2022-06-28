@@ -2,6 +2,7 @@
 
 namespace Bdf\Queue;
 
+use Bdf\Queue\Connection\ConnectionDriverInterface;
 use Bdf\Queue\Consumer\ConsumerInterface;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
@@ -46,7 +47,8 @@ class WorkerTest extends TestCase
     }
 }
 
-class TestWorkerStub implements ConsumerInterface {
+class TestWorkerStub implements ConsumerInterface
+{
     /**
      * @inheritDoc
      */
@@ -59,6 +61,14 @@ class TestWorkerStub implements ConsumerInterface {
      * @inheritDoc
      */
     public function stop(): void
+    {
+
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function connection(): ConnectionDriverInterface
     {
 
     }

@@ -77,10 +77,10 @@ class BenchReceiverTest extends TestCase
      */
     public function test_terminate()
     {
-        $this->extension->expects($this->once())->method('terminate');
+        $this->extension->expects($this->once())->method('terminate')->with($this->consumer);
 
         $extension = new BenchReceiver($this->extension, $this->logger, 5);
-        $extension->terminate();
+        $extension->terminate($this->consumer);
     }
 
     /**
@@ -91,7 +91,7 @@ class BenchReceiverTest extends TestCase
         $extension = new BenchReceiver($this->extension, $this->logger, 5);
         $extension->receive(new \stdClass(), $this->consumer);
         $extension->receive(new \stdClass(), $this->consumer);
-        $extension->terminate();
+        $extension->terminate($this->consumer);
 
         $logs = $this->logger->cleanLogs();
 
@@ -121,7 +121,7 @@ class BenchReceiverTest extends TestCase
         $extension->receive(new \stdClass(), $this->consumer);
         $extension->receive(new \stdClass(), $this->consumer);
         $extension->receive(new \stdClass(), $this->consumer);
-        $extension->terminate();
+        $extension->terminate($this->consumer);
 
         $logs = $this->logger->cleanLogs();
 
@@ -140,7 +140,7 @@ class BenchReceiverTest extends TestCase
         $extension->receiveTimeout($this->consumer);
         $extension->receive(new \stdClass(), $this->consumer);
         $extension->receiveTimeout($this->consumer);
-        $extension->terminate();
+        $extension->terminate($this->consumer);
 
         $logs = $this->logger->cleanLogs();
 
@@ -157,7 +157,7 @@ class BenchReceiverTest extends TestCase
         $extension = new BenchReceiver($this->extension, $this->logger, 5);
         $extension->receive(new \stdClass(), $this->consumer);
         $extension->receive(new \stdClass(), $this->consumer);
-        $extension->terminate();
+        $extension->terminate($this->consumer);
         $extension->report();
 
         $logs = $this->logger->cleanLogs();
@@ -179,7 +179,7 @@ class BenchReceiverTest extends TestCase
         $extension->receiveTimeout($this->consumer);
         $extension->receive(new \stdClass(), $this->consumer);
         $extension->receiveTimeout($this->consumer);
-        $extension->terminate();
+        $extension->terminate($this->consumer);
 
         $logger->cleanLogs();
 

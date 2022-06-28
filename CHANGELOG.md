@@ -1,7 +1,11 @@
 v1.3.0
 ------
 
-* BC Breaks: Add method on interface ReceiverInterface::start()
+* BC Breaks: Add method on interface `Bdf\Queue\Consumer\ReceiverInterface::start()`
+* BC Breaks: Add parameter `Bdf\Queue\Consumer\ConsumerInterface $consumer` on method `Bdf\Queue\Consumer\ReceiverInterface::receiveStop()`
+* BC Breaks: Add parameter `Bdf\Queue\Consumer\ConsumerInterface $consumer` on method `Bdf\Queue\Consumer\ReceiverInterface::terminate()`
+* BC Breaks: Add method on interface `Bdf\Queue\Consumer\ConsumerInterface::connection()`
+* BC Breaks: Add method on interface `Bdf\Queue\Consumer\Reader\QueueReaderInterface::connection()`
 
 
 v1.2.0

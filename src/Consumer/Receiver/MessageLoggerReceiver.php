@@ -61,11 +61,11 @@ class MessageLoggerReceiver implements ReceiverInterface
     /**
      * {@inheritdoc}
      */
-    public function receiveStop(): void
+    public function receiveStop(ConsumerInterface $consumer): void
     {
         $this->logger->info('stopping worker');
 
-        $this->delegate->receiveStop();
+        $this->delegate->receiveStop($consumer);
     }
 
     /**

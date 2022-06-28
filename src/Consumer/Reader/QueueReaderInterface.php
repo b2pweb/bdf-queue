@@ -2,6 +2,7 @@
 
 namespace Bdf\Queue\Consumer\Reader;
 
+use Bdf\Queue\Connection\ConnectionDriverInterface;
 use Bdf\Queue\Message\EnvelopeInterface;
 
 /**
@@ -22,4 +23,9 @@ interface QueueReaderInterface
      * Stop the reader, and close the connection
      */
     public function stop(): void;
+
+    /**
+     * Get the connection driver instance
+     */
+    public function connection(): ConnectionDriverInterface;
 }

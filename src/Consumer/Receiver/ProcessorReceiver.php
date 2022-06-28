@@ -70,14 +70,14 @@ class ProcessorReceiver implements ReceiverInterface
     /**
      * {@inheritdoc}
      */
-    public function receiveStop(): void
+    public function receiveStop(ConsumerInterface $consumer): void
     {
     }
 
     /**
      * {@inheritdoc}
      */
-    public function terminate(): void
+    public function terminate(ConsumerInterface $consumer): void
     {
     }
 }

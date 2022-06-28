@@ -2,6 +2,7 @@
 
 namespace Bdf\Queue\Consumer\Reader;
 
+use Bdf\Queue\Connection\ConnectionDriverInterface;
 use Bdf\Queue\Connection\ReservableQueueDriverInterface;
 use Bdf\Queue\Message\EnvelopeInterface;
 
@@ -74,5 +75,13 @@ final class BufferedReader implements QueueReaderInterface
         }
 
         $this->driver->connection()->close();
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function connection(): ConnectionDriverInterface
+    {
+        return $this->driver->connection();
     }
 }
