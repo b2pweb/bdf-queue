@@ -82,6 +82,7 @@ class GearmanConnectionTest extends TestCase
      */
     public function test_topic()
     {
+        $this->driver->setConfig([]);
         $this->assertInstanceOf(GenericTopic::class, $this->driver->topic());
     }
 }

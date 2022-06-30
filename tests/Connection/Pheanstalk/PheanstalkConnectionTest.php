@@ -92,6 +92,7 @@ class PheanstalkConnectionTest extends TestCase
      */
     public function test_topic()
     {
+        $this->connection->setConfig([]);
         $this->assertInstanceOf(GenericTopic::class, $this->connection->topic());
     }
 }

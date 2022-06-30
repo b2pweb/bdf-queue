@@ -15,7 +15,7 @@ use Bdf\Queue\Message\Message;
  * This architecture creates a pub/sub pattern for connections that do not support it.
  * The generic topic will create destination queue with topic name and group as "group/topic"
  *
- * @experimental 1.7
+ * @experimental 1.3
  */
 class GenericTopic implements TopicDriverInterface
 {
@@ -25,26 +25,22 @@ class GenericTopic implements TopicDriverInterface
     }
 
     /**
-     * Available options:
-     *  - "wildcard": the wildcard representation string
-     *  - "group_separator": separate the group name and the topic name
-     *
-     * @var array
+     * @var QueueNamingStrategyInterface
      */
-    private $options;
+    private $namingStrategy;
 
     /**
-     * GearmanTopic constructor.
-     *
      * @param ConnectionDriverInterface $connection
+     * @param array{wildcard?: string, group_separator?: string} $options
      */
     public function __construct(ConnectionDriverInterface $connection, array $options = [])
     {
         $this->connection = $connection;
-        $this->options = $options + [
-            'wildcard' => '*',
-            'group_separator' => '/',
-        ];
+        $this->namingStrategy = new RegexQueueNamingStrategy(
+            $options['wildcard'] ?? RegexQueueNamingStrategy::WILDCARD,
+            $options['group_separator'] ?? '/',
+            $connection->config()['group'] ?? RegexQueueNamingStrategy::DEFAULT_GROUP
+        );
     }
 
     /**
@@ -95,17 +91,13 @@ class GenericTopic implements TopicDriverInterface
 
     /**
      * {@inheritdoc}
-     *
-     * @todo export strategy for queue naming
      */
     public function subscribe(array $topics, callable $callback): void
     {
-        $group = $this->connection->config()['group'] ?? '';
         $newTopics = [];
 
         foreach ($topics as $key => $topic) {
-            $topic = str_replace('*', $this->options['wildcard'], $topic);
-            $newTopics[$key] = "$group{$this->options['group_separator']}$topic";
+            $newTopics[$key] = $this->namingStrategy->topicNameToQueue($topic);
         }
 
         $this->addSubscribe($newTopics, $callback);
@@ -122,21 +114,8 @@ class GenericTopic implements TopicDriverInterface
     private function getRoutes(array $queuesInfo, string $topic): iterable
     {
         foreach ($queuesInfo as $info) {
-            if (empty($info['queue']) || strpos($info['queue'], $this->options['group_separator']) === false) {
-                continue;
-            }
-
-            list(, $queue) = explode($this->options['group_separator'], $info['queue'], 2);
-
-            // Create the regex pattern if the topic has '*' char.
-            if ($queue === $topic) {
+            if (!empty($info['queue']) && $this->namingStrategy->queueMatchWithTopic($info['queue'], $topic)) {
                 yield $info['queue'];
-            } elseif (strpos($queue, $this->options['wildcard']) !== false) {
-                $regex = '/'.str_replace(['.', $this->options['wildcard'], '/'], ['\.', '.*', '\\/'], $queue).'/';
-
-                if (preg_match($regex, $topic)) {
-                    yield $info['queue'];
-                }
             }
         }
     }
