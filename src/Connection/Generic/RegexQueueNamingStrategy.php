@@ -77,6 +77,7 @@ final class RegexQueueNamingStrategy implements QueueNamingStrategyInterface
 
         // Match already computed
         if (($match = $this->matchCache[$queue][$topic] ?? null) !== null) {
+            /** @var bool - Ignore _regex topic */
             return $match;
         }
 
