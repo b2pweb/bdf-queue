@@ -4,9 +4,9 @@ namespace Bdf\Queue\Destination\Queue;
 
 use Bdf\Dsn\DsnRequest;
 use Bdf\Queue\Connection\ConnectionDriverInterface;
-use Bdf\Queue\Connection\CountableQueueDriverInterface;
+use Bdf\Queue\Connection\CountableDriverInterface;
 use Bdf\Queue\Connection\ManageableQueueInterface;
-use Bdf\Queue\Connection\PeekableQueueDriverInterface;
+use Bdf\Queue\Connection\PeekableDriverInterface;
 use Bdf\Queue\Connection\QueueDriverInterface;
 use Bdf\Queue\Consumer\ConsumerInterface;
 use Bdf\Queue\Consumer\QueueConsumer;
@@ -123,7 +123,7 @@ final class QueueDestination implements DestinationInterface, ReadableDestinatio
     {
         $queue = $this->driver->connection()->queue();
 
-        if (!$queue instanceof CountableQueueDriverInterface) {
+        if (!$queue instanceof CountableDriverInterface) {
             throw new \BadMethodCallException(__METHOD__.' works only with countable connection.');
         }
 
@@ -137,7 +137,7 @@ final class QueueDestination implements DestinationInterface, ReadableDestinatio
     {
         $queue = $this->driver->connection()->queue();
 
-        if (!$queue instanceof PeekableQueueDriverInterface) {
+        if (!$queue instanceof PeekableDriverInterface) {
             throw new \BadMethodCallException(__METHOD__.' works only with peekable connection.');
         }
 

@@ -202,13 +202,13 @@ class DoctrineQueue implements QueueDriverInterface, ReservableQueueDriverInterf
     /**
      * {@inheritdoc}
      */
-    public function count(string $queueName): int
+    public function count(string $name): int
     {
         $query = $this->connection->connection()->createQueryBuilder()
             ->select('COUNT(*)')
             ->from($this->connection->table())
             ->andWhere('queue = :queue')
-            ->setParameter('queue', $queueName);
+            ->setParameter('queue', $name);
 
         $result = method_exists($query, 'executeQuery') ? $query->executeQuery() : $query->execute();
 
@@ -218,14 +218,14 @@ class DoctrineQueue implements QueueDriverInterface, ReservableQueueDriverInterf
     /**
      * {@inheritdoc}
      */
-    public function peek(string $queueName, int $rowCount = 20, int $page = 1): array
+    public function peek(string $name, int $rowCount = 20, int $page = 1): array
     {
         $query = $this->connection->connection()->createQueryBuilder()
             ->select('*')
             ->from($this->connection->table())
             ->andWhere('queue = :queue')
             ->orderBy('available_at, created_at')
-            ->setParameter('queue', $queueName)
+            ->setParameter('queue', $name)
             ->setFirstResult($rowCount * ($page - 1))
             ->setMaxResults($rowCount);
 

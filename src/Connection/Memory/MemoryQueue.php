@@ -150,9 +150,9 @@ class MemoryQueue implements QueueDriverInterface, ReservableQueueDriverInterfac
     /**
      * {@inheritdoc}
      */
-    public function count(string $queueName): int
+    public function count(string $name): int
     {
-        $storage = $this->connection->storage()->queues[$queueName] ?? null;
+        $storage = $this->connection->storage()->queues[$name] ?? null;
 
         return $storage ? $storage->count() : 0;
     }
@@ -160,18 +160,18 @@ class MemoryQueue implements QueueDriverInterface, ReservableQueueDriverInterfac
     /**
      * {@inheritdoc}
      */
-    public function peek(string $queueName, int $rowCount = 20, int $page = 1): array
+    public function peek(string $name, int $rowCount = 20, int $page = 1): array
     {
-        if (!isset($this->connection->storage()->queues[$queueName])) {
+        if (!isset($this->connection->storage()->queues[$name])) {
             return [];
         }
 
-        $queues = $this->connection->storage()->queues[$queueName];
+        $queues = $this->connection->storage()->queues[$name];
         $iterator = new \LimitIterator($queues, $rowCount * ($page - 1), $rowCount);
         $messages = [];
 
         foreach ($iterator as $data) {
-            $messages[] = $this->connection->toQueuedMessage($data->raw, $queueName, $data);
+            $messages[] = $this->connection->toQueuedMessage($data->raw, $name, $data);
         }
 
         return $messages;

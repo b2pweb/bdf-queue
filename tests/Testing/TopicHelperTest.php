@@ -51,6 +51,7 @@ class TopicHelperTest extends TestCase
         $container->add('queue.destinations', [
             'foo' => 'topic://test/topic1',
             'bar' => 'topic://test/topic2',
+            'all' => 'topic://test/*',
         ]);
         (new QueueServiceProvider())->configure($container);
 
@@ -139,6 +140,29 @@ class TopicHelperTest extends TestCase
 
         $this->assertCount(2, $this->helper->messages('foo'));
         $this->assertCount(1, $this->helper->messages('bar'));
+    }
+
+    /**
+     *
+     */
+    public function test_peek_messages()
+    {
+        $this->helper->init('foo', 'bar', 'all');
+
+        $this->helper->destination('foo')->send((new Message('a')));
+        $this->helper->destination('bar')->send((new Message('b')));
+        $this->helper->destination('foo')->send((new Message('c')));
+
+        $this->assertCount(2, $this->helper->peek('foo'));
+        $this->assertCount(1, $this->helper->peek('bar'));
+
+        $this->assertEquals(['a', 'c'], array_map(function (QueuedMessage $message) { return $message->data(); }, $this->helper->peek('foo')));
+        $this->assertEquals(['b'], array_map(function (QueuedMessage $message) { return $message->data(); }, $this->helper->peek('bar')));
+        $this->assertEquals(['a', 'b', 'c'], array_map(function (QueuedMessage $message) { return $message->data(); }, $this->helper->peek('all')));
+
+        $this->assertEquals(['a', 'b'], array_map(function (QueuedMessage $message) { return $message->data(); }, $this->helper->peek('all', 2)));
+        $this->assertEquals(['c'], array_map(function (QueuedMessage $message) { return $message->data(); }, $this->helper->peek('all', 2, 2)));
+        $this->assertEquals([], array_map(function (QueuedMessage $message) { return $message->data(); }, $this->helper->peek('all', 2, 10)));
     }
 
     /**

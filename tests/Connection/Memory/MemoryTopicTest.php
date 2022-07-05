@@ -3,6 +3,7 @@
 namespace Bdf\Queue\Connection\Memory;
 
 use Bdf\Queue\Message\Message;
+use Bdf\Queue\Message\QueuedMessage;
 use Bdf\Queue\Message\TopicEnvelope;
 use Bdf\Queue\Serializer\JsonSerializer;
 use PHPUnit\Framework\TestCase;
@@ -16,15 +17,19 @@ class MemoryTopicTest extends TestCase
 {
     /** @var MemoryTopic */
     private $driver;
+    /**
+     * @var MemoryConnection
+     */
+    private $connection;
 
     /**
      * @return MemoryTopic
      */
     protected function setUp(): void
     {
-        $connection = new MemoryConnection('foo',  new JsonSerializer());
+        $this->connection = new MemoryConnection('foo',  new JsonSerializer());
 
-        $this->driver = $connection->topic();
+        $this->driver = $this->connection->topic();
     }
 
     /**
@@ -183,5 +188,84 @@ class MemoryTopicTest extends TestCase
         $called1 = false;
         $this->assertFalse($called1);
         $this->assertTrue($called2);
+    }
+
+    /**
+     * @return void
+     */
+    public function test_count()
+    {
+        $this->driver->subscribe(['*'], function() {});
+        $this->driver->publish(Message::createForTopic('foo.bar', ['content'], 'TestEvent'));
+        $this->driver->publish(Message::createForTopic('foo.baz', ['content'], 'TestEvent'));
+        $this->driver->publish(Message::createForTopic('bar.baz', ['content'], 'TestEvent'));
+
+        $this->assertEquals(3, $this->driver->count('*'));
+        $this->assertEquals(2, $this->driver->count('foo.*'));
+        $this->assertEquals(1, $this->driver->count('foo.bar'));
+        $this->assertEquals(0, $this->driver->count('foo.other'));
+    }
+
+    /**
+     * @return void
+     */
+    public function test_peek()
+    {
+        $this->driver->subscribe(['*'], function() {});
+        $this->driver->publish(Message::createForTopic('foo.bar', 'content 1', 'TestEvent'));
+        $this->driver->publish(Message::createForTopic('foo.baz', 'content 2', 'TestEvent'));
+        $this->driver->publish(Message::createForTopic('bar.baz', 'content 3', 'TestEvent'));
+
+        $this->assertCount(3, $this->driver->peek('*'));
+        $this->assertCount(2, $this->driver->peek('foo.*'));
+        $this->assertCount(1, $this->driver->peek('foo.bar'));
+        $this->assertCount(0, $this->driver->peek('foo.other'));
+
+        $this->assertContainsOnly(QueuedMessage::class, $this->driver->peek('*'));
+        $this->assertEquals(['content 1', 'content 2', 'content 3'], array_map(function (QueuedMessage $message) { return $message->data(); }, $this->driver->peek('*')));
+        $this->assertEquals(['content 1', 'content 2'], array_map(function (QueuedMessage $message) { return $message->data(); }, $this->driver->peek('foo.*')));
+        $this->assertEquals(['content 3'], array_map(function (QueuedMessage $message) { return $message->data(); }, $this->driver->peek('bar.*')));
+
+        $this->assertEquals(['content 1', 'content 2'], array_map(function (QueuedMessage $message) { return $message->data(); }, $this->driver->peek('*', 2)));
+        $this->assertEquals(['content 3'], array_map(function (QueuedMessage $message) { return $message->data(); }, $this->driver->peek('*', 2, 2)));
+        $this->assertEquals([], array_map(function (QueuedMessage $message) { return $message->data(); }, $this->driver->peek('*', 2, 10)));
+    }
+
+    /**
+     * @return void
+     */
+    public function test_peek_should_ignore_multiple_queues()
+    {
+        $other = $this->connection->topic();
+        $this->driver->subscribe(['*'], function() {});
+        $other->subscribe(['*'], function () {});
+
+        // Publish on another topic instance
+        $other->publish(Message::createForTopic('foo.bar', 'content 1', 'TestEvent'));
+        $other->publish(Message::createForTopic('foo.baz', 'content 2', 'TestEvent'));
+        $other->publish(Message::createForTopic('bar.baz', 'content 3', 'TestEvent'));
+
+        $this->assertEquals(['content 1', 'content 2', 'content 3'], array_map(function (QueuedMessage $message) { return $message->data(); }, $this->driver->peek('*')));
+        $this->assertEquals(['content 1', 'content 2'], array_map(function (QueuedMessage $message) { return $message->data(); }, $this->driver->peek('foo.*')));
+        $this->assertEquals(['content 3'], array_map(function (QueuedMessage $message) { return $message->data(); }, $this->driver->peek('bar.*')));
+    }
+
+    /**
+     * @return void
+     */
+    public function test_count_should_ignore_multiple_queues()
+    {
+        $other = $this->connection->topic();
+        $this->driver->subscribe(['*'], function() {});
+        $other->subscribe(['*'], function () {});
+
+        // Publish on another topic instance
+        $other->publish(Message::createForTopic('foo.bar', 'content 1', 'TestEvent'));
+        $other->publish(Message::createForTopic('foo.baz', 'content 2', 'TestEvent'));
+        $other->publish(Message::createForTopic('bar.baz', 'content 3', 'TestEvent'));
+
+        $this->assertEquals(3, $this->driver->count('*'));
+        $this->assertEquals(2, $this->driver->count('foo.*'));
+        $this->assertEquals(1, $this->driver->count('foo.baz'));
     }
 }

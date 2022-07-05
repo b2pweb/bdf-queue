@@ -109,6 +109,8 @@ final class MultiTopicDestination implements DestinationInterface
      * @param DsnRequest $dsn
      *
      * @return self
+     *
+     * @deprecated Since 1.4. Use TopicDestinationFactory::createMultipleByDsn() instead
      */
     public static function createByDsn(ConnectionDriverInterface $connection, DsnRequest $dsn): self
     {

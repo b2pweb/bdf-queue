@@ -66,7 +66,7 @@ class NullQueue implements QueueDriverInterface, CountableQueueDriverInterface
     /**
      * {@inheritdoc}
      */
-    public function count(string $queueName): int
+    public function count(string $name): int
     {
         return 0;
     }

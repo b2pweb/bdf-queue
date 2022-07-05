@@ -22,17 +22,17 @@ class TopicDestinationTest extends TestCase
     /**
      * @var MemoryConnection
      */
-    private $connection;
+    protected $connection;
 
     /**
      * @var TopicDriverInterface
      */
-    private $driver;
+    protected $driver;
 
     /**
      * @var TopicDestination
      */
-    private $destination;
+    protected $destination;
 
 
     /**

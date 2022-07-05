@@ -104,10 +104,10 @@ class PheanstalkQueue implements QueueDriverInterface, CountableQueueDriverInter
     /**
      * {@inheritdoc}
      */
-    public function count(string $queueName): int
+    public function count(string $name): int
     {
         try {
-            return $this->connection->pheanstalk()->statsTube($queueName)['current-jobs-ready'];
+            return $this->connection->pheanstalk()->statsTube($name)['current-jobs-ready'];
         } catch (Exception $e) {
             return 0;
         }

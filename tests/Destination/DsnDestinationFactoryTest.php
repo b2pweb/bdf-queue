@@ -7,6 +7,7 @@ use Bdf\Queue\Connection\Factory\ResolverConnectionDriverFactory;
 use Bdf\Queue\Destination\Queue\MultiQueueDestination;
 use Bdf\Queue\Destination\Queue\QueueDestination;
 use Bdf\Queue\Destination\Topic\MultiTopicDestination;
+use Bdf\Queue\Destination\Topic\ReadableTopicDestination;
 use Bdf\Queue\Destination\Topic\TopicDestination;
 use Bdf\Queue\Tests\QueueServiceProvider;
 use League\Container\Container;
@@ -28,7 +29,10 @@ class DsnDestinationFactoryTest extends TestCase
     protected function setUp(): void
     {
         $container = new Container();
-        $container->add('queue.connections', ['test' => 'memory:']);
+        $container->add('queue.connections', [
+            'test' => 'memory:',
+            'other' => 'gearman://127.0.0.1',
+        ]);
         (new QueueServiceProvider())->configure($container);
 
         $this->connectionFactory = $container->get(ResolverConnectionDriverFactory::class);
@@ -61,7 +65,8 @@ class DsnDestinationFactoryTest extends TestCase
     {
         $factory = new DsnDestinationFactory($this->connectionFactory);
 
-        $this->assertEquals(new TopicDestination($this->connectionFactory->create('test')->topic(), 'topic-name'), $factory->create('topic://test/topic-name'));
+        $this->assertEquals(new ReadableTopicDestination($this->connectionFactory->create('test')->topic(), 'topic-name'), $factory->create('topic://test/topic-name'));
+        $this->assertEquals(new TopicDestination($this->connectionFactory->create('other')->topic(), 'topic-name'), $factory->create('topic://other/topic-name'));
     }
 
     /**
