@@ -106,6 +106,8 @@ final class TopicDestination implements DestinationInterface
      * @param DsnRequest $dsn
      *
      * @return self
+     *
+     * @deprecated Since 1.4. Use TopicDestinationFactory::createByDsn() instead
      */
     public static function createByDsn(ConnectionDriverInterface $connection, DsnRequest $dsn): self
     {

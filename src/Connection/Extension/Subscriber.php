@@ -2,6 +2,8 @@
 
 namespace Bdf\Queue\Connection\Extension;
 
+use Bdf\Queue\Util\TopicMatcher;
+
 /**
  * Subscriber
  */
@@ -34,7 +36,7 @@ trait Subscriber
 
             // Create the regex pattern if the topic has '*' char.
             if (strpos($pattern, '*') !== false) {
-                $this->regex[$pattern] = '/'.str_replace(['.', '*'], ['\.', '.*'], $pattern).'/';
+                $this->regex[$pattern] = TopicMatcher::toRegex($pattern);
             }
         }
     }

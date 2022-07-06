@@ -8,6 +8,7 @@ use Bdf\Queue\Destination\Queue\MultiQueueDestination;
 use Bdf\Queue\Destination\Queue\QueueDestination;
 use Bdf\Queue\Destination\Topic\MultiTopicDestination;
 use Bdf\Queue\Destination\Topic\TopicDestination;
+use Bdf\Queue\Destination\Topic\TopicDestinationFactory;
 
 /**
  * Factory for destination using DSN
@@ -87,8 +88,8 @@ final class DsnDestinationFactory implements DestinationFactoryInterface
         return [
             'queue' => [QueueDestination::class, 'createByDsn'],
             'queues' => [MultiQueueDestination::class, 'createByDsn'],
-            'topic' => [TopicDestination::class, 'createByDsn'],
-            'topics' => [MultiTopicDestination::class, 'createByDsn'],
+            'topic' => [TopicDestinationFactory::class, 'createByDsn'],
+            'topics' => [TopicDestinationFactory::class, 'createMultipleByDsn'],
         ];
     }
 }

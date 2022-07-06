@@ -88,12 +88,12 @@ class GearmanQueue implements QueueDriverInterface, CountableQueueDriverInterfac
     /**
      * {@inheritdoc}
      */
-    public function count(string $queueName): int
+    public function count(string $name): int
     {
         $queues = $this->queuesInfo();
 
         foreach ($queues as $info) {
-            if ($info['queue'] === $queueName) {
+            if ($info['queue'] === $name) {
                 return $info['jobs in queue'];
             }
         }

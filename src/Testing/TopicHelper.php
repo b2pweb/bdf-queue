@@ -7,6 +7,8 @@ use Bdf\Queue\Consumer\Receiver\Builder\ReceiverLoaderInterface;
 use Bdf\Queue\Consumer\TopicConsumer;
 use Bdf\Queue\Destination\DestinationInterface;
 use Bdf\Queue\Destination\DestinationManager;
+use Bdf\Queue\Destination\ReadableDestinationInterface;
+use Bdf\Queue\Message\QueuedMessage;
 use Bdf\Queue\Message\TopicEnvelope;
 use PHPUnit\Framework\Constraint\Constraint;
 use PHPUnit\Framework\Constraint\IsEqual;
@@ -145,6 +147,25 @@ class TopicHelper
     public function messages(string $destination = null): array
     {
         return $this->received[$destination ?: $this->defaultDestination] ?? [];
+    }
+
+    /**
+     * Peek sent messages from a topic
+     * Unlike `TopicHelper::messages()` consume message is not required for retrieve, and messages are not removed from topic
+     *
+     * @param string|null $destination The destination name. Can be in format "connectionName::topicName"
+     *
+     * @return QueuedMessage[]
+     */
+    public function peek(string $destination = null, int $count = 20, int $page = 1): array
+    {
+        $destination = $this->destination($destination);
+
+        if (!$destination instanceof ReadableDestinationInterface) {
+            throw new \BadMethodCallException('The destination do not supports peeking messages');
+        }
+
+        return $destination->peek($count, $page);
     }
 
     /**

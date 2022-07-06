@@ -126,11 +126,11 @@ LUA;
     /**
      * {@inheritdoc}
      */
-    public function count(string $queueName): int
+    public function count(string $name): int
     {
         $redis = $this->connection->connect();
 
-        return $redis->lLen($this->connection->queuePrefix().$queueName);
+        return $redis->lLen($this->connection->queuePrefix() . $name);
     }
 
     /**

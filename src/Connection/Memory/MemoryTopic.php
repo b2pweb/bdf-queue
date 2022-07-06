@@ -3,16 +3,19 @@
 namespace Bdf\Queue\Connection\Memory;
 
 use Bdf\Queue\Connection\ConnectionDriverInterface;
+use Bdf\Queue\Connection\CountableDriverInterface;
 use Bdf\Queue\Connection\Extension\ConnectionBearer;
 use Bdf\Queue\Connection\Extension\Subscriber;
 use Bdf\Queue\Connection\Extension\TopicEnvelopeHelper;
+use Bdf\Queue\Connection\PeekableDriverInterface;
 use Bdf\Queue\Connection\TopicDriverInterface;
 use Bdf\Queue\Message\Message;
+use Bdf\Queue\Util\TopicMatcher;
 
 /**
  * MemoryTopic
  */
-class MemoryTopic implements TopicDriverInterface
+class MemoryTopic implements TopicDriverInterface, CountableDriverInterface, PeekableDriverInterface
 {
     use ConnectionBearer;
     use TopicEnvelopeHelper;
@@ -91,6 +94,56 @@ class MemoryTopic implements TopicDriverInterface
         }
 
         $this->addSubscriber($topics, $callback);
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function count(string $name): int
+    {
+        $count = 0;
+
+        // Search only on first queue : all queues contains the same messages
+        foreach ($this->connection->storage()->awaitings as $queue) {
+            if (!$queue) {
+                continue;
+            }
+
+            foreach ($queue as $metadata) {
+                if (TopicMatcher::match($name, $metadata['topic'])) {
+                    ++$count;
+                }
+            }
+
+            break;
+        }
+
+        return $count;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function peek(string $name, int $rowCount = 20, int $page = 1): array
+    {
+        $messages = [];
+
+        // Search only on first queue : all queues contains the same messages
+        foreach ($this->connection->storage()->awaitings as $queue) {
+            if (!$queue) {
+                continue;
+            }
+
+            foreach ($queue as $metadata) {
+                if (TopicMatcher::match($name, $metadata['topic'])) {
+                    $messages[] = $this->connection->toQueuedMessage($metadata['payload'], $metadata['topic']);
+                }
+            }
+
+            break;
+        }
+
+        return array_slice($messages, ($rowCount * ($page - 1)), $rowCount, false);
     }
 
     /**
