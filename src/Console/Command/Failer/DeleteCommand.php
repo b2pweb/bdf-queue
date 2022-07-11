@@ -5,12 +5,14 @@ namespace Bdf\Queue\Console\Command\Failer;
 use Bdf\Queue\Failer\FailedJob;
 use Bdf\Queue\Failer\FailedJobCriteria;
 use Bdf\Queue\Failer\FailedJobStorageInterface;
+use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 
 /**
  * Command for delete failed jobs
  */
+#[AsCommand('queue:failer:delete', 'Delete failed queue jobs')]
 class DeleteCommand extends AbstractFailerCommand
 {
     protected static $defaultName = 'queue:failer:delete';

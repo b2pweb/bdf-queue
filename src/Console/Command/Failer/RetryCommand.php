@@ -6,12 +6,14 @@ use Bdf\Queue\Destination\DestinationManager;
 use Bdf\Queue\Failer\FailedJob;
 use Bdf\Queue\Failer\FailedJobCriteria;
 use Bdf\Queue\Failer\FailedJobStorageInterface;
+use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 
 /**
  * RetryCommand
  */
+#[AsCommand('queue:failer:retry', 'Retry a failed queue job')]
 class RetryCommand extends AbstractFailerCommand
 {
     protected static $defaultName = 'queue:failer:retry';

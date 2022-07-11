@@ -5,6 +5,7 @@ namespace Bdf\Queue\Console\Command\Failer;
 use Bdf\Queue\Failer\FailedJob;
 use Bdf\Queue\Failer\FailedJobCriteria;
 use Bdf\Queue\Failer\FailedJobStorageInterface;
+use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Helper\Table;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -15,6 +16,7 @@ use Symfony\Component\VarDumper\Dumper\CliDumper;
 /**
  * ShowCommand
  */
+#[AsCommand('queue:failer:show', 'List all of the failed queue jobs')]
 class ShowCommand extends AbstractFailerCommand
 {
     protected static $defaultName = 'queue:failer:show';

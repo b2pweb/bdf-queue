@@ -4,6 +4,7 @@ namespace Bdf\Queue\Console\Command;
 
 use Bdf\Queue\Connection\ConnectionDriverInterface;
 use Bdf\Queue\Connection\Factory\ConnectionDriverFactoryInterface;
+use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Completion\CompletionInput;
 use Symfony\Component\Console\Completion\CompletionSuggestions;
@@ -16,6 +17,7 @@ use Symfony\Component\Console\Output\OutputInterface;
 /**
  *
  */
+#[AsCommand('queue:info', 'Display queue info')]
 class InfoCommand extends Command
 {
     protected static $defaultName = 'queue:info';
