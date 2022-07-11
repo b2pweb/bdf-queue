@@ -99,6 +99,8 @@ EOF;
 
         $expected = <<<EOF
 Server: test
+------ Report: queues
+No result found
 
 EOF;
 
@@ -140,5 +142,27 @@ EOF;
             ['--filter'],
             ['queues', 'workers'],
         ];
+    }
+
+    /**
+     *
+     */
+    public function test_json_format()
+    {
+        $this->manager->send(Message::create([], 'test1')->setConnection('test'));
+        $this->manager->send(Message::create([], 'test1')->setConnection('test'));
+        $this->manager->send(Message::create([], 'test2')->setConnection('test'));
+        $this->manager->send(Message::create([], 'test2', 10)->setConnection('test'));
+
+        $command = new InfoCommand($this->container->get(ConnectionDriverFactoryInterface::class));
+        $tester = new CommandTester($command);
+        $tester->execute(['connection' => ['test'], '--format' => 'json']);
+
+        $expected = ['queues' => [
+            ['queue' => 'test1', 'jobs in queue' => 2, 'jobs awaiting' => 2, 'jobs running' => 0, 'jobs delayed' => 0],
+            ['queue' => 'test2', 'jobs in queue' => 2, 'jobs awaiting' => 1, 'jobs running' => 0, 'jobs delayed' => 1],
+        ]];
+
+        $this->assertSame($expected, json_decode($tester->getDisplay(), true));
     }
 }

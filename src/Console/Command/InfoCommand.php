@@ -46,6 +46,7 @@ class InfoCommand extends Command
             ->setDescription('Display queue info')
             ->addArgument('connection', InputArgument::REQUIRED | InputArgument::IS_ARRAY, 'Queue connections.')
             ->addOption('filter', 'f', InputOption::VALUE_REQUIRED, 'This will display only the report filtered by its name. The list of reports depends of each driver.')
+            ->addOption('format', null, InputOption::VALUE_REQUIRED, 'Display the report in the given format. Available values [json].')
         ;
     }
 
@@ -55,38 +56,52 @@ class InfoCommand extends Command
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $filter = $input->getOption('filter');
+        $format = $input->getOption('format');
         $connections = array_map([$this->connectionFactory, 'create'], $input->getArgument('connection'));
 
         /** @var ConnectionDriverInterface $connection */
         foreach ($connections as $connection) {
-            $output->writeln(sprintf('<comment>Server: %s</comment>', $connection->getName()));
             $reports = $connection->queue()->stats();
 
-            if (empty($reports)) {
-                $output->writeln('Reports are not available for this connection.');
-                continue;
+            if (isset($reports[$filter])) {
+                $reports = [$filter => $reports[$filter]];
             }
 
-            foreach ($reports as $report => $stats) {
-                if ($filter !== null && $filter !== $report) {
-                    continue;
-                }
+            if ('json' === $format) {
+                $output->writeln(json_encode($reports, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
+            } else {
+                $output->writeln(sprintf('<comment>Server: %s</comment>', $connection->getName()));
 
-                $output->writeln(sprintf('------ Report: <comment>%s</comment>', $report));
-
-                if (empty($stats)) {
-                    $output->writeln('No result found');
-                } else {
-                    (new Table($output))
-                        ->setHeaders(isset($stats[0]) ? array_keys($stats[0]) : [])
-                        ->setRows($stats)
-                        ->setStyle('box')
-                        ->render();
-                }
+                $this->displayTable($output, $reports);
             }
         }
 
         return 0;
+    }
+
+    /**
+     *
+     */
+    private function displayTable(OutputInterface $output, array $reports): void
+    {
+        if (empty($reports)) {
+            $output->writeln('Reports are not available for this connection.');
+            return;
+        }
+
+        foreach ($reports as $report => $stats) {
+            $output->writeln(sprintf('------ Report: <comment>%s</comment>', $report));
+
+            if (empty($stats)) {
+                $output->writeln('No result found');
+            } else {
+                (new Table($output))
+                    ->setHeaders(isset($stats[0]) ? array_keys($stats[0]) : [])
+                    ->setRows($stats)
+                    ->setStyle('box')
+                    ->render();
+            }
+        }
     }
 
     /**
