@@ -231,13 +231,14 @@ final class FailedJobCriteria
     private static function matchSingleProperty($entityValue, string $operator, $comparedValue): bool
     {
         switch ($operator) {
-            case '=':
+            case '=': {
                 if (is_string($comparedValue)) {
                     $entityValue = strtolower($entityValue);
                     $comparedValue = strtolower($comparedValue);
                 }
 
                 return $entityValue == $comparedValue;
+            }
 
             case '>':
                 return $entityValue > $comparedValue;
@@ -251,12 +252,13 @@ final class FailedJobCriteria
             case '<=':
                 return $entityValue <= $comparedValue;
 
-            case FailedJobCriteria::WILDCARD:
+            case FailedJobCriteria::WILDCARD: {
                 if ($entityValue instanceof \DateTimeInterface) {
                     $entityValue = $entityValue->format(DateTime::ATOM);
                 }
 
-                return (bool) preg_match('#^' . str_replace('\*', '.*', preg_quote($comparedValue)) . '$#i', $entityValue);
+                return (bool)preg_match('#^' . str_replace('\*', '.*', preg_quote($comparedValue)) . '$#i', $entityValue);
+            }
 
             default:
                 throw new InvalidArgumentException('Unsupported operator ' . $operator);

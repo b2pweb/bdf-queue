@@ -168,11 +168,11 @@ class ConsumeCommand extends Command
 
         switch ($unit) {
             case 't': $bytes *= 1024;
-            // no break
+                // no break
             case 'g': $bytes *= 1024;
-            // no break
+                // no break
             case 'm': $bytes *= 1024;
-            // no break
+                // no break
             case 'k': $bytes *= 1024;
         }
 
