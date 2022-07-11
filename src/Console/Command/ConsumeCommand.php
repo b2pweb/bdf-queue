@@ -9,6 +9,7 @@ use Bdf\Queue\Destination\DestinationManager;
 use Bdf\Queue\Worker;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
+use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Completion\CompletionInput;
 use Symfony\Component\Console\Completion\CompletionSuggestions;
@@ -20,6 +21,7 @@ use Symfony\Component\Console\Output\OutputInterface;
 /**
  * ConsumeCommand
  */
+#[AsCommand('queue:consume', 'Consume a message from a queue.')]
 class ConsumeCommand extends Command
 {
     use DestinationExtension;
@@ -166,11 +168,11 @@ class ConsumeCommand extends Command
 
         switch ($unit) {
             case 't': $bytes *= 1024;
-            // no break
+                // no break
             case 'g': $bytes *= 1024;
-            // no break
+                // no break
             case 'm': $bytes *= 1024;
-            // no break
+                // no break
             case 'k': $bytes *= 1024;
         }
 

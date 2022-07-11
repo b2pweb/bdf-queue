@@ -5,6 +5,7 @@ namespace Bdf\Queue\Console\Command;
 use Bdf\Queue\Console\Command\Extension\DestinationExtension;
 use Bdf\Queue\Destination\DestinationManager;
 use Bdf\Queue\Message\Message;
+use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Completion\CompletionInput;
 use Symfony\Component\Console\Completion\CompletionSuggestions;
@@ -16,6 +17,7 @@ use Symfony\Component\Console\Output\OutputInterface;
 /**
  * Produce a serialized message onto a given queue
  */
+#[AsCommand('queue:produce', 'Push a serialized message onto queue')]
 class ProduceCommand extends Command
 {
     use DestinationExtension;

@@ -4,6 +4,7 @@ namespace Bdf\Queue\Console\Command;
 
 use Bdf\Queue\Connection\AmqpLib\AmqpLibConnection;
 use Bdf\Queue\Connection\Factory\ConnectionDriverFactoryInterface;
+use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Completion\CompletionInput;
 use Symfony\Component\Console\Completion\CompletionSuggestions;
@@ -14,6 +15,7 @@ use Symfony\Component\Console\Output\OutputInterface;
 /**
  * BindCommand
  */
+#[AsCommand('queue:bind', 'Bind a channel or pattern to a topic.')]
 class BindCommand extends Command
 {
     protected static $defaultName = 'queue:bind';

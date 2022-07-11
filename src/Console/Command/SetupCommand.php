@@ -4,6 +4,7 @@ namespace Bdf\Queue\Console\Command;
 
 use Bdf\Queue\Console\Command\Extension\DestinationExtension;
 use Bdf\Queue\Destination\DestinationManager;
+use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Completion\CompletionInput;
 use Symfony\Component\Console\Completion\CompletionSuggestions;
@@ -14,6 +15,7 @@ use Symfony\Component\Console\Output\OutputInterface;
 /**
  * SetupCommand
  */
+#[AsCommand('queue:setup', 'Declare or delete a queue from a connection.')]
 class SetupCommand extends Command
 {
     use DestinationExtension;
