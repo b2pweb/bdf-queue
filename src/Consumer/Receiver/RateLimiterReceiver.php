@@ -55,12 +55,20 @@ class RateLimiterReceiver implements ReceiverInterface
      * @param int $limit
      * @param int $sleep
      */
-    public function __construct(ReceiverInterface $delegate, LoggerInterface $logger, int $limit, int $sleep = 3)
+    public function __construct(/*LoggerInterface $logger, int $limit, int $sleep = 3*/)
     {
-        $this->logger = $logger;
-        $this->delegate = $delegate;
-        $this->limit = $limit;
-        $this->sleep = $sleep;
+        $args = func_get_args();
+        $index = 0;
+
+        if ($args[0] instanceof ReceiverInterface) {
+            @trigger_error('Passing delegate in constructor of receiver is deprecated since 1.4', E_USER_DEPRECATED);
+            $this->delegate = $args[0];
+            ++$index;
+        }
+
+        $this->logger = $args[$index++];
+        $this->limit = $args[$index++];
+        $this->sleep = $args[$index] ?? 3;
     }
 
     /**
@@ -69,7 +77,8 @@ class RateLimiterReceiver implements ReceiverInterface
     public function receive($message, ConsumerInterface $consumer): void
     {
         try {
-            $this->delegate->receive($message, $consumer);
+            $next = $this->delegate ?? $consumer;
+            $next->receive($message, $consumer);
         } finally {
             // Do not sleep when an exception is raised
             $this->jobsDoneInLoop++;
@@ -95,7 +104,8 @@ class RateLimiterReceiver implements ReceiverInterface
     {
         $this->jobsDoneInLoop = 0;
 
-        $this->delegate->receiveTimeout($consumer);
+        $next = $this->delegate ?? $consumer;
+        $next->receiveTimeout($consumer);
     }
 
     /**

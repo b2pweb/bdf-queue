@@ -27,6 +27,10 @@ class JobLoggerReceiverTest extends TestCase
     protected $extension;
     /** @var ConsumerInterface|MockObject */
     protected $consumer;
+    /**
+     * @var NextInterface|MockObject
+     */
+    private $next;
 
     /**
      * 
@@ -47,12 +51,24 @@ class JobLoggerReceiverTest extends TestCase
 
         $this->extension = $this->createMock(ReceiverInterface::class);
         $this->consumer = $this->createMock(ConsumerInterface::class);
+        $this->next = $this->createMock(NextInterface::class);
     }
     
     /**
      * 
      */
     public function test_next_call()
+    {
+        $this->next->expects($this->once())->method('receive');
+
+        $extension = new MessageLoggerReceiver($this->logger);
+        $extension->receive($this->envelope, $this->next);
+    }
+
+    /**
+     *
+     */
+    public function test_next_call_legacy()
     {
         $this->extension->expects($this->once())->method('receive');
 
@@ -65,6 +81,17 @@ class JobLoggerReceiverTest extends TestCase
      */
     public function test_start()
     {
+        $this->next->expects($this->once())->method('start')->with($this->next);
+
+        $extension = new MessageLoggerReceiver($this->logger);
+        $extension->start($this->next);
+    }
+
+    /**
+     *
+     */
+    public function test_start_legacy()
+    {
         $this->extension->expects($this->once())->method('start')->with($this->consumer);
 
         $extension = new MessageLoggerReceiver($this->extension, $this->logger);
@@ -75,6 +102,27 @@ class JobLoggerReceiverTest extends TestCase
      *
      */
     public function test_log()
+    {
+        $extension = new MessageLoggerReceiver($this->logger);
+        $extension->receive($this->envelope, $this->next);
+
+        $output = array_filter($this->buffer->getRecords());
+        $this->assertCount(3, $output);
+
+        $regex = '/^\[' . str_replace('/', '\\/', date('Y-m-d H:i')) . ':[0-9]{2}\] INFO: \[test-connection::test-queue\] "test-job" starting/';
+        $this->assertRegExp($regex, $output[0]['formatted']);
+
+        $regex = '/^\[' . str_replace('/', '\\/', date('Y-m-d H:i')) . ':[0-9]{2}\] DEBUG: {"name":"foo"}/';
+        $this->assertRegExp($regex, $output[1]['formatted']);
+
+        $regex = '/^\[' . str_replace('/', '\\/', date('Y-m-d H:i')) . ':[0-9]{2}\] INFO: \[test-connection::test-queue\] "test-job" succeed/';
+        $this->assertRegExp($regex, $output[2]['formatted']);
+    }
+
+    /**
+     *
+     */
+    public function test_log_legacy()
     {
         $extension = new MessageLoggerReceiver($this->extension, $this->logger);
         $extension->receive($this->envelope, $this->consumer);
@@ -99,6 +147,19 @@ class JobLoggerReceiverTest extends TestCase
     {
         $this->expectExceptionMessage('error');
 
+        $this->next->expects($this->once())->method('receive')->willThrowException(new \Exception('error'));
+
+        $extension = new MessageLoggerReceiver($this->logger);
+        $extension->receive($this->envelope, $this->next);
+    }
+
+    /**
+     *
+     */
+    public function test_exception_is_thrown_legacy()
+    {
+        $this->expectExceptionMessage('error');
+
         $this->extension->expects($this->once())->method('receive')->willThrowException(new \Exception('error'));
 
         $extension = new MessageLoggerReceiver($this->extension, $this->logger);
@@ -109,6 +170,27 @@ class JobLoggerReceiverTest extends TestCase
      *
      */
     public function test_exception()
+    {
+        $this->next->expects($this->once())->method('receive')->willThrowException(new \Exception('error'));
+
+        $extension = new MessageLoggerReceiver($this->logger);
+        try {
+            $extension->receive($this->envelope, $this->next);
+        } catch (\Exception $exception) {
+
+        }
+
+        $output = array_filter($this->buffer->getRecords());
+        $this->assertCount(3, $output);
+
+        $regex = '/^\[' . str_replace('/', '\\/', date('Y-m-d H:i')) . ':[0-9]{2}\] CRITICAL: \[test-connection::test-queue\] "test-job" failed/';
+        $this->assertRegExp($regex, $output[2]['formatted']);
+    }
+
+    /**
+     *
+     */
+    public function test_exception_legacy()
     {
         $this->extension->expects($this->once())->method('receive')->willThrowException(new \Exception('error'));
 
@@ -130,6 +212,21 @@ class JobLoggerReceiverTest extends TestCase
      *
      */
     public function test_on_stopping()
+    {
+        $this->next->expects($this->once())->method('receiveStop')->with($this->next);
+
+        $extension = new MessageLoggerReceiver($this->logger);
+        $extension->receiveStop($this->next);
+
+        $regex = '/^\[' . str_replace('/', '\\/', date('Y-m-d H:i')) . ':[0-9]{2}\] INFO: stopping worker/';
+
+        $this->assertRegExp($regex, $this->buffer->getRecords()[0]['formatted']);
+    }
+
+    /**
+     *
+     */
+    public function test_on_stopping_legacy()
     {
         $this->extension->expects($this->once())->method('receiveStop')->with($this->consumer);
 

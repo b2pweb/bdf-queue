@@ -15,20 +15,25 @@ class StopWhenEmptyReceiver implements ReceiverInterface
     use DelegateHelper;
 
     /**
-     * @var LoggerInterface
+     * @var LoggerInterface|null
      */
     private $logger;
 
     /**
      * StopWhenEmptyReceiver constructor.
      *
-     * @param ReceiverInterface $delegate Previous receiver
-     * @param null|LoggerInterface $logger Logger. Null value can be set instead of NullLogger
+     * @param ReceiverInterface|LoggerInterface|null $delegate Previous receiver
+     * @param LoggerInterface|null $logger Logger. Null value can be set instead of NullLogger
      */
-    public function __construct(ReceiverInterface $delegate, LoggerInterface $logger = null)
+    public function __construct($delegate = null, LoggerInterface $logger = null)
     {
-        $this->delegate = $delegate;
-        $this->logger = $logger;
+        if ($delegate instanceof ReceiverInterface) {
+            @trigger_error('Passing delegate in constructor of receiver is deprecated since 1.4', E_USER_DEPRECATED);
+            $this->delegate = $delegate;
+            $this->logger = $logger;
+        } else {
+            $this->logger = $delegate;
+        }
     }
 
     /**
@@ -36,7 +41,8 @@ class StopWhenEmptyReceiver implements ReceiverInterface
      */
     public function receiveTimeout(ConsumerInterface $consumer): void
     {
-        $this->delegate->receiveTimeout($consumer);
+        $next = $this->delegate ?? $consumer;
+        $next->receiveTimeout($consumer);
 
         $consumer->stop();
 

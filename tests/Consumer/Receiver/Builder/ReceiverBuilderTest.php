@@ -5,6 +5,8 @@ namespace Bdf\Queue\Consumer\Receiver\Builder;
 use Bdf\Instantiator\Instantiator;
 use Bdf\Instantiator\InstantiatorInterface;
 use Bdf\Queue\Consumer\ConsumerInterface;
+use Bdf\Queue\Consumer\DelegateHelper;
+use Bdf\Queue\Consumer\Receiver\BenchReceiver;
 use Bdf\Queue\Consumer\Receiver\Binder\BinderReceiver;
 use Bdf\Queue\Consumer\Receiver\Binder\ClassNameBinder;
 use Bdf\Queue\Consumer\Receiver\MemoryLimiterReceiver;
@@ -14,6 +16,7 @@ use Bdf\Queue\Consumer\Receiver\MessageStoreReceiver;
 use Bdf\Queue\Consumer\Receiver\NoFailureReceiver;
 use Bdf\Queue\Consumer\Receiver\ProcessorReceiver;
 use Bdf\Queue\Consumer\Receiver\RateLimiterReceiver;
+use Bdf\Queue\Consumer\Receiver\ReceiverPipeline;
 use Bdf\Queue\Consumer\Receiver\RetryMessageReceiver;
 use Bdf\Queue\Consumer\Receiver\StopWhenEmptyReceiver;
 use Bdf\Queue\Consumer\Receiver\TimeLimiterReceiver;
@@ -135,13 +138,13 @@ class ReceiverBuilderTest extends TestCase
         ;
 
         $this->assertEquals(
-            new StopWhenEmptyReceiver(
+            new ReceiverPipeline([
+                new StopWhenEmptyReceiver(new LoggerProxy(new NullLogger())),
                 new MyReceiver(
                     new ProcessorReceiver(new JobHintProcessorResolver($this->container->get(InstantiatorInterface::class))),
                     'rab'
                 ),
-                new NullLogger()
-            ),
+            ]),
             $this->builder->build()
         );
     }
@@ -154,10 +157,10 @@ class ReceiverBuilderTest extends TestCase
         $this->builder->log();
 
         $this->assertEquals(
-            new MessageLoggerReceiver(
+            new ReceiverPipeline([
+                new MessageLoggerReceiver(new LoggerProxy(new NullLogger())),
                 new ProcessorReceiver(new JobHintProcessorResolver($this->container->get(InstantiatorInterface::class))),
-                new NullLogger()
-            ),
+            ]),
             $this->builder->build()
         );
     }
@@ -168,14 +171,15 @@ class ReceiverBuilderTest extends TestCase
     public function test_log_in_container()
     {
         $this->container->add('logger', $logger = $this->createMock(LoggerInterface::class));
+        $this->builder = new ReceiverBuilder($this->container);
 
         $this->builder->log();
 
         $this->assertEquals(
-            new MessageLoggerReceiver(
+            new ReceiverPipeline([
+                new MessageLoggerReceiver(new LoggerProxy($logger)),
                 new ProcessorReceiver(new JobHintProcessorResolver($this->container->get(InstantiatorInterface::class))),
-                $logger
-            ),
+            ]),
             $this->builder->build()
         );
     }
@@ -188,10 +192,10 @@ class ReceiverBuilderTest extends TestCase
         $this->builder->log($logger = $this->createMock(LoggerInterface::class));
 
         $this->assertEquals(
-            new MessageLoggerReceiver(
+            new ReceiverPipeline([
+                new MessageLoggerReceiver(new LoggerProxy($logger)),
                 new ProcessorReceiver(new JobHintProcessorResolver($this->container->get(InstantiatorInterface::class))),
-                $logger
-            ),
+            ]),
             $this->builder->build()
         );
     }
@@ -204,11 +208,10 @@ class ReceiverBuilderTest extends TestCase
         $this->builder->limit(5);
 
         $this->assertEquals(
-            new RateLimiterReceiver(
+            new ReceiverPipeline([
+                new RateLimiterReceiver(new LoggerProxy(new NullLogger()), 5, 3),
                 new ProcessorReceiver(new JobHintProcessorResolver($this->container->get(InstantiatorInterface::class))),
-                new NullLogger(),
-                5, 3
-            ),
+            ]),
             $this->builder->build()
         );
     }
@@ -221,11 +224,10 @@ class ReceiverBuilderTest extends TestCase
         $this->builder->max(5);
 
         $this->assertEquals(
-            new MessageCountLimiterReceiver(
+            new ReceiverPipeline([
+                new MessageCountLimiterReceiver(5, new LoggerProxy(new NullLogger())),
                 new ProcessorReceiver(new JobHintProcessorResolver($this->container->get(InstantiatorInterface::class))),
-                5,
-                new NullLogger()
-            ),
+            ]),
             $this->builder->build()
         );
     }
@@ -238,11 +240,10 @@ class ReceiverBuilderTest extends TestCase
         $this->builder->memory(5);
 
         $this->assertEquals(
-            new MemoryLimiterReceiver(
+            new ReceiverPipeline([
+                new MemoryLimiterReceiver(5, new LoggerProxy(new NullLogger())),
                 new ProcessorReceiver(new JobHintProcessorResolver($this->container->get(InstantiatorInterface::class))),
-                5,
-                new NullLogger()
-            ),
+            ]),
             $this->builder->build()
         );
     }
@@ -255,11 +256,10 @@ class ReceiverBuilderTest extends TestCase
         $this->builder->retry(5, 15);
 
         $this->assertEquals(
-            new RetryMessageReceiver(
+            new ReceiverPipeline([
+                new RetryMessageReceiver(new LoggerProxy(new NullLogger()), 5, 15),
                 new ProcessorReceiver(new JobHintProcessorResolver($this->container->get(InstantiatorInterface::class))),
-                new NullLogger(),
-                5, 15
-            ),
+            ]),
             $this->builder->build()
         );
     }
@@ -272,10 +272,10 @@ class ReceiverBuilderTest extends TestCase
         $this->builder->stopWhenEmpty();
 
         $this->assertEquals(
-            new StopWhenEmptyReceiver(
+            new ReceiverPipeline([
+                new StopWhenEmptyReceiver(new LoggerProxy(new NullLogger())),
                 new ProcessorReceiver(new JobHintProcessorResolver($this->container->get(InstantiatorInterface::class))),
-                new NullLogger()
-            ),
+            ]),
             $this->builder->build()
         );
     }
@@ -287,10 +287,10 @@ class ReceiverBuilderTest extends TestCase
     {
         $this->builder->noFailure();
 
-        $this->assertEquals(
-            new NoFailureReceiver(
-                new ProcessorReceiver(new JobHintProcessorResolver($this->container->get(InstantiatorInterface::class)))
-            ),
+        $this->assertEquals(new ReceiverPipeline([
+                new NoFailureReceiver(),
+                new ProcessorReceiver(new JobHintProcessorResolver($this->container->get(InstantiatorInterface::class))),
+            ]),
             $this->builder->build()
         );
     }
@@ -325,6 +325,40 @@ class ReceiverBuilderTest extends TestCase
         );
 
         $this->assertEquals(
+            new ReceiverPipeline([
+                new BinderReceiver([$binder1, $binder2]),
+                new ProcessorReceiver(new JobHintProcessorResolver($this->container->get(InstantiatorInterface::class))),
+            ]),
+            $this->builder->build()
+        );
+
+        $this->builder->binder(
+            $binder3 = $this->createMock(BinderInterface::class)
+        );
+
+        $this->assertEquals(
+            new ReceiverPipeline([
+                new BinderReceiver([$binder1, $binder2, $binder3]),
+                new ProcessorReceiver(new JobHintProcessorResolver($this->container->get(InstantiatorInterface::class))),
+            ]),
+            $this->builder->build()
+        );
+    }
+
+    /**
+     *
+     */
+    public function test_binder_with_legacy_definition()
+    {
+        $this->builder->add(
+            BinderReceiver::class,
+            [[
+                $binder1 = $this->createMock(BinderInterface::class),
+                $binder2 = $this->createMock(BinderInterface::class),
+            ]]
+        );
+
+        $this->assertEquals(
             new BinderReceiver(
                 new ProcessorReceiver(new JobHintProcessorResolver($this->container->get(InstantiatorInterface::class))),
                 [$binder1, $binder2]
@@ -354,10 +388,10 @@ class ReceiverBuilderTest extends TestCase
         $this->builder->bind(['Foo' => Foo::class]);
 
         $this->assertEquals(
-            new BinderReceiver(
+            new ReceiverPipeline([
+                new BinderReceiver([new AliasBinder(['Foo' => Foo::class], $serializer)]),
                 new ProcessorReceiver(new JobHintProcessorResolver($this->container->get(InstantiatorInterface::class))),
-                [new AliasBinder(['Foo' => Foo::class], $serializer)]
-            ),
+            ]),
             $this->builder->build()
         );
     }
@@ -371,10 +405,10 @@ class ReceiverBuilderTest extends TestCase
         $this->builder->bindByClassName(function () {});
 
         $this->assertEquals(
-            new BinderReceiver(
+            new ReceiverPipeline([
+                new BinderReceiver([new ClassNameBinder($serializer, function () {})]),
                 new ProcessorReceiver(new JobHintProcessorResolver($this->container->get(InstantiatorInterface::class))),
-                [new ClassNameBinder($serializer, function () {})]
-            ),
+            ]),
             $this->builder->build()
         );
     }
@@ -449,11 +483,10 @@ class ReceiverBuilderTest extends TestCase
         $this->builder->expire(10);
 
         $this->assertEquals(
-            new TimeLimiterReceiver(
+            new ReceiverPipeline([
+                new TimeLimiterReceiver(10, new LoggerProxy(new NullLogger())),
                 new ProcessorReceiver(new JobHintProcessorResolver($this->container->get(InstantiatorInterface::class))),
-                10,
-                new NullLogger()
-            ),
+            ]),
             $this->builder->build()
         );
     }
@@ -467,13 +500,61 @@ class ReceiverBuilderTest extends TestCase
 
         $this->builder->watch($callable);
 
-        $this->assertEquals(
-            new MessageWatcherReceiver(
+        $this->assertEquals(new ReceiverPipeline([
+                new MessageWatcherReceiver($callable),
                 new ProcessorReceiver(new JobHintProcessorResolver($this->container->get(InstantiatorInterface::class))),
-                $callable
-            ),
+            ]),
             $this->builder->build()
         );
+    }
+
+    public function test_add_new_receiver_system()
+    {
+        $a = new class implements ReceiverInterface {
+            use DelegateHelper;
+        };
+        $b = new class implements ReceiverInterface {
+            use DelegateHelper;
+        };
+
+        $this->builder->add($a);
+        $this->builder->add($b);
+
+        $this->assertEquals(new ReceiverPipeline([
+            $b,
+            $a,
+            new ProcessorReceiver(new JobHintProcessorResolver($this->container->get(InstantiatorInterface::class)))
+        ]), $this->builder->build());
+    }
+
+    public function test_add_mixing_legacy_and_new()
+    {
+        $a = new class implements ReceiverInterface {
+            use DelegateHelper;
+        };
+        $b = new class implements ReceiverInterface {
+            use DelegateHelper;
+        };
+        $c = new class implements ReceiverInterface {
+            use DelegateHelper;
+        };
+
+        $this->builder->add($a);
+        $this->builder->add($b);
+        $this->builder->add(BenchReceiver::class);
+        $this->builder->add($c);
+
+        $this->assertEquals(new ReceiverPipeline([
+            $c,
+            new BenchReceiver(
+                new ReceiverPipeline([
+                    $b,
+                    $a,
+                    new ProcessorReceiver(new JobHintProcessorResolver($this->container->get(InstantiatorInterface::class)))
+                ]),
+                new NullLogger()
+            ),
+        ]), $this->builder->build());
     }
 }
 

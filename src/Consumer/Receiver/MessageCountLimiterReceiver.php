@@ -25,11 +25,19 @@ class MessageCountLimiterReceiver implements ReceiverInterface
      * @param int $limit
      * @param LoggerInterface|null $logger
      */
-    public function __construct(ReceiverInterface $delegate, int $limit, LoggerInterface $logger = null)
+    public function __construct(/*int $limit, LoggerInterface $logger = null*/)
     {
-        $this->delegate = $delegate;
-        $this->limit = $limit;
-        $this->logger = $logger;
+        $args = func_get_args();
+        $index = 0;
+
+        if ($args[0] instanceof ReceiverInterface) {
+            @trigger_error('Passing delegate in constructor of receiver is deprecated since 1.4', E_USER_DEPRECATED);
+            $this->delegate = $args[0];
+            ++$index;
+        }
+
+        $this->limit = $args[$index++];
+        $this->logger = $args[$index] ?? null;
     }
 
     /**
@@ -37,7 +45,8 @@ class MessageCountLimiterReceiver implements ReceiverInterface
      */
     public function receive($message, ConsumerInterface $consumer): void
     {
-        $this->delegate->receive($message, $consumer);
+        $next = $this->delegate ?? $consumer;
+        $next->receive($message, $consumer);
 
         if (++$this->receivedMessages >= $this->limit) {
             $consumer->stop();

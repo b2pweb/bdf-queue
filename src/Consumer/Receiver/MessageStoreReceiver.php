@@ -41,11 +41,19 @@ class MessageStoreReceiver implements ReceiverInterface
      * @param FailedJobStorageInterface $storage
      * @param LoggerInterface $logger
      */
-    public function __construct(ReceiverInterface $delegate, FailedJobStorageInterface $storage, LoggerInterface $logger)
+    public function __construct(/*FailedJobStorageInterface $storage, LoggerInterface $logger*/)
     {
-        $this->delegate = $delegate;
-        $this->repository = FailedJobRepositoryAdapter::adapt($storage);
-        $this->logger = $logger;
+        $args = func_get_args();
+        $index = 0;
+
+        if ($args[0] instanceof ReceiverInterface) {
+            @trigger_error('Passing delegate in constructor of receiver is deprecated since 1.4', E_USER_DEPRECATED);
+            $this->delegate = $args[0];
+            ++$index;
+        }
+
+        $this->repository = FailedJobRepositoryAdapter::adapt($args[$index++]);
+        $this->logger = $args[$index];
     }
 
     /**
@@ -55,8 +63,10 @@ class MessageStoreReceiver implements ReceiverInterface
      */
     public function receive($message, ConsumerInterface $consumer): void
     {
+        $next = $this->delegate ?? $consumer;
+
         try {
-            $this->delegate->receive($message, $consumer);
+            $next->receive($message, $consumer);
         } catch (\Throwable $exception) {
             if ($message->message()->noStore() !== true) {
                 $this->logger->info('Storing the job "'.$message->message()->name().'".');

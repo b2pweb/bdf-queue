@@ -31,10 +31,18 @@ class MessageWatcherReceiver implements ReceiverInterface
      * @param ReceiverInterface $delegate
      * @param callable $callable
      */
-    public function __construct(ReceiverInterface $delegate, callable $callable = null)
+    public function __construct(/*callable $callable = null*/)
     {
-        $this->delegate = $delegate;
-        $this->callable = $callable;
+        $args = func_get_args();
+        $index = 0;
+
+        if (isset($args[0]) && $args[0] instanceof ReceiverInterface) {
+            @trigger_error('Passing delegate in constructor of receiver is deprecated since 1.4', E_USER_DEPRECATED);
+            $this->delegate = $args[0];
+            ++$index;
+        }
+
+        $this->callable = $args[$index] ?? null;
     }
 
     /**
@@ -48,7 +56,8 @@ class MessageWatcherReceiver implements ReceiverInterface
             ($this->callable)($message, $consumer);
         }
 
-        $this->delegate->receive($message, $consumer);
+        $next = $this->delegate ?? $consumer;
+        $next->receive($message, $consumer);
     }
 
     /**
@@ -60,7 +69,8 @@ class MessageWatcherReceiver implements ReceiverInterface
             ($this->callable)(null, $consumer);
         }
 
-        $this->delegate->receiveTimeout($consumer);
+        $next = $this->delegate ?? $consumer;
+        $next->receiveTimeout($consumer);
     }
 
     /**

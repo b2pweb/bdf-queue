@@ -22,6 +22,23 @@ class StopWhenEmptyReceiverTest extends TestCase
 
         $logger->expects($this->once())->method('info')->with('The worker will stop for no consuming job');
 
+        $next = $this->createMock(NextInterface::class);
+        $next->expects($this->once())->method('receiveTimeout');
+        $next->expects($this->once())->method('stop');
+
+        $extension = new StopWhenEmptyReceiver($logger);
+        $extension->receiveTimeout($next);
+    }
+
+    /**
+     *
+     */
+    public function test_no_stop_if_not_empty_legacy()
+    {
+        $logger = $this->createMock(LoggerInterface::class);
+
+        $logger->expects($this->once())->method('info')->with('The worker will stop for no consuming job');
+
         $decorate = $this->createMock(ReceiverInterface::class);
         $decorate->expects($this->once())->method('receiveTimeout');
 

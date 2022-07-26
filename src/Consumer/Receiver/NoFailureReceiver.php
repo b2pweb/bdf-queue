@@ -20,9 +20,9 @@ class NoFailureReceiver implements ReceiverInterface
     /**
      * JobLoggerListener constructor.
      *
-     * @param ReceiverInterface $delegate
+     * @param ReceiverInterface|null $delegate
      */
-    public function __construct(ReceiverInterface $delegate)
+    public function __construct(ReceiverInterface $delegate = null)
     {
         $this->delegate = $delegate;
     }
@@ -32,8 +32,10 @@ class NoFailureReceiver implements ReceiverInterface
      */
     public function receive($message, ConsumerInterface $consumer): void
     {
+        $next = $this->delegate ?? $consumer;
+
         try {
-            $this->delegate->receive($message, $consumer);
+            $next->receive($message, $consumer);
         } catch (\Exception $exception) {
         }
     }

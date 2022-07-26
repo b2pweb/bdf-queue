@@ -1,3 +1,14 @@
+v1.4.0
+------
+
+* BC Breaks: default logger of `Bdf\Queue\Consumer\Receiver\Builder\ReceiverBuilder` is resolved on constructor, so changing logger in container will not change logger into built receivers
+* BC Breaks: logger instance provided by `Bdf\Queue\Consumer\Receiver\Builder\ReceiverBuilder` is always wrapped into `Bdf\Queue\Consumer\Receiver\Builder\LoggerProxy`
+* BC Breaks: `Bdf\Queue\Consumer\Receiver\Builder\ReceiverBuilder::build()` now will use `ReceiverPipeline` instead of legacy delegation chaining
+* Add `Bdf\Queue\Consumer\Receiver\ReceiverPipeline` which handle stack of receiver without use delegation chaining
+* Allows `Bdf\Queue\Consumer\ReceiverInterface` to take `NextInterface` as parameter (do not change PHP typehint for compatibility)
+* Migrate receivers to allow both legacy delegation chaining and next parameter
+
+
 v1.3.0
 ------
 
