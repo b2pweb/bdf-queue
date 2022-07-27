@@ -103,6 +103,40 @@ class ReceiverBuilderTest extends TestCase
         $this->builder->add(StopWhenEmptyReceiver::class);
 
         $this->assertEquals(
+            new ReceiverPipeline([
+                new StopWhenEmptyReceiver(new NullLogger()),
+                new MyReceiver(
+                    new ProcessorReceiver(new JobHintProcessorResolver($this->container->get(InstantiatorInterface::class))),
+                    'bar'
+                ),
+            ]),
+            $this->builder->build()
+        );
+    }
+
+    /**
+     *
+     */
+    public function test_add_only_legacy()
+    {
+        // Redefine factory to force legacy behavior
+        $this->factory->addFactory(StopWhenEmptyReceiver::class, function (ReceiverFactory $factory, ReceiverInterface $next) {
+            return new StopWhenEmptyReceiver($next, $factory->logger());
+        });
+
+        $this->builder->add(MyReceiver::class, ['bar']);
+
+        $this->assertEquals(
+            new MyReceiver(
+                new ProcessorReceiver(new JobHintProcessorResolver($this->container->get(InstantiatorInterface::class))),
+                'bar'
+            ),
+            $this->builder->build()
+        );
+
+        $this->builder->add(StopWhenEmptyReceiver::class);
+
+        $this->assertEquals(
             new StopWhenEmptyReceiver(
                 new MyReceiver(
                     new ProcessorReceiver(new JobHintProcessorResolver($this->container->get(InstantiatorInterface::class))),
@@ -110,6 +144,33 @@ class ReceiverBuilderTest extends TestCase
                 ),
                 new NullLogger()
             ),
+            $this->builder->build()
+        );
+    }
+
+    /**
+     *
+     */
+    public function test_add_pipeline()
+    {
+        $this->builder->add(StopWhenEmptyReceiver::class);
+
+        $this->assertEquals(
+            new ReceiverPipeline([
+                new StopWhenEmptyReceiver(new NullLogger()),
+                new ProcessorReceiver(new JobHintProcessorResolver($this->container->get(InstantiatorInterface::class))),
+            ]),
+            $this->builder->build()
+        );
+
+        $this->builder->add('bench');
+
+        $this->assertEquals(
+            new ReceiverPipeline([
+                new BenchReceiver(new NullLogger()),
+                new StopWhenEmptyReceiver(new NullLogger()),
+                new ProcessorReceiver(new JobHintProcessorResolver($this->container->get(InstantiatorInterface::class))),
+            ]),
             $this->builder->build()
         );
     }
@@ -305,11 +366,10 @@ class ReceiverBuilderTest extends TestCase
         $this->builder->store();
 
         $this->assertEquals(
-            new MessageStoreReceiver(
+            new ReceiverPipeline([
+                new MessageStoreReceiver($failer, new NullLogger()),
                 new ProcessorReceiver(new JobHintProcessorResolver($this->container->get(InstantiatorInterface::class))),
-                $failer,
-                new NullLogger()
-            ),
+            ]),
             $this->builder->build()
         );
     }
@@ -359,10 +419,12 @@ class ReceiverBuilderTest extends TestCase
         );
 
         $this->assertEquals(
-            new BinderReceiver(
+            new ReceiverPipeline([
+                new BinderReceiver(
+                    [$binder1, $binder2]
+                ),
                 new ProcessorReceiver(new JobHintProcessorResolver($this->container->get(InstantiatorInterface::class))),
-                [$binder1, $binder2]
-            ),
+            ]),
             $this->builder->build()
         );
 
@@ -371,10 +433,12 @@ class ReceiverBuilderTest extends TestCase
         );
 
         $this->assertEquals(
-            new BinderReceiver(
+            new ReceiverPipeline([
+                new BinderReceiver(
+                    [$binder1, $binder2, $binder3]
+                ),
                 new ProcessorReceiver(new JobHintProcessorResolver($this->container->get(InstantiatorInterface::class))),
-                [$binder1, $binder2, $binder3]
-            ),
+            ]),
             $this->builder->build()
         );
     }
@@ -529,6 +593,10 @@ class ReceiverBuilderTest extends TestCase
 
     public function test_add_mixing_legacy_and_new()
     {
+        $this->factory->addFactory('custom', function (ReceiverFactory $factory, ReceiverInterface $next, $foo) {
+            return new MyReceiver($next, $foo);
+        });
+
         $a = new class implements ReceiverInterface {
             use DelegateHelper;
         };
@@ -541,18 +609,18 @@ class ReceiverBuilderTest extends TestCase
 
         $this->builder->add($a);
         $this->builder->add($b);
-        $this->builder->add(BenchReceiver::class);
+        $this->builder->add('custom', ['bar']);
         $this->builder->add($c);
 
         $this->assertEquals(new ReceiverPipeline([
             $c,
-            new BenchReceiver(
+            new MyReceiver(
                 new ReceiverPipeline([
                     $b,
                     $a,
                     new ProcessorReceiver(new JobHintProcessorResolver($this->container->get(InstantiatorInterface::class)))
                 ]),
-                new NullLogger()
+                'bar'
             ),
         ]), $this->builder->build());
     }

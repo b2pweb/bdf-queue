@@ -475,7 +475,14 @@ class ReceiverBuilder
                 continue;
             }
 
-            // @todo gérer les factory non legacy (permet de gérer les receiver ayant des dépendances)
+            // Factory do not take next receiver : simply push to the pipeline
+            if (!$this->factory->factoryTakeNextReceiverAsFirstParameter($middleware)) {
+                array_unshift($stack, $this->factory->create($middleware, $parameters));
+                continue;
+            }
+
+            @trigger_error('Passing next receiver as parameter of factory "'.$middleware.'" is deprecated since 1.4, and will be removed in 2.0.', E_USER_DEPRECATED);
+
             // Legacy : the stack of middleware is handled by delegate passed on constructor
             // So create the pipeline as previous receiver
             $receiver = count($stack) === 1 ? $stack[0] : new ReceiverPipeline($stack);
