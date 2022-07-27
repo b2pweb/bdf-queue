@@ -50,7 +50,7 @@ class ReceiverFactory
      * Does the factory in key is legacy (i.e. take next receiver as first parameter)
      * If this metadata is not set, it should be resolved using reflection
      *
-     * @var array<string, bool>
+     * @var array<string, bool|null>
      */
     private $factoryTakeNextReceiverAsFirstParameter = [];
 
@@ -233,8 +233,8 @@ class ReceiverFactory
         if (
             $reflection->getNumberOfParameters() < 2
             || !$reflection->getParameters()[1]->hasType()
-            || !$reflection->getParameters()[1]->getType() instanceof \ReflectionNamedType
-            || $reflection->getParameters()[1]->getType()->getName() !== ReceiverInterface::class
+            || !($type = $reflection->getParameters()[1]->getType()) instanceof \ReflectionNamedType
+            || $type->getName() !== ReceiverInterface::class
         ) {
             return $this->factoryTakeNextReceiverAsFirstParameter[$middleware] = false;
         }
