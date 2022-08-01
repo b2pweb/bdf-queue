@@ -59,12 +59,20 @@ class BenchReceiver implements ReceiverInterface
      * @param int $maxJobs The max number of jobs for one report
      * @param int $maxHistory Max number of stats to keep
      */
-    public function __construct(ReceiverInterface $delegate, LoggerInterface $logger, $maxJobs = 100, $maxHistory = 10)
+    public function __construct(/*LoggerInterface $logger, int $maxJobs = 100, int $maxHistory = 10*/)
     {
-        $this->delegate = $delegate;
-        $this->logger = $logger;
-        $this->maxJobs = $maxJobs;
-        $this->maxHistory = $maxHistory;
+        $args = func_get_args();
+        $index = 0;
+
+        if ($args[0] instanceof ReceiverInterface) {
+            @trigger_error('Passing delegate in constructor of receiver is deprecated since 1.4', E_USER_DEPRECATED);
+            $this->delegate = $args[0];
+            ++$index;
+        }
+
+        $this->logger = $args[$index++];
+        $this->maxJobs = $args[$index++] ?? 100;
+        $this->maxHistory = $args[$index] ?? 10;
     }
 
     /**
@@ -79,8 +87,10 @@ class BenchReceiver implements ReceiverInterface
             $this->current['memory-start'] = memory_get_peak_usage(false);
         }
 
+        $next = $this->delegate ?? $consumer;
+
         try {
-            $this->delegate->receive($message, $consumer);
+            $next->receive($message, $consumer);
         } finally {
             $this->current['end'] = $endTime = microtime(true);
             $this->current['times'][] = $endTime - $startTime;
@@ -96,7 +106,8 @@ class BenchReceiver implements ReceiverInterface
     public function receiveTimeout(ConsumerInterface $consumer): void
     {
         $this->reset(false);
-        $this->delegate->receiveTimeout($consumer);
+        $next = $this->delegate ?? $consumer;
+        $next->receiveTimeout($consumer);
     }
 
     /**
@@ -104,7 +115,8 @@ class BenchReceiver implements ReceiverInterface
      */
     public function terminate(ConsumerInterface $consumer): void
     {
-        $this->delegate->terminate($consumer);
+        $next = $this->delegate ?? $consumer;
+        $next->terminate($consumer);
 
         $this->report();
     }

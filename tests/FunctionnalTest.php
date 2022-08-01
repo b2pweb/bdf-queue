@@ -7,6 +7,8 @@ use Bdf\Instantiator\InstantiatorInterface;
 use Bdf\Queue\Connection\ConnectionDriverInterface;
 use Bdf\Queue\Connection\Factory\ConnectionDriverFactoryInterface;
 use Bdf\Queue\Connection\QueueDriverInterface;
+use Bdf\Queue\Consumer\ConsumerInterface;
+use Bdf\Queue\Consumer\DelegateHelper;
 use Bdf\Queue\Consumer\Reader\BufferedReader;
 use Bdf\Queue\Consumer\Receiver\Builder\ReceiverBuilder;
 use Bdf\Queue\Consumer\Receiver\Builder\ReceiverLoader;
@@ -602,6 +604,43 @@ class FunctionnalTest extends TestCase
         $chain = MessageCountLimiterReceiver::class.'->'.MessageLoggerReceiver::class.'->'.StopWhenEmptyReceiver::class.'->'.ProcessorReceiver::class;
 
         $this->assertEquals($chain, (string)$builder->build());
+    }
+
+    public function test_receiver_order()
+    {
+        $helper = new QueueHelper($this->container);
+        $destination = $helper->destination('test::test');
+        $destination->send(Message::create('foo'));
+
+        $out = null;
+        $helper->consume(1, $destination, function(ReceiverBuilder $builder) use(&$out) {
+            $builder->add(new class implements ReceiverInterface {
+                use DelegateHelper;
+
+                public function receive($message, ConsumerInterface $consumer): void
+                {
+                    /* @var EnvelopeInterface $message */
+                    $message->message()->setData($message->message()->data().'A');
+                    $consumer->receive($message, $consumer);
+                }
+            });
+            $builder->add(new class implements ReceiverInterface {
+                use DelegateHelper;
+
+                public function receive($message, ConsumerInterface $consumer): void
+                {
+                    /* @var EnvelopeInterface $message */
+                    $message->message()->setData($message->message()->data().'B');
+                    $consumer->receive($message, $consumer);
+                }
+            });
+
+            $builder->handler(function ($message) use (&$out) {
+                $out = $message;
+            });
+        });
+
+        $this->assertSame('fooBA', $out);
     }
 }
 

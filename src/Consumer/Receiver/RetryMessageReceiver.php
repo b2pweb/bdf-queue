@@ -49,12 +49,20 @@ class RetryMessageReceiver implements ReceiverInterface
      * @param int $maxTries Maximum number of retries, if not set on message
      * @param int $delay The retry delay in seconds. If the job fail, it will be retried after this delay.
      */
-    public function __construct(ReceiverInterface $delegate, LoggerInterface $logger, $maxTries = 3, $delay = 10)
+    public function __construct(/*LoggerInterface $logger, int $maxTries = 3, int $delay = 10*/)
     {
-        $this->delegate = $delegate;
-        $this->logger = $logger;
-        $this->maxTries = $maxTries;
-        $this->delay = $delay;
+        $args = func_get_args();
+        $index = 0;
+
+        if ($args[0] instanceof ReceiverInterface) {
+            @trigger_error('Passing delegate in constructor of receiver is deprecated since 1.4', E_USER_DEPRECATED);
+            $this->delegate = $args[0];
+            ++$index;
+        }
+
+        $this->logger = $args[$index++];
+        $this->maxTries = $args[$index++] ?? 3;
+        $this->delay = $args[$index] ?? 10;
     }
 
     /**
@@ -64,8 +72,10 @@ class RetryMessageReceiver implements ReceiverInterface
      */
     public function receive($message, ConsumerInterface $consumer): void
     {
+        $next = $this->delegate ?? $consumer;
+
         try {
-            $this->delegate->receive($message, $consumer);
+            $next->receive($message, $consumer);
         } catch (\Throwable $exception) {
             // Too many attemps: we dont retry the job and let the other middleware take care about it.
             if ($this->maxTriesReached($message->message())) {

@@ -40,11 +40,19 @@ class TimeLimiterReceiver implements ReceiverInterface
      * @param int $limit  Time limit in second
      * @param LoggerInterface|null $logger
      */
-    public function __construct(ReceiverInterface $delegate, int $limit, LoggerInterface $logger = null)
+    public function __construct(/*int $limit, LoggerInterface $logger = null*/)
     {
-        $this->delegate = $delegate;
-        $this->logger = $logger;
-        $this->limit = $limit;
+        $args = func_get_args();
+        $index = 0;
+
+        if ($args[0] instanceof ReceiverInterface) {
+            @trigger_error('Passing delegate in constructor of receiver is deprecated since 1.4', E_USER_DEPRECATED);
+            $this->delegate = $args[0];
+            ++$index;
+        }
+
+        $this->limit = $args[$index++];
+        $this->logger = $args[$index] ?? null;
     }
 
     /**
@@ -54,7 +62,8 @@ class TimeLimiterReceiver implements ReceiverInterface
     {
         $this->endTime = $this->limit + time();
 
-        $this->delegate->start($consumer);
+        $next = $this->delegate ?? $consumer;
+        $next->start($consumer);
     }
 
     /**
@@ -62,7 +71,8 @@ class TimeLimiterReceiver implements ReceiverInterface
      */
     public function receive($message, ConsumerInterface $consumer): void
     {
-        $this->delegate->receive($message, $consumer);
+        $next = $this->delegate ?? $consumer;
+        $next->receive($message, $consumer);
 
         $this->checkRunningTime($consumer);
     }
@@ -72,7 +82,8 @@ class TimeLimiterReceiver implements ReceiverInterface
      */
     public function receiveTimeout(ConsumerInterface $consumer): void
     {
-        $this->delegate->receiveTimeout($consumer);
+        $next = $this->delegate ?? $consumer;
+        $next->receiveTimeout($consumer);
 
         $this->checkRunningTime($consumer);
     }

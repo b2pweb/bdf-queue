@@ -4,6 +4,7 @@ namespace Bdf\Queue\Consumer\Receiver\Binder;
 
 use Bdf\Queue\Connection\Factory\ConnectionDriverFactoryInterface;
 use Bdf\Queue\Consumer\ConsumerInterface;
+use Bdf\Queue\Consumer\Receiver\NextInterface;
 use Bdf\Queue\Consumer\Receiver\StopWhenEmptyReceiver;
 use Bdf\Queue\Consumer\ReceiverInterface;
 use Bdf\Queue\Destination\DestinationInterface;
@@ -86,6 +87,20 @@ class BinderReceiverTest extends TestCase
      */
     public function test_start()
     {
+        $next = $this->createMock(NextInterface::class);
+
+        $receiver = new BinderReceiver([]);
+
+        $next->expects($this->once())->method('start')->with($next);
+
+        $receiver->start($next);
+    }
+
+    /**
+     *
+     */
+    public function test_start_legacy()
+    {
         $inner = $this->createMock(ReceiverInterface::class);
         $consumer = $this->createMock(ConsumerInterface::class);
 
@@ -100,6 +115,20 @@ class BinderReceiverTest extends TestCase
      *
      */
     public function test_receiveTimeout()
+    {
+        $next = $this->createMock(NextInterface::class);
+
+        $receiver = new BinderReceiver([]);
+
+        $next->expects($this->once())->method('receiveTimeout')->with($next);
+
+        $receiver->receiveTimeout($next);
+    }
+
+    /**
+     *
+     */
+    public function test_receiveTimeout_legacy()
     {
         $inner = $this->createMock(ReceiverInterface::class);
         $consumer = $this->createMock(ConsumerInterface::class);
@@ -116,6 +145,20 @@ class BinderReceiverTest extends TestCase
      */
     public function test_receiveStop()
     {
+        $next = $this->createMock(NextInterface::class);
+
+        $receiver = new BinderReceiver([]);
+
+        $next->expects($this->once())->method('receiveStop')->with($next);
+
+        $receiver->receiveStop($next);
+    }
+
+    /**
+     *
+     */
+    public function test_receiveStop_legacy()
+    {
         $inner = $this->createMock(ReceiverInterface::class);
         $consumer = $this->createMock(ConsumerInterface::class);
 
@@ -130,6 +173,20 @@ class BinderReceiverTest extends TestCase
      *
      */
     public function test_terminate()
+    {
+        $next = $this->createMock(NextInterface::class);
+
+        $receiver = new BinderReceiver([]);
+
+        $next->expects($this->once())->method('terminate')->with($next);
+
+        $receiver->terminate($next);
+    }
+
+    /**
+     *
+     */
+    public function test_terminate_legacy()
     {
         $inner = $this->createMock(ReceiverInterface::class);
         $consumer = $this->createMock(ConsumerInterface::class);

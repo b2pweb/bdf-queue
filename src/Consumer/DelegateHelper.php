@@ -9,7 +9,7 @@ namespace Bdf\Queue\Consumer;
 trait DelegateHelper
 {
     /**
-     * @var ReceiverInterface
+     * @var ReceiverInterface|null
      */
     private $delegate;
 
@@ -18,7 +18,8 @@ trait DelegateHelper
      */
     public function start(ConsumerInterface $consumer): void
     {
-        $this->delegate->start($consumer);
+        $next = $this->delegate ?? $consumer;
+        $next->start($consumer);
     }
 
     /**
@@ -26,7 +27,8 @@ trait DelegateHelper
      */
     public function receive($message, ConsumerInterface $consumer): void
     {
-        $this->delegate->receive($message, $consumer);
+        $next = $this->delegate ?? $consumer;
+        $next->receive($message, $consumer);
     }
 
     /**
@@ -34,7 +36,8 @@ trait DelegateHelper
      */
     public function receiveTimeout(ConsumerInterface $consumer): void
     {
-        $this->delegate->receiveTimeout($consumer);
+        $next = $this->delegate ?? $consumer;
+        $next->receiveTimeout($consumer);
     }
 
     /**
@@ -42,7 +45,8 @@ trait DelegateHelper
      */
     public function receiveStop(ConsumerInterface $consumer): void
     {
-        $this->delegate->receiveStop($consumer);
+        $next = $this->delegate ?? $consumer;
+        $next->receiveStop($consumer);
     }
 
     /**
@@ -50,7 +54,8 @@ trait DelegateHelper
      */
     public function terminate(ConsumerInterface $consumer): void
     {
-        $this->delegate->terminate($consumer);
+        $next = $this->delegate ?? $consumer;
+        $next->terminate($consumer);
     }
 
     /**
@@ -60,6 +65,10 @@ trait DelegateHelper
      */
     public function __toString()
     {
+        if (!$this->delegate) {
+            return get_class($this);
+        }
+
         $next = method_exists($this->delegate, '__toString')
                 ? (string) $this->delegate
                 : get_class($this->delegate);

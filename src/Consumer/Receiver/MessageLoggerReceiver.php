@@ -29,10 +29,18 @@ class MessageLoggerReceiver implements ReceiverInterface
      * @param ReceiverInterface $delegate
      * @param LoggerInterface $logger
      */
-    public function __construct(ReceiverInterface $delegate, LoggerInterface $logger)
+    public function __construct(/*LoggerInterface $logger*/)
     {
-        $this->logger = $logger;
-        $this->delegate = $delegate;
+        $args = func_get_args();
+        $index = 0;
+
+        if ($args[0] instanceof ReceiverInterface) {
+            @trigger_error('Passing delegate in constructor of receiver is deprecated since 1.4', E_USER_DEPRECATED);
+            $this->delegate = $args[0];
+            ++$index;
+        }
+
+        $this->logger = $args[$index];
     }
 
     /**
@@ -42,13 +50,15 @@ class MessageLoggerReceiver implements ReceiverInterface
      */
     public function receive($message, ConsumerInterface $consumer): void
     {
+        $next = $this->delegate ?? $consumer;
+
         try {
             $this->logger->info($this->format($message->message(), ' starting'), [
                 'queued at' => $message->message()->queuedAt()->format('Y/m/d H:i:s')
             ]);
             $this->logger->debug($message->message()->raw());
 
-            $this->delegate->receive($message, $consumer);
+            $next->receive($message, $consumer);
 
             $this->logger->info($this->format($message->message(), ' succeed'));
         } catch (\Throwable $exception) {
@@ -65,7 +75,8 @@ class MessageLoggerReceiver implements ReceiverInterface
     {
         $this->logger->info('stopping worker');
 
-        $this->delegate->receiveStop($consumer);
+        $next = $this->delegate ?? $consumer;
+        $next->receiveStop($consumer);
     }
 
     /**
