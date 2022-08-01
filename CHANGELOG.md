@@ -5,6 +5,13 @@ v1.4.0
 * Allows `Bdf\Queue\Consumer\ReceiverInterface` to take `NextInterface` as parameter (do not change PHP typehint for compatibility)
 * Migrate receivers to allow both legacy delegation chaining and next parameter
 * Handle new receiver instantiation on `Bdf\Queue\Consumer\Receiver\Builder\ReceiverFactory`. Autodetect by reflection if the factory is legacy
+* Add interfaces `Bdf\Queue\Connection\CountableDriverInterface` and `Bdf\Queue\Connection\PeekableDriverInterface` for both queue and topic drivers
+* Implements `CountableDriverInterface` and `PeekableDriverInterface` on `MemoryTopic`
+* Add `Bdf\Queue\Destination\Topic\ReadableTopicDestination` which implements `ReadableDestinationInterface` to allow use method `count` and `peek` on topics
+* Add method `peek` on `Bdf\Queue\Testing\TopicHelper`
+* Deprecates `Bdf\Queue\Connection\CountableQueueDriverInterface` and `Bdf\Queue\Connection\PeekableQueueDriverInterface`
+* Deprecates `MultiTopicDestination::createByDsn()` and `TopicDestination::createByDsn()`
+* BC Breaks: use `Bdf\Queue\Destination\Topic\TopicDestinationFactory::createByDsn()` for create a topic destination. This method will return a `ReadableTopicDestination` is the topic driver supports `peek` or `count` methods
 * BC Breaks: default logger of `Bdf\Queue\Consumer\Receiver\Builder\ReceiverBuilder` is resolved on constructor, so changing logger in container will not change logger into built receivers
 * BC Breaks: logger instance provided by `Bdf\Queue\Consumer\Receiver\Builder\ReceiverBuilder` is always wrapped into `Bdf\Queue\Consumer\Receiver\Builder\LoggerProxy`
 * BC Breaks: `Bdf\Queue\Consumer\Receiver\Builder\ReceiverBuilder::build()` now will use `ReceiverPipeline` instead of legacy delegation chaining
