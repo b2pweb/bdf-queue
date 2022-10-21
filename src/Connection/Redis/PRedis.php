@@ -17,14 +17,21 @@ class PRedis implements RedisInterface
     private $redis;
 
     /**
-     * @var array
+     * @var array{
+     *     host: string,
+     *     port: int,
+     *     timeout: float|null,
+     *     path?: string,
+     *     scheme?: string,
+     *     password?: string,
+     *     database?: int,
+     *     persistent?: bool,
+     * }
      */
     private $config;
 
     /**
-     * PRedis constructor.
-     *
-     * @param array $config
+     * {@inheritdoc}
      */
     public function __construct(array $config)
     {

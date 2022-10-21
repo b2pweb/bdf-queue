@@ -43,7 +43,7 @@ class RedisConnectionTest extends TestCase
         $config = [
             'host'      => '127.0.0.1',
             'port'      => 6379,
-            'timeout'   => 0,
+            'timeout'   => null,
             'prefix'    => RedisConnection::PREFIX,
             'auto_declare' => false,
             'vendor' => 'phpredis',
