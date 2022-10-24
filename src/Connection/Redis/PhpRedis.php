@@ -102,6 +102,7 @@ class PhpRedis implements RedisInterface
      */
     public function del($key)
     {
+        /** @psalm-suppress InvalidCast */
         return (int) $this->redis->del($key);
     }
 
