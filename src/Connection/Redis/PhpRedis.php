@@ -84,6 +84,7 @@ class PhpRedis implements RedisInterface
      */
     public function sAdd($key, $value)
     {
+        /** @psalm-suppress InvalidCast */
         return (int) $this->redis->sAdd($key, $value);
     }
 
@@ -92,6 +93,7 @@ class PhpRedis implements RedisInterface
      */
     public function sRem($key, $member)
     {
+        /** @psalm-suppress InvalidCast */
         return (int) $this->redis->sRem($key, $member);
     }
 

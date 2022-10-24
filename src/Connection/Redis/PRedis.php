@@ -26,6 +26,7 @@ class PRedis implements RedisInterface
      *     password?: string,
      *     database?: int,
      *     persistent?: bool,
+     *     read_write_timeout: float,
      * }
      */
     private $config;
