@@ -22,7 +22,16 @@ class PhpRedis implements RedisInterface
     private $version;
 
     /**
-     * @var array
+     * @var array{
+     *     host: string,
+     *     port: int,
+     *     timeout: float|null,
+     *     path?: string,
+     *     scheme?: string,
+     *     password?: string,
+     *     database?: int,
+     *     persistent?: bool,
+     * }
      */
     private $config;
 
@@ -42,7 +51,24 @@ class PhpRedis implements RedisInterface
     private function connect()
     {
         $this->redis = new Redis();
-        $this->redis->connect($this->config['host'], $this->config['port'], $this->config['timeout']);
+
+        $host = isset($this->config['scheme']) && $this->config['scheme'] === 'unix' ? $this->config['path'] : $this->config['host'];
+        $port = $this->config['port'] ?? 6379;
+        $timeout = $this->config['timeout'] ?? 0.0;
+
+        if (empty($this->config['persistent'])) {
+            $this->redis->connect($host, $port, $timeout);
+        } else {
+            $this->redis->pconnect($host, $port, $timeout);
+        }
+
+        if (!empty($this->config['password'])) {
+            $this->redis->auth($this->config['password']);
+        }
+
+        if (isset($this->config['database'])) {
+            $this->redis->select($this->config['database']);
+        }
     }
 
     /**
@@ -58,6 +84,7 @@ class PhpRedis implements RedisInterface
      */
     public function sAdd($key, $value)
     {
+        /** @psalm-suppress InvalidCast */
         return (int) $this->redis->sAdd($key, $value);
     }
 
@@ -66,6 +93,7 @@ class PhpRedis implements RedisInterface
      */
     public function sRem($key, $member)
     {
+        /** @psalm-suppress InvalidCast */
         return (int) $this->redis->sRem($key, $member);
     }
 
@@ -74,6 +102,7 @@ class PhpRedis implements RedisInterface
      */
     public function del($key)
     {
+        /** @psalm-suppress InvalidCast */
         return (int) $this->redis->del($key);
     }
 

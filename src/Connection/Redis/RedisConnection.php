@@ -31,7 +31,19 @@ class RedisConnection implements ConnectionDriverInterface, ManageableQueueInter
     /**
      * The config
      *
-     * @var array
+     * @var array{
+     *     host: string,
+     *     port: int,
+     *     timeout: float|null,
+     *     prefix: string,
+     *     auto_declare: bool,
+     *     vendor: string,
+     *     path?: string,
+     *     scheme?: string,
+     *     password?: string,
+     *     database?: int,
+     *     persistent?: bool,
+     * }
      */
     private $config;
 
@@ -55,7 +67,7 @@ class RedisConnection implements ConnectionDriverInterface, ManageableQueueInter
         $this->config = $config + [
             'host'      => '127.0.0.1',
             'port'      => 6379,
-            'timeout'   => 0,
+            'timeout'   => null,
             'prefix'    => self::PREFIX,
 
             /*
@@ -86,6 +98,11 @@ class RedisConnection implements ConnectionDriverInterface, ManageableQueueInter
             $driverClass = $this->config['vendor'] === 'phpredis'
                 ? PhpRedis::class
                 : PRedis::class;
+
+            // Allow use user as password config because redis only use password
+            if (empty($this->config['password']) && !empty($this->config['user'])) {
+                $this->config['password'] = $this->config['user'];
+            }
 
             $this->redis = new $driverClass($this->config);
         }

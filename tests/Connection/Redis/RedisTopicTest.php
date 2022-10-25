@@ -105,7 +105,7 @@ class RedisTopicTest extends TestCase
      */
     public function test_functional()
     {
-        $redis = new FakeRedisPubSub();
+        $redis = new FakeRedisPubSub([]);
 
         $driver = new RedisConnection('foo', new JsonSerializer());
         $driver->setRedis($redis);
@@ -137,6 +137,7 @@ class FakeRedisPubSub implements RedisInterface
 {
     public $pending = [];
 
+    public function __construct(array $config) { }
     public function close() { }
     public function sAdd($key, $value) { }
     public function sRem($key, $member) { }

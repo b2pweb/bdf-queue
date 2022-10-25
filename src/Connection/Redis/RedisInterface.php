@@ -5,6 +5,20 @@ namespace Bdf\Queue\Connection\Redis;
 interface RedisInterface
 {
     /**
+     * @param array{
+     *     host: string,
+     *     port: int,
+     *     timeout: float|null,
+     *     path?: string,
+     *     scheme?: string,
+     *     password?: string,
+     *     database?: int,
+     *     persistent?: bool,
+     * } $config
+     */
+    public function __construct(array $config);
+
+    /**
      * Close connection
      *
      * @return void
