@@ -89,6 +89,6 @@ class MessageLoggerReceiver implements ReceiverInterface
      */
     private function format($message, $additionals = '')
     {
-        return "[{$message->connection()}::{$message->source()}] \"{$message->name()}\"${additionals}";
+        return "[{$message->connection()}::{$message->source()}] \"{$message->name()}\"{$additionals}";
     }
 }

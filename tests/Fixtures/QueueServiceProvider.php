@@ -209,6 +209,6 @@ class QueueServiceProvider
         }
 
         // Connection overload the serializer
-        return $container->get("queue.serializer.${name}");
+        return $container->get("queue.serializer.{$name}");
     }
 }
