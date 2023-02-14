@@ -4,6 +4,8 @@ namespace Bdf\Queue\Destination;
 
 /**
  * Cache the created destinations
+ *
+ * @deprecated Since 1.5. Use DestinationFactory instead.
  */
 final class CachedDestinationFactory implements DestinationFactoryInterface
 {

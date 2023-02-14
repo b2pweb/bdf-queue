@@ -20,7 +20,6 @@ use Bdf\Queue\Message\Message;
 
 /**
  * Destination for multiple queues on single connection
- * Read-only destination : cannot send a message to this destination
  */
 final class MultiQueueDestination implements DestinationInterface, ReadableDestinationInterface
 {

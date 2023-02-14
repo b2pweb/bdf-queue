@@ -4,6 +4,8 @@ namespace Bdf\Queue\Destination;
 
 /**
  * Factory for destination using configuration
+ *
+ * @deprecated Since 1.5. Use DestinationFactory instead.
  */
 final class ConfigurationDestinationFactory implements DestinationFactoryInterface
 {

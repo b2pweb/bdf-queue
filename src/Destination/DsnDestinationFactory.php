@@ -16,6 +16,8 @@ use Bdf\Queue\Destination\Topic\TopicDestinationFactory;
  * DSN format : [type]://[connection]/[queue or topic name]?[options]
  *
  * Ex: queue://my-connection/my-queue?prefetch=10
+ *
+ * @deprecated Since 1.5. Use DestinationFactory instead.
  */
 final class DsnDestinationFactory implements DestinationFactoryInterface
 {
