@@ -13,12 +13,10 @@ use Bdf\Queue\Connection\Null\NullConnection;
 use Bdf\Queue\Connection\Pheanstalk\PheanstalkConnection;
 use Bdf\Queue\Connection\RdKafka\RdKafkaConnection;
 use Bdf\Queue\Connection\Redis\RedisConnection;
-use Bdf\Queue\Destination\CachedDestinationFactory;
-use Bdf\Queue\Destination\ConfigurationDestinationFactory;
+use Bdf\Queue\Destination\DestinationFactory;
 use Bdf\Queue\Destination\DestinationFactoryInterface;
 use Bdf\Queue\Destination\DestinationInterface;
 use Bdf\Queue\Destination\DestinationManager;
-use Bdf\Queue\Destination\DsnDestinationFactory;
 use Bdf\Queue\Failer\FailedJobRepositoryInterface;
 use Bdf\Queue\Serializer\BdfSerializer;
 use Bdf\Queue\Serializer\SerializerInterface;
@@ -64,10 +62,10 @@ function getDestinationManager(): DestinationManager
 
 function getDestinationFactory(): DestinationFactoryInterface
 {
-    $dsn = new DsnDestinationFactory(getConnectionsDriverFactory());
-    $configurable = new ConfigurationDestinationFactory(require __DIR__.'/../config/destinations.php', $dsn);
-
-    return new CachedDestinationFactory($configurable);
+    return new DestinationFactory(
+        getConnectionsDriverFactory(),
+        require __DIR__.'/../config/destinations.php'
+    );
 }
 
 //--- Configuration of connections

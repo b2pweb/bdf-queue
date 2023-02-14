@@ -39,7 +39,7 @@ use Bdf\Queue\Connection\Factory\ResolverConnectionDriverFactory;
 use Bdf\Queue\Connection\Pheanstalk\PheanstalkConnection;
 use Bdf\Queue\Destination\ConfigurationDestinationFactory;
 use Bdf\Queue\Destination\DestinationManager;
-use Bdf\Queue\Destination\DsnDestinationFactory;
+use Bdf\Queue\Destination\DestinationFactory;
 use Bdf\Queue\Serializer\JsonSerializer;
 
 // Declare connections
@@ -60,14 +60,26 @@ $driverFactory->addDriverResolver('pheanstalk', function($config) {
 });
 
 // Declare destination
-$destinationFactory = new DsnDestinationFactory($driverFactory);
-
 // You can also declare your custom destination that defined type of transport (queue, multi queues, topic, ...),
 // the connection to use, and the name of the queue(s) / topic(s) to use.
 // This example will use the queue driver of the "foo" connection defined above. And send / consume message on the queue named "default".
-$destinationFactory = new ConfigurationDestinationFactory(
-    ['my_destination' => 'queue://foo/default'],
-    $destinationFactory
+$destinationFactory = new DestinationFactory(
+    $driverFactory,
+    ['my_destination' => 'queue://foo/default']
+);
+
+// To send a message to multiple destinations, you can use "aggregate" destination type.
+// You can use a wildcard to send to all destinations that match the pattern.
+// In this example, 'user' destination will be sent to the "foo" and "bar" queues, and to all topics that match the pattern "*.user"
+$destinationFactory = new DestinationFactory(
+    $driverFactory,
+    [
+        'foo' => 'queue://test/foo',
+        'bar' => 'queue://test/bar',
+        'a.user' => 'topic://a/user',
+        'b.user' => 'topic://b/user',
+        'user' => 'aggregate://foo,bar,*.user',
+    ]
 );
 
 // Create the manager
