@@ -2,6 +2,7 @@
 
 namespace Bdf\Queue\Console\Command;
 
+use Bdf\Queue\Connection\Exception\ConnectionLostException;
 use Bdf\Queue\Console\Command\Extension\DestinationExtension;
 use Bdf\Queue\Consumer\Receiver\Builder\ReceiverLoaderInterface;
 use Bdf\Queue\Consumer\ReceiverInterface;
@@ -25,6 +26,12 @@ use Symfony\Component\Console\Output\OutputInterface;
 class ConsumeCommand extends Command
 {
     use DestinationExtension;
+
+    /**
+     * Exit code used when the connection to queue or topic is lost
+     * @see https://man.freebsd.org/cgi/man.cgi?sektion=3&query=sysexits
+     */
+    public const EX_UNAVAILABLE = 69;
 
     protected static $defaultName = 'queue:consume';
 
@@ -90,8 +97,14 @@ class ConsumeCommand extends Command
     {
         $destination = $this->createDestination($this->manager, $input);
 
-        $worker = new Worker($destination->consumer($this->createExtension($input, $output)));
-        $worker->run(['duration' => $input->getOption('duration')]);
+        try {
+            $worker = new Worker($destination->consumer($this->createExtension($input, $output)));
+            $worker->run(['duration' => $input->getOption('duration')]);
+        } catch (ConnectionLostException $e) {
+            $output->writeln('<error>Connection lost</error> : ' . $e->getMessage());
+
+            return self::EX_UNAVAILABLE;
+        }
 
         return 0;
     }

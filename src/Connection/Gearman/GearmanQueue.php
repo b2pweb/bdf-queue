@@ -4,9 +4,13 @@ namespace Bdf\Queue\Connection\Gearman;
 
 use Bdf\Queue\Connection\ConnectionDriverInterface;
 use Bdf\Queue\Connection\CountableQueueDriverInterface;
+use Bdf\Queue\Connection\Exception\ConnectionFailedException;
+use Bdf\Queue\Connection\Exception\ConnectionLostException;
+use Bdf\Queue\Connection\Exception\ServerException;
 use Bdf\Queue\Connection\Extension\ConnectionBearer;
 use Bdf\Queue\Connection\Extension\QueueEnvelopeHelper;
 use Bdf\Queue\Connection\QueueDriverInterface;
+use Bdf\Queue\Exception\ServerNotAvailableException;
 use Bdf\Queue\Message\EnvelopeInterface;
 use Bdf\Queue\Message\Message;
 use Bdf\Queue\Message\QueuedMessage;
@@ -48,11 +52,8 @@ class GearmanQueue implements QueueDriverInterface, CountableQueueDriverInterfac
     public function pushRaw($raw, string $queue, int $delay = 0): void
     {
         $client = $this->connection->client();
-        $client->doBackground($queue, $raw);
-
-        if ($client->returnCode() != GEARMAN_SUCCESS) {
-            throw new RuntimeException($client->error(), $client->getErrno());
-        }
+        @$client->doBackground($queue, $raw);
+        $this->checkReturnCode($client);
     }
 
     /**
@@ -62,7 +63,9 @@ class GearmanQueue implements QueueDriverInterface, CountableQueueDriverInterfac
     {
         $worker = $this->connection->worker($queue);
         $worker->setTimeout($duration * 1000);
-        $worker->work();
+        @$worker->work();
+
+        $this->checkReturnCode($worker);
 
         $message = $this->connection->getCollectedMessage($queue);
 
@@ -116,6 +119,10 @@ class GearmanQueue implements QueueDriverInterface, CountableQueueDriverInterfac
      * Get queues info
      *
      * @return array
+     *
+     * @throws ServerNotAvailableException If no servers has been found
+     * @throws ConnectionFailedException When the connection cannot be established
+     * @throws ServerException When the server return an error
      */
     private function queuesInfo()
     {
@@ -162,6 +169,10 @@ class GearmanQueue implements QueueDriverInterface, CountableQueueDriverInterfac
      * Get workers info
      *
      * @return array
+     *
+     * @throws ServerNotAvailableException If no servers has been found
+     * @throws ConnectionFailedException When the connection cannot be established
+     * @throws ServerException When the server return an error
      */
     private function workersInfo()
     {
@@ -196,5 +207,27 @@ class GearmanQueue implements QueueDriverInterface, CountableQueueDriverInterfac
         array_pop($result);
 
         return $result;
+    }
+
+    /**
+     * Check the return code of the gearman client or worker
+     * Throw an exception if the return code is not GEARMAN_SUCCESS
+     *
+     * @param \GearmanClient|\GearmanWorker $gearman
+     */
+    private function checkReturnCode($gearman): void
+    {
+        switch ($gearman->returnCode()) {
+            case GEARMAN_SUCCESS:
+            case GEARMAN_TIMEOUT:
+                return;
+
+            case GEARMAN_LOST_CONNECTION:
+            case GEARMAN_COULD_NOT_CONNECT:
+                throw new ConnectionLostException($gearman->error(), $gearman->getErrno());
+
+            default:
+                throw new ServerException($gearman->error(), $gearman->getErrno());
+        }
     }
 }

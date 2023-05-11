@@ -2,9 +2,13 @@
 
 namespace Bdf\Queue\Connection\Redis;
 
+use Bdf\Queue\Connection\Exception\ConnectionFailedException;
+use Bdf\Queue\Connection\Exception\ConnectionLostException;
+use Bdf\Queue\Connection\Exception\ServerException;
 use Predis\Client;
 use Predis\Connection\ConnectionException;
 use Predis\PubSub\Consumer as PubSubConsumer;
+use Predis\Response\ServerException as BaseServerException;
 
 /**
  * PRedis
@@ -45,8 +49,12 @@ class PRedis implements RedisInterface
      */
     private function connect()
     {
-        $this->redis = new Client($this->config);
-        $this->redis->connect();
+        try {
+            $this->redis = new Client($this->config);
+            $this->redis->connect();
+        } catch (ConnectionException $e) {
+            throw new ConnectionFailedException($e->getMessage(), $e->getCode(), $e);
+        }
     }
 
     /**
@@ -62,7 +70,13 @@ class PRedis implements RedisInterface
      */
     public function sAdd($key, $value)
     {
-        return $this->redis->sAdd($key, (array)$value);
+        try {
+            return $this->redis->sAdd($key, (array)$value);
+        } catch (ConnectionException $e) {
+            throw new ConnectionLostException($e->getMessage(), $e->getCode(), $e);
+        } catch (BaseServerException $e) {
+            throw new ServerException($e->getMessage(), $e->getCode(), $e);
+        }
     }
 
     /**
@@ -70,7 +84,13 @@ class PRedis implements RedisInterface
      */
     public function sRem($key, $member)
     {
-        return $this->redis->sRem($key, (array)$member);
+        try {
+            return $this->redis->sRem($key, (array)$member);
+        } catch (ConnectionException $e) {
+            throw new ConnectionLostException($e->getMessage(), $e->getCode(), $e);
+        } catch (BaseServerException $e) {
+            throw new ServerException($e->getMessage(), $e->getCode(), $e);
+        }
     }
 
     /**
@@ -78,7 +98,13 @@ class PRedis implements RedisInterface
      */
     public function del($key)
     {
-        return $this->redis->del((array)$key);
+        try {
+            return $this->redis->del((array)$key);
+        } catch (ConnectionException $e) {
+            throw new ConnectionLostException($e->getMessage(), $e->getCode(), $e);
+        } catch (BaseServerException $e) {
+            throw new ServerException($e->getMessage(), $e->getCode(), $e);
+        }
     }
 
     /**
@@ -86,7 +112,13 @@ class PRedis implements RedisInterface
      */
     public function zAdd($key, $score, $value)
     {
-        return $this->redis->zAdd($key, [$value => $score]);
+        try {
+            return $this->redis->zAdd($key, [$value => $score]);
+        } catch (ConnectionException $e) {
+            throw new ConnectionLostException($e->getMessage(), $e->getCode(), $e);
+        } catch (BaseServerException $e) {
+            throw new ServerException($e->getMessage(), $e->getCode(), $e);
+        }
     }
 
     /**
@@ -94,7 +126,13 @@ class PRedis implements RedisInterface
      */
     public function rPush($key, $value)
     {
-        return $this->redis->rPush($key, (array)$value);
+        try {
+            return $this->redis->rPush($key, (array)$value);
+        } catch (ConnectionException $e) {
+            throw new ConnectionLostException($e->getMessage(), $e->getCode(), $e);
+        } catch (BaseServerException $e) {
+            throw new ServerException($e->getMessage(), $e->getCode(), $e);
+        }
     }
 
     /**
@@ -102,7 +140,13 @@ class PRedis implements RedisInterface
      */
     public function blPop(array $keys, $timeout)
     {
-        return $this->redis->blPop($keys, $timeout);
+        try {
+            return $this->redis->blPop($keys, $timeout);
+        } catch (ConnectionException $e) {
+            throw new ConnectionLostException($e->getMessage(), $e->getCode(), $e);
+        } catch (BaseServerException $e) {
+            throw new ServerException($e->getMessage(), $e->getCode(), $e);
+        }
     }
 
     /**
@@ -110,7 +154,13 @@ class PRedis implements RedisInterface
      */
     public function evaluate($script, array $keys = [], array $args = [])
     {
-        return call_user_func_array([$this->redis, 'eval'], array_merge([$script, count($keys)], $keys, $args));
+        try {
+            return call_user_func_array([$this->redis, 'eval'], array_merge([$script, count($keys)], $keys, $args));
+        } catch (ConnectionException $e) {
+            throw new ConnectionLostException($e->getMessage(), $e->getCode(), $e);
+        } catch (BaseServerException $e) {
+            throw new ServerException($e->getMessage(), $e->getCode(), $e);
+        }
     }
 
     /**
@@ -118,7 +168,13 @@ class PRedis implements RedisInterface
      */
     public function lLen($key)
     {
-        return $this->redis->lLen($key);
+        try {
+            return $this->redis->lLen($key);
+        } catch (ConnectionException $e) {
+            throw new ConnectionLostException($e->getMessage(), $e->getCode(), $e);
+        } catch (BaseServerException $e) {
+            throw new ServerException($e->getMessage(), $e->getCode(), $e);
+        }
     }
 
     /**
@@ -126,7 +182,13 @@ class PRedis implements RedisInterface
      */
     public function zCard($key)
     {
-        return $this->redis->zCard($key);
+        try {
+            return $this->redis->zCard($key);
+        } catch (ConnectionException $e) {
+            throw new ConnectionLostException($e->getMessage(), $e->getCode(), $e);
+        } catch (BaseServerException $e) {
+            throw new ServerException($e->getMessage(), $e->getCode(), $e);
+        }
     }
 
     /**
@@ -134,7 +196,13 @@ class PRedis implements RedisInterface
      */
     public function sMembers($key)
     {
-        return $this->redis->sMembers($key);
+        try {
+            return $this->redis->sMembers($key);
+        } catch (ConnectionException $e) {
+            throw new ConnectionLostException($e->getMessage(), $e->getCode(), $e);
+        } catch (BaseServerException $e) {
+            throw new ServerException($e->getMessage(), $e->getCode(), $e);
+        }
     }
 
     /**
@@ -153,7 +221,13 @@ class PRedis implements RedisInterface
      */
     public function publish($channel, $message)
     {
-        return $this->redis->publish($channel, $message);
+        try {
+            return $this->redis->publish($channel, $message);
+        } catch (ConnectionException $e) {
+            throw new ConnectionLostException($e->getMessage(), $e->getCode(), $e);
+        } catch (BaseServerException $e) {
+            throw new ServerException($e->getMessage(), $e->getCode(), $e);
+        }
     }
 
     /**

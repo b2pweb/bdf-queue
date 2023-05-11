@@ -76,6 +76,7 @@ class PheanstalkConnection implements ConnectionDriverInterface
      * Get the pheanstalk connection
      *
      * @return PheanstalkInterface
+     * @throws ServerNotAvailableException If no servers has been found
      */
     public function pheanstalk(): PheanstalkInterface
     {

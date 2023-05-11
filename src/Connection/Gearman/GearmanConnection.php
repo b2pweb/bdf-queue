@@ -3,6 +3,9 @@
 namespace Bdf\Queue\Connection\Gearman;
 
 use Bdf\Queue\Connection\ConnectionDriverInterface;
+use Bdf\Queue\Connection\Exception\ConnectionException;
+use Bdf\Queue\Connection\Exception\ConnectionFailedException;
+use Bdf\Queue\Connection\Exception\ServerException;
 use Bdf\Queue\Connection\Extension\ConnectionNamed;
 use Bdf\Queue\Connection\Generic\GenericTopic;
 use Bdf\Queue\Connection\QueueDriverInterface;
@@ -13,6 +16,7 @@ use Bdf\Queue\Message\QueuedMessage;
 use Bdf\Queue\Serializer\SerializerInterface;
 use Bdf\Queue\Util\MultiServer;
 use GearmanClient;
+use GearmanException;
 use GearmanJob;
 use GearmanWorker;
 
@@ -80,16 +84,21 @@ class GearmanConnection implements ConnectionDriverInterface
      * Get the gearman client
      *
      * @return GearmanClient
+     * @throws ServerNotAvailableException When no server is available
      */
     public function client()
     {
         if ($this->client === null) {
             $this->client = new GearmanClient();
 
-            // Set the first server available
-            foreach ($this->getActiveHost() as $host => $port) {
-                $this->client->addServer($host, $port);
-                break;
+            try {
+                // Set the first server available
+                foreach ($this->getActiveHost() as $host => $port) {
+                    $this->client->addServer($host, $port);
+                    break;
+                }
+            } catch (GearmanException $e) {
+                throw new ConnectionException($e->getMessage(), $e->getCode(), $e);
             }
 
             if (!empty($this->config['client-timeout'])) {
@@ -122,9 +131,13 @@ class GearmanConnection implements ConnectionDriverInterface
         if (!isset($this->workers[$queue])) {
             $this->workers[$queue] = new GearmanWorker();
 
-            // Set all host available
-            foreach ($this->getActiveHost() as $host => $port) {
-                $this->workers[$queue]->addServer($host, $port);
+            try {
+                // Set all host available
+                foreach ($this->getActiveHost() as $host => $port) {
+                    $this->workers[$queue]->addServer($host, $port);
+                }
+            } catch (GearmanException $e) {
+                throw new ConnectionException($e->getMessage(), $e->getCode(), $e);
             }
 
             $this->workers[$queue]->addFunction($queue, function (GearmanJob $job) {
@@ -201,6 +214,10 @@ class GearmanConnection implements ConnectionDriverInterface
      * @param string $command
      *
      * @return string[][]
+     *
+     * @throws ServerNotAvailableException If no servers has been found
+     * @throws ConnectionFailedException When the connection cannot be established
+     * @throws ServerException When the server return an error
      */
     public function command(string $command): array
     {
@@ -225,7 +242,7 @@ class GearmanConnection implements ConnectionDriverInterface
                 $gearman->addServer($host, $port);
 
                 $valid[$host] = $port;
-            } catch (\GearmanException $gearmanException) {
+            } catch (GearmanException $gearmanException) {
                 $exception = $gearmanException;
             }
         }

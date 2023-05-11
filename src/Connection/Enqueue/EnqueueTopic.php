@@ -3,11 +3,16 @@
 namespace Bdf\Queue\Connection\Enqueue;
 
 use Bdf\Queue\Connection\ConnectionDriverInterface;
+use Bdf\Queue\Connection\Exception\ConnectionException;
+use Bdf\Queue\Connection\Exception\ServerException;
 use Bdf\Queue\Connection\Extension\TopicEnvelopeHelper;
 use Bdf\Queue\Connection\TopicDriverInterface;
 use Bdf\Queue\Message\Message;
 use Enqueue\Consumption\FallbackSubscriptionConsumer;
 use Interop\Queue\Consumer;
+use Interop\Queue\Exception;
+use Interop\Queue\Exception\InvalidDestinationException;
+use Interop\Queue\Exception\InvalidMessageException;
 use Interop\Queue\Exception\SubscriptionConsumerNotSupportedException;
 use Interop\Queue\Message as EnqueueMessage;
 use Interop\Queue\SubscriptionConsumer;
@@ -70,7 +75,13 @@ class EnqueueTopic implements TopicDriverInterface
     {
         $context = $this->connection->context();
 
-        $context->createProducer()->send($this->connection->topicDestination($topic), $context->createMessage($payload));
+        try {
+            $context->createProducer()->send($this->connection->topicDestination($topic), $context->createMessage($payload));
+        } catch (InvalidDestinationException | InvalidMessageException $e) {
+            throw new ConnectionException($e);
+        } catch (Exception $e) {
+            throw new ServerException($e->getMessage(), $e->getCode(), $e);
+        }
     }
 
     /**
@@ -91,7 +102,11 @@ class EnqueueTopic implements TopicDriverInterface
 
         $this->consumedMessages = 0;
 
-        $this->consumer()->consume($duration);
+        try {
+            $this->consumer()->consume($duration);
+        } catch (Exception $e) {
+            throw new ServerException($e->getMessage(), $e->getCode(), $e);
+        }
 
         return $this->consumedMessages;
     }
@@ -107,19 +122,23 @@ class EnqueueTopic implements TopicDriverInterface
         foreach ($topics as $topic) {
             $destination = $this->connection->topicDestination($topic);
 
-            $consumer->subscribe(
-                $context->createConsumer($destination),
-                function (EnqueueMessage $message, Consumer $consumer) use ($callback, $topic) {
-                    ++$this->consumedMessages;
+            try {
+                $consumer->subscribe(
+                    $context->createConsumer($destination),
+                    function (EnqueueMessage $message, Consumer $consumer) use ($callback, $topic) {
+                        ++$this->consumedMessages;
 
-                    // Use topic or queue envelop ?
-                    $callback($this->toTopicEnvelope(
-                        $this->connection->toQueuedMessage($message->getBody(), $topic, $message)
-                    ));
+                        // Use topic or queue envelop ?
+                        $callback($this->toTopicEnvelope(
+                            $this->connection->toQueuedMessage($message->getBody(), $topic, $message)
+                        ));
 
-                    $consumer->acknowledge($message);
-                }
-            );
+                        $consumer->acknowledge($message);
+                    }
+                );
+            } catch (Exception $e) {
+                throw new ConnectionException($e->getMessage(), $e->getCode(), $e);
+            }
         }
     }
 

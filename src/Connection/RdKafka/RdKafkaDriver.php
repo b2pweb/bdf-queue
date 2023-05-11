@@ -3,6 +3,10 @@
 namespace Bdf\Queue\Connection\RdKafka;
 
 use Bdf\Queue\Connection\ConnectionDriverInterface;
+use Bdf\Queue\Connection\Exception\ConnectionException;
+use Bdf\Queue\Connection\Exception\ConnectionFailedException;
+use Bdf\Queue\Connection\Exception\ConnectionLostException;
+use Bdf\Queue\Connection\Exception\ServerException;
 use Bdf\Queue\Connection\Extension\ConnectionBearer;
 use Bdf\Queue\Connection\Extension\EnvelopeHelper;
 use Bdf\Queue\Connection\Extension\Subscriber;
@@ -11,6 +15,7 @@ use Bdf\Queue\Connection\TopicDriverInterface;
 use Bdf\Queue\Message\EnvelopeInterface;
 use Bdf\Queue\Message\Message;
 use Bdf\Queue\Message\QueuedMessage;
+use RdKafka\Exception as KafkaException;
 use RdKafka\KafkaConsumer;
 
 /**
@@ -48,13 +53,17 @@ class RdKafkaDriver implements QueueDriverInterface, TopicDriverInterface
     {
         $message->setQueuedAt(new \DateTimeImmutable());
 
-        $topic = $this->connection->producer()->newTopic($message->queue());
-        $topic->produce(
-            $message->header('partition', RD_KAFKA_PARTITION_UA),
-            0,
-            $this->connection->serializer()->serialize($message),
-            $message->header('key')
-        );
+        try {
+            $topic = $this->connection->producer()->newTopic($message->queue());
+            $topic->produce(
+                $message->header('partition', RD_KAFKA_PARTITION_UA),
+                0,
+                $this->connection->serializer()->serialize($message),
+                $message->header('key')
+            );
+        } catch (KafkaException $e) {
+            $this->handleException($e);
+        }
     }
 
     /**
@@ -62,8 +71,12 @@ class RdKafkaDriver implements QueueDriverInterface, TopicDriverInterface
      */
     public function pushRaw($raw, string $queue, int $delay = 0): void
     {
-        $topic = $this->connection->producer()->newTopic($queue);
-        $topic->produce(RD_KAFKA_PARTITION_UA, 0, $raw);
+        try {
+            $topic = $this->connection->producer()->newTopic($queue);
+            $topic->produce(RD_KAFKA_PARTITION_UA, 0, $raw);
+        } catch (KafkaException $e) {
+            $this->handleException($e);
+        }
     }
 
     /**
@@ -73,13 +86,17 @@ class RdKafkaDriver implements QueueDriverInterface, TopicDriverInterface
     {
         $message->setQueuedAt(new \DateTimeImmutable());
 
-        $topic = $this->connection->producer()->newTopic($message->topic());
-        $topic->produce(
-            $message->header('partition', RD_KAFKA_PARTITION_UA),
-            0,
-            $this->connection->serializer()->serialize($message),
-            $message->header('key')
-        );
+        try {
+            $topic = $this->connection->producer()->newTopic($message->topic());
+            $topic->produce(
+                $message->header('partition', RD_KAFKA_PARTITION_UA),
+                0,
+                $this->connection->serializer()->serialize($message),
+                $message->header('key')
+            );
+        } catch (KafkaException $e) {
+            $this->handleException($e);
+        }
     }
 
     /**
@@ -87,26 +104,28 @@ class RdKafkaDriver implements QueueDriverInterface, TopicDriverInterface
      */
     public function publishRaw(string $topic, $payload): void
     {
-        $topic = $this->connection->producer()->newTopic($topic);
-        $topic->produce(RD_KAFKA_PARTITION_UA, 0, $payload);
+        try {
+            $topic = $this->connection->producer()->newTopic($topic);
+            $topic->produce(RD_KAFKA_PARTITION_UA, 0, $payload);
+        } catch (KafkaException $e) {
+            $this->handleException($e);
+        }
     }
 
     /**
      * {@inheritdoc}
-     *
-     * @throws \RdKafka\Exception
-     * @throws \Exception
      */
     public function pop(string $queue, int $duration = ConnectionDriverInterface::DURATION): ?EnvelopeInterface
     {
-        return $this->popKafkaMessage($this->connection->queueConsumer($queue), $duration);
+        try {
+            return $this->popKafkaMessage($this->connection->queueConsumer($queue), $duration);
+        } catch (KafkaException $e) {
+            $this->handleException($e);
+        }
     }
 
     /**
      * {@inheritdoc}
-     *
-     * @throws \RdKafka\Exception
-     * @throws \Exception
      */
     public function consume(int $duration = ConnectionDriverInterface::DURATION): int
     {
@@ -126,10 +145,19 @@ class RdKafkaDriver implements QueueDriverInterface, TopicDriverInterface
 
     /**
      * Pop a kafka message from a consumer
+     *
+     * @throws ConnectionLostException If the connection is lost
+     * @throws ServerException For any server side error
+     * @throws ConnectionFailedException If the connection cannot be established
+     * @throws ConnectionException For any connection error
      */
     private function popKafkaMessage(KafkaConsumer $consumer, int $duration, $forTopic = false): ?EnvelopeInterface
     {
-        $kafkaMessage = $consumer->consume($duration > 0 ? $duration * 1000 : 1000); //ms
+        try {
+            $kafkaMessage = $consumer->consume($duration > 0 ? $duration * 1000 : 1000); //ms
+        } catch (KafkaException $e) {
+            $this->handleException($e);
+        }
 
         if ($kafkaMessage !== null) {
             switch ($kafkaMessage->err) {
@@ -147,7 +175,7 @@ class RdKafkaDriver implements QueueDriverInterface, TopicDriverInterface
                     break;
 
                 default:
-                    throw new \Exception($kafkaMessage->errstr(), $kafkaMessage->err);
+                    throw new ServerException($kafkaMessage->errstr(), $kafkaMessage->err);
             }
         }
 
@@ -159,10 +187,14 @@ class RdKafkaDriver implements QueueDriverInterface, TopicDriverInterface
      */
     public function acknowledge(QueuedMessage $message): void
     {
-        if ($this->connection->commitAsync()) {
-            $this->connection->queueConsumer($message->queue())->commitAsync($message->internalJob());
-        } else {
-            $this->connection->queueConsumer($message->queue())->commit($message->internalJob());
+        try {
+            if ($this->connection->commitAsync()) {
+                $this->connection->queueConsumer($message->queue())->commitAsync($message->internalJob());
+            } else {
+                $this->connection->queueConsumer($message->queue())->commit($message->internalJob());
+            }
+        } catch (KafkaException $e) {
+            $this->handleException($e);
         }
     }
 
@@ -195,5 +227,20 @@ class RdKafkaDriver implements QueueDriverInterface, TopicDriverInterface
     public function stats(): array
     {
         return [];
+    }
+
+    /**
+     * Transform the kafka exception to one of bdf queue exception
+     */
+    private function handleException(KafkaException $e): void
+    {
+        switch ($e->getCode()) {
+            case RD_KAFKA_RESP_ERR__TRANSPORT:
+            case RD_KAFKA_RESP_ERR_NETWORK_EXCEPTION:
+                throw new ConnectionLostException($e->getMessage(), $e->getCode(), $e);
+
+            default:
+                throw new ServerException($e->getMessage(), $e->getCode(), $e);
+        }
     }
 }

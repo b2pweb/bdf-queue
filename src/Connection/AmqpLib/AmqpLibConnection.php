@@ -5,6 +5,10 @@ namespace Bdf\Queue\Connection\AmqpLib;
 use Bdf\Queue\Connection\AmqpLib\Exchange\ExchangeResolverInterface;
 use Bdf\Queue\Connection\AmqpLib\Exchange\NamespaceExchangeResolver;
 use Bdf\Queue\Connection\ConnectionDriverInterface;
+use Bdf\Queue\Connection\Exception\ConnectionException;
+use Bdf\Queue\Connection\Exception\ConnectionFailedException;
+use Bdf\Queue\Connection\Exception\ConnectionLostException;
+use Bdf\Queue\Connection\Exception\ServerException;
 use Bdf\Queue\Connection\Extension\ConnectionNamed;
 use Bdf\Queue\Connection\ManageableQueueInterface;
 use Bdf\Queue\Connection\ManageableTopicInterface;
@@ -12,9 +16,13 @@ use Bdf\Queue\Connection\QueueDriverInterface;
 use Bdf\Queue\Connection\TopicDriverInterface;
 use Bdf\Queue\Message\MessageSerializationTrait;
 use Bdf\Queue\Serializer\SerializerInterface;
+use Exception;
 use PhpAmqpLib\Connection\AbstractConnection;
 use PhpAmqpLib\Connection\AMQPStreamConnection;
 use PhpAmqpLib\Channel\AMQPChannel;
+use PhpAmqpLib\Exception\AMQPConnectionClosedException;
+use PhpAmqpLib\Exception\AMQPExceptionInterface;
+use PhpAmqpLib\Exception\AMQPRuntimeException;
 use PhpAmqpLib\Message\AMQPMessage;
 use PhpAmqpLib\Wire\AMQPTable;
 
@@ -128,13 +136,17 @@ class AmqpLibConnection implements ConnectionDriverInterface, ManageableQueueInt
     {
         if ($this->connection === null) {
             // create connection with AMQP
-            $this->connection = new AMQPStreamConnection(
-                $this->config['host'],
-                $this->config['port'],
-                $this->config['user'],
-                $this->config['password'],
-                $this->config['vhost']
-            );
+            try {
+                $this->connection = new AMQPStreamConnection(
+                    $this->config['host'],
+                    $this->config['port'],
+                    $this->config['user'],
+                    $this->config['password'],
+                    $this->config['vhost']
+                );
+            } catch (Exception $e) {
+                throw new ConnectionFailedException($e->getMessage(), $e->getCode(), $e);
+            }
         }
 
         return $this->connection;
@@ -158,12 +170,21 @@ class AmqpLibConnection implements ConnectionDriverInterface, ManageableQueueInt
     public function channel(): AMQPChannel
     {
         if ($this->channel === null) {
-            $this->channel = $this->connection()->channel();
-            $this->channel->basic_qos(
-                $this->config['qos_prefetch_size'],
-                $this->config['qos_prefetch_count'],
-                $this->config['qos_global']
-            );
+            try {
+                $channel = $this->connection()->channel();
+                $channel->basic_qos(
+                    $this->config['qos_prefetch_size'],
+                    $this->config['qos_prefetch_count'],
+                    $this->config['qos_global']
+                );
+                $this->channel = $channel;
+            } catch (AMQPConnectionClosedException $e) {
+                throw new ConnectionLostException($e->getMessage(), $e->getCode(), $e);
+            } catch (AMQPRuntimeException $e) {
+                throw new ServerException($e->getMessage(), $e->getCode(), $e);
+            } catch (AMQPExceptionInterface $e) {
+                throw new ConnectionException($e->getMessage(), $e->getCode(), $e);
+            }
         }
 
         return $this->channel;
@@ -230,14 +251,22 @@ class AmqpLibConnection implements ConnectionDriverInterface, ManageableQueueInt
     {
         // Exchange should be declared to use ttl queue.
         // The main queue should be bind with a routing key equal to 'x-dead-letter-routing-key'
-        $this->channel()->queue_declare(
-            $queue,
-            (bool) ($this->config['queue_flags'] & self::FLAG_QUEUE_PASSIVE),
-            (bool) ($this->config['queue_flags'] & self::FLAG_QUEUE_DURABLE),
-            (bool) ($this->config['queue_flags'] & self::FLAG_QUEUE_EXCLUSIVE),
-            (bool) ($this->config['queue_flags'] & self::FLAG_QUEUE_AUTODELETE),
-            (bool) ($this->config['queue_flags'] & self::FLAG_QUEUE_NOWAIT)
-        );
+        try {
+            $this->channel()->queue_declare(
+                $queue,
+                (bool) ($this->config['queue_flags'] & self::FLAG_QUEUE_PASSIVE),
+                (bool) ($this->config['queue_flags'] & self::FLAG_QUEUE_DURABLE),
+                (bool) ($this->config['queue_flags'] & self::FLAG_QUEUE_EXCLUSIVE),
+                (bool) ($this->config['queue_flags'] & self::FLAG_QUEUE_AUTODELETE),
+                (bool) ($this->config['queue_flags'] & self::FLAG_QUEUE_NOWAIT)
+            );
+        } catch (AMQPConnectionClosedException $e) {
+            throw new ConnectionLostException($e->getMessage(), $e->getCode(), $e);
+        } catch (AMQPRuntimeException $e) {
+            throw new ServerException($e->getMessage(), $e->getCode(), $e);
+        } catch (AMQPExceptionInterface $e) {
+            throw new ConnectionException($e->getMessage(), $e->getCode(), $e);
+        }
     }
 
     /**
@@ -245,12 +274,20 @@ class AmqpLibConnection implements ConnectionDriverInterface, ManageableQueueInt
      */
     public function deleteQueue(string $queue): void
     {
-        $this->channel()->queue_delete(
-            $queue,
-            (bool) ($this->config['queue_flags'] & self::FLAG_QUEUE_IFUNUSED),
-            (bool) ($this->config['queue_flags'] & self::FLAG_QUEUE_IFEMPTY),
-            (bool) ($this->config['queue_flags'] & self::FLAG_QUEUE_NOWAIT)
-        );
+        try {
+            $this->channel()->queue_delete(
+                $queue,
+                (bool) ($this->config['queue_flags'] & self::FLAG_QUEUE_IFUNUSED),
+                (bool) ($this->config['queue_flags'] & self::FLAG_QUEUE_IFEMPTY),
+                (bool) ($this->config['queue_flags'] & self::FLAG_QUEUE_NOWAIT)
+            );
+        } catch (AMQPConnectionClosedException $e) {
+            throw new ConnectionLostException($e->getMessage(), $e->getCode(), $e);
+        } catch (AMQPRuntimeException $e) {
+            throw new ServerException($e->getMessage(), $e->getCode(), $e);
+        } catch (AMQPExceptionInterface $e) {
+            throw new ConnectionException($e->getMessage(), $e->getCode(), $e);
+        }
     }
 
     /**
@@ -264,20 +301,28 @@ class AmqpLibConnection implements ConnectionDriverInterface, ManageableQueueInt
     public function declareDelayedQueue($name, $delay = 0)
     {
         if ($delay) {
-            list($name) = $this->channel()->queue_declare(
-                $name.'_deferred_'.$delay,
-                (bool) ($this->config['queue_flags'] & self::FLAG_QUEUE_PASSIVE),
-                (bool) ($this->config['queue_flags'] & self::FLAG_QUEUE_DURABLE),
-                (bool) ($this->config['queue_flags'] & self::FLAG_QUEUE_EXCLUSIVE),
-                (bool) ($this->config['queue_flags'] & self::FLAG_QUEUE_AUTODELETE),
-                (bool) ($this->config['queue_flags'] & self::FLAG_QUEUE_NOWAIT),
-                new AMQPTable([
-                    // 'x-dead-letter-exchange' should have same value to exchange name (see basic_publish)
-                    'x-dead-letter-exchange'    => '',
-                    'x-dead-letter-routing-key' => $name,
-                    'x-message-ttl'             => $delay * 1000,
-                ])
-            );
+            try {
+                list($name) = $this->channel()->queue_declare(
+                    $name.'_deferred_'.$delay,
+                    (bool) ($this->config['queue_flags'] & self::FLAG_QUEUE_PASSIVE),
+                    (bool) ($this->config['queue_flags'] & self::FLAG_QUEUE_DURABLE),
+                    (bool) ($this->config['queue_flags'] & self::FLAG_QUEUE_EXCLUSIVE),
+                    (bool) ($this->config['queue_flags'] & self::FLAG_QUEUE_AUTODELETE),
+                    (bool) ($this->config['queue_flags'] & self::FLAG_QUEUE_NOWAIT),
+                    new AMQPTable([
+                        // 'x-dead-letter-exchange' should have same value to exchange name (see basic_publish)
+                        'x-dead-letter-exchange'    => '',
+                        'x-dead-letter-routing-key' => $name,
+                        'x-message-ttl'             => $delay * 1000,
+                    ])
+                );
+            } catch (AMQPConnectionClosedException $e) {
+                throw new ConnectionLostException($e->getMessage(), $e->getCode(), $e);
+            } catch (AMQPRuntimeException $e) {
+                throw new ServerException($e->getMessage(), $e->getCode(), $e);
+            } catch (AMQPExceptionInterface $e) {
+                throw new ConnectionException($e->getMessage(), $e->getCode(), $e);
+            }
         }
 
         return $name;
@@ -288,15 +333,23 @@ class AmqpLibConnection implements ConnectionDriverInterface, ManageableQueueInt
      */
     public function declareTopic(string $topic): void
     {
-        $this->channel()->exchange_declare(
-            $this->exchangeResolver->resolve($topic),
-            'topic',
-            (bool) ($this->config['topic_flags'] & self::FLAG_QUEUE_PASSIVE),
-            (bool) ($this->config['topic_flags'] & self::FLAG_QUEUE_DURABLE),
-            (bool) ($this->config['topic_flags'] & self::FLAG_QUEUE_AUTODELETE),
-            (bool) ($this->config['topic_flags'] & self::FLAG_TOPIC_INTERNAL),
-            (bool) ($this->config['topic_flags'] & self::FLAG_QUEUE_NOWAIT)
-        );
+        try {
+            $this->channel()->exchange_declare(
+                $this->exchangeResolver->resolve($topic),
+                'topic',
+                (bool) ($this->config['topic_flags'] & self::FLAG_QUEUE_PASSIVE),
+                (bool) ($this->config['topic_flags'] & self::FLAG_QUEUE_DURABLE),
+                (bool) ($this->config['topic_flags'] & self::FLAG_QUEUE_AUTODELETE),
+                (bool) ($this->config['topic_flags'] & self::FLAG_TOPIC_INTERNAL),
+                (bool) ($this->config['topic_flags'] & self::FLAG_QUEUE_NOWAIT)
+            );
+        } catch (AMQPConnectionClosedException $e) {
+            throw new ConnectionLostException($e->getMessage(), $e->getCode(), $e);
+        } catch (AMQPRuntimeException $e) {
+            throw new ServerException($e->getMessage(), $e->getCode(), $e);
+        } catch (AMQPExceptionInterface $e) {
+            throw new ConnectionException($e->getMessage(), $e->getCode(), $e);
+        }
     }
 
     /**
@@ -304,11 +357,19 @@ class AmqpLibConnection implements ConnectionDriverInterface, ManageableQueueInt
      */
     public function deleteTopic(string $topic): void
     {
-        $this->channel()->exchange_delete(
-            $this->exchangeResolver->resolve($topic),
-            (bool) ($this->config['topic_flags'] & self::FLAG_QUEUE_IFUNUSED),
-            (bool) ($this->config['topic_flags'] & self::FLAG_QUEUE_NOWAIT)
-        );
+        try {
+            $this->channel()->exchange_delete(
+                $this->exchangeResolver->resolve($topic),
+                (bool) ($this->config['topic_flags'] & self::FLAG_QUEUE_IFUNUSED),
+                (bool) ($this->config['topic_flags'] & self::FLAG_QUEUE_NOWAIT)
+            );
+        } catch (AMQPConnectionClosedException $e) {
+            throw new ConnectionLostException($e->getMessage(), $e->getCode(), $e);
+        } catch (AMQPRuntimeException $e) {
+            throw new ServerException($e->getMessage(), $e->getCode(), $e);
+        } catch (AMQPExceptionInterface $e) {
+            throw new ConnectionException($e->getMessage(), $e->getCode(), $e);
+        }
     }
 
     /**
@@ -320,6 +381,11 @@ class AmqpLibConnection implements ConnectionDriverInterface, ManageableQueueInt
      * @return string The queue name
      *
      * @todo export strategy for naming queue
+     *
+     * @throws ConnectionLostException If the connection is lost
+     * @throws ServerException For any server side error
+     * @throws ConnectionFailedException If the connection cannot be established
+     * @throws ConnectionException For any connection error
      */
     public function bind(string $topic, array $channels)
     {
@@ -329,8 +395,16 @@ class AmqpLibConnection implements ConnectionDriverInterface, ManageableQueueInt
         $queue = $this->config['group'].'/'.$topic;
         $this->declareQueue($queue);
 
-        foreach ($channels as $channel) {
-            $this->channel->queue_bind($queue, $exchange, $channel);
+        try {
+            foreach ($channels as $channel) {
+                $this->channel->queue_bind($queue, $exchange, $channel);
+            }
+        } catch (AMQPConnectionClosedException $e) {
+            throw new ConnectionLostException($e->getMessage(), $e->getCode(), $e);
+        } catch (AMQPRuntimeException $e) {
+            throw new ServerException($e->getMessage(), $e->getCode(), $e);
+        } catch (AMQPExceptionInterface $e) {
+            throw new ConnectionException($e->getMessage(), $e->getCode(), $e);
         }
 
         return $queue;
@@ -345,14 +419,27 @@ class AmqpLibConnection implements ConnectionDriverInterface, ManageableQueueInt
      * @return string The queue name
      *
      * @todo export strategy for naming queue
+     *
+     * @throws ConnectionLostException If the connection is lost
+     * @throws ServerException For any server side error
+     * @throws ConnectionFailedException If the connection cannot be established
+     * @throws ConnectionException For any connection error
      */
     public function unbind(string $topic, array $channels)
     {
         $exchange = $this->exchangeResolver->resolve($topic);
         $queue = $this->config['group'].'/'.$topic;
 
-        foreach ($channels as $channel) {
-            $this->channel->queue_unbind($queue, $exchange, $channel);
+        try {
+            foreach ($channels as $channel) {
+                $this->channel->queue_unbind($queue, $exchange, $channel);
+            }
+        } catch (AMQPConnectionClosedException $e) {
+            throw new ConnectionLostException($e->getMessage(), $e->getCode(), $e);
+        } catch (AMQPRuntimeException $e) {
+            throw new ServerException($e->getMessage(), $e->getCode(), $e);
+        } catch (AMQPExceptionInterface $e) {
+            throw new ConnectionException($e->getMessage(), $e->getCode(), $e);
         }
 
         return $queue;
@@ -360,16 +447,29 @@ class AmqpLibConnection implements ConnectionDriverInterface, ManageableQueueInt
 
     /**
      * Publish an amqp message
+     *
+     * @throws ConnectionLostException If the connection is lost
+     * @throws ServerException For any server side error
+     * @throws ConnectionFailedException If the connection cannot be established
+     * @throws ConnectionException For any connection error
      */
     public function publish(AMQPMessage $amqpMessage, string $topic, string $routing, int $flags = 0): void
     {
-        $this->channel()->basic_publish(
-            $amqpMessage,
-            $this->exchangeResolver->resolve($topic),
-            $routing,
-            (bool) ($flags & AmqpLibConnection::FLAG_MESSAGE_MANDATORY),
-            (bool) ($flags & AmqpLibConnection::FLAG_MESSAGE_IMMEDIATE)
-        );
+        try {
+            $this->channel()->basic_publish(
+                $amqpMessage,
+                $this->exchangeResolver->resolve($topic),
+                $routing,
+                (bool) ($flags & AmqpLibConnection::FLAG_MESSAGE_MANDATORY),
+                (bool) ($flags & AmqpLibConnection::FLAG_MESSAGE_IMMEDIATE)
+            );
+        } catch (AMQPConnectionClosedException $e) {
+            throw new ConnectionLostException($e->getMessage(), $e->getCode(), $e);
+        } catch (AMQPRuntimeException $e) {
+            throw new ServerException($e->getMessage(), $e->getCode(), $e);
+        } catch (AMQPExceptionInterface $e) {
+            throw new ConnectionException($e->getMessage(), $e->getCode(), $e);
+        }
     }
 
     /**

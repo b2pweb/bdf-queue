@@ -3,6 +3,7 @@
 namespace Bdf\Queue\Connection\Redis;
 
 use Bdf\Queue\Connection\ConnectionDriverInterface;
+use Bdf\Queue\Connection\Exception\ConnectionLostException;
 use Bdf\Queue\Connection\Extension\ConnectionBearer;
 use Bdf\Queue\Connection\Extension\TopicEnvelopeHelper;
 use Bdf\Queue\Connection\TopicDriverInterface;
@@ -64,7 +65,7 @@ class RedisTopic implements TopicDriverInterface
 
         try {
             $redis->publish($topic, $payload);
-        } catch (\RedisException $e) {
+        } catch (ConnectionLostException $e) {
             // Auto-reconnect on timeout
             // May be useless after redis extension update ?
             $this->connection->close();

@@ -3,6 +3,10 @@
 namespace Bdf\Queue\Connection\RdKafka;
 
 use Bdf\Queue\Connection\ConnectionDriverInterface;
+use Bdf\Queue\Connection\Exception\ConnectionException;
+use Bdf\Queue\Connection\Exception\ConnectionFailedException;
+use Bdf\Queue\Connection\Exception\ConnectionLostException;
+use Bdf\Queue\Connection\Exception\ServerException;
 use Bdf\Queue\Connection\Extension\ConnectionNamed;
 use Bdf\Queue\Connection\ManageableQueueInterface;
 use Bdf\Queue\Connection\ManageableTopicInterface;
@@ -10,7 +14,9 @@ use Bdf\Queue\Connection\QueueDriverInterface;
 use Bdf\Queue\Connection\TopicDriverInterface;
 use Bdf\Queue\Message\MessageSerializationTrait;
 use Bdf\Queue\Serializer\SerializerInterface;
+use Exception;
 use RdKafka\Conf as KafkaConf;
+use RdKafka\Exception as KafkaException;
 use RdKafka\KafkaConsumer;
 use RdKafka\Producer as KafkaProducer;
 use RdKafka\TopicConf;
@@ -161,20 +167,27 @@ class RdKafkaConnection implements ConnectionDriverInterface, ManageableQueueInt
      *
      * @return KafkaConsumer
      *
-     * @throws \RdKafka\Exception
+     * @throws ConnectionFailedException When the connection configuration is invalid
+     * @throws ConnectionLostException When the connection is lost
+     * @throws ServerException When the server return an error
+     * @throws ConnectionException Generic error
      */
     public function queueConsumer($queue)
     {
         if (!isset($this->consumers[$queue])) {
             // Use queue for queue consumer
-            $this->consumers[$queue] = new KafkaConsumer($this->createKafkaConf($queue));
+            $this->consumers[$queue] = $this->createConsumer($queue);
 
-            if ($this->config['offset'] === null) {
-                $this->consumers[$queue]->subscribe([$queue]);
-            } else {
-                $this->consumers[$queue]->assign([
-                    new TopicPartition($queue, $this->config['partition'], $this->config['offset']),
-                ]);
+            try {
+                if ($this->config['offset'] === null) {
+                    $this->consumers[$queue]->subscribe([$queue]);
+                } else {
+                    $this->consumers[$queue]->assign([
+                        new TopicPartition($queue, $this->config['partition'], $this->config['offset']),
+                    ]);
+                }
+            } catch (KafkaException $e) {
+                $this->handleException($e);
             }
         }
 
@@ -188,7 +201,10 @@ class RdKafkaConnection implements ConnectionDriverInterface, ManageableQueueInt
      *
      * @return KafkaConsumer
      *
-     * @throws \RdKafka\Exception
+     * @throws ConnectionFailedException When the connection configuration is invalid
+     * @throws ConnectionLostException When the connection is lost
+     * @throws ServerException When the server return an error
+     * @throws ConnectionException Generic error
      */
     public function topicConsumer(array $topics)
     {
@@ -196,8 +212,13 @@ class RdKafkaConnection implements ConnectionDriverInterface, ManageableQueueInt
 
         if (!isset($this->consumers[$key])) {
             // Use group for topic consumer
-            $this->consumers[$key] = new KafkaConsumer($this->createKafkaConf($this->config['group']));
-            $this->consumers[$key]->subscribe($this->createTopicName($topics));
+            $this->consumers[$key] = $this->createConsumer($this->config['group']);
+
+            try {
+                $this->consumers[$key]->subscribe($this->createTopicName($topics));
+            } catch (KafkaException $e) {
+                $this->handleException($e);
+            }
         }
 
         return $this->consumers[$key];
@@ -239,7 +260,11 @@ class RdKafkaConnection implements ConnectionDriverInterface, ManageableQueueInt
     public function close(): void
     {
         foreach ($this->consumers as $consumer) {
-            $consumer->unsubscribe();
+            try {
+                $consumer->unsubscribe();
+            } catch (KafkaException $e) {
+                // Ignore
+            }
         }
 
         $this->consumers = [];
@@ -308,5 +333,35 @@ class RdKafkaConnection implements ConnectionDriverInterface, ManageableQueueInt
     public function commitAsync(): bool
     {
         return $this->config['commitAsync'];
+    }
+
+    /**
+     * @param string|null $group The group id
+     * @return KafkaConsumer
+     *
+     * @throws ConnectionFailedException When the configuration is invalid
+     */
+    private function createConsumer(?string $group): KafkaConsumer
+    {
+        try {
+            return new KafkaConsumer($this->createKafkaConf($group));
+        } catch (Exception $e) {
+            throw new ConnectionFailedException($e->getMessage(), $e->getCode(), $e);
+        }
+    }
+
+    /**
+     * Transform the kafka exception to one of bdf queue exception
+     */
+    private function handleException(KafkaException $e): void
+    {
+        switch ($e->getCode()) {
+            case RD_KAFKA_RESP_ERR__TRANSPORT:
+            case RD_KAFKA_RESP_ERR_NETWORK_EXCEPTION:
+                throw new ConnectionLostException($e->getMessage(), $e->getCode(), $e);
+
+            default:
+                throw new ServerException($e->getMessage(), $e->getCode(), $e);
+        }
     }
 }

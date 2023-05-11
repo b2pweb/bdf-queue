@@ -3,11 +3,17 @@
 namespace Bdf\Queue\Connection\Enqueue;
 
 use Bdf\Queue\Connection\ConnectionDriverInterface;
+use Bdf\Queue\Connection\Exception\ConnectionException;
+use Bdf\Queue\Connection\Exception\ServerException;
 use Bdf\Queue\Connection\Extension\QueueEnvelopeHelper;
 use Bdf\Queue\Connection\QueueDriverInterface;
 use Bdf\Queue\Message\EnvelopeInterface;
 use Bdf\Queue\Message\Message;
 use Bdf\Queue\Message\QueuedMessage;
+use Interop\Queue\Exception;
+use Interop\Queue\Exception\DeliveryDelayNotSupportedException;
+use Interop\Queue\Exception\InvalidDestinationException;
+use Interop\Queue\Exception\InvalidMessageException;
 
 /**
  * Queue driver for enqueue
@@ -65,10 +71,20 @@ class EnqueueQueue implements QueueDriverInterface
         $producer = $context->createProducer();
 
         if ($delay > 0) {
-            $producer->setDeliveryDelay($delay);
+            try {
+                $producer->setDeliveryDelay($delay);
+            } catch (DeliveryDelayNotSupportedException $e) {
+                throw new ConnectionException($e);
+            }
         }
 
-        $producer->send($queue, $context->createMessage($raw));
+        try {
+            $producer->send($queue, $context->createMessage($raw));
+        } catch (InvalidDestinationException | InvalidMessageException $e) {
+            throw new ConnectionException($e);
+        } catch (Exception $e) {
+            throw new ServerException($e->getMessage(), $e->getCode(), $e);
+        }
     }
 
     /**
@@ -79,7 +95,11 @@ class EnqueueQueue implements QueueDriverInterface
         $context = $this->connection->context();
         $queue = $this->connection->queueDestination($queue);
 
-        $message = $context->createConsumer($queue)->receive($duration);
+        try {
+            $message = $context->createConsumer($queue)->receive($duration);
+        } catch (Exception $e) {
+            throw new ServerException($e->getMessage(), $e->getCode(), $e);
+        }
 
         if (!$message) {
             return null;
@@ -93,10 +113,14 @@ class EnqueueQueue implements QueueDriverInterface
      */
     public function acknowledge(QueuedMessage $message): void
     {
-        $this->connection->context()
-            ->createConsumer($this->connection->context()->createQueue($message->queue()))
-            ->acknowledge($message->internalJob())
-        ;
+        $context = $this->connection->context();
+
+        try {
+            $consumer = $context->createConsumer($context->createQueue($message->queue()));
+            $consumer->acknowledge($message->internalJob());
+        } catch (Exception $e) {
+            throw new ServerException($e->getMessage(), $e->getCode(), $e);
+        }
     }
 
     /**
@@ -104,10 +128,14 @@ class EnqueueQueue implements QueueDriverInterface
      */
     public function release(QueuedMessage $message): void
     {
-        $this->connection->context()
-            ->createConsumer($this->connection->context()->createQueue($message->queue()))
-            ->reject($message->internalJob(), true)
-        ;
+        $context = $this->connection->context();
+
+        try {
+            $consumer = $context->createConsumer($this->connection->context()->createQueue($message->queue()));
+            $consumer->reject($message->internalJob(), true);
+        } catch (Exception $e) {
+            throw new ServerException($e->getMessage(), $e->getCode(), $e);
+        }
     }
 
     /**
