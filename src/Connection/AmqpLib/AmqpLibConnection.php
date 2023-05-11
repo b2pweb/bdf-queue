@@ -17,11 +17,10 @@ use Bdf\Queue\Connection\TopicDriverInterface;
 use Bdf\Queue\Message\MessageSerializationTrait;
 use Bdf\Queue\Serializer\SerializerInterface;
 use Exception;
+use PhpAmqpLib\Channel\AMQPChannel;
 use PhpAmqpLib\Connection\AbstractConnection;
 use PhpAmqpLib\Connection\AMQPStreamConnection;
-use PhpAmqpLib\Channel\AMQPChannel;
 use PhpAmqpLib\Exception\AMQPConnectionClosedException;
-use PhpAmqpLib\Exception\AMQPExceptionInterface;
 use PhpAmqpLib\Exception\AMQPRuntimeException;
 use PhpAmqpLib\Message\AMQPMessage;
 use PhpAmqpLib\Wire\AMQPTable;
@@ -182,7 +181,9 @@ class AmqpLibConnection implements ConnectionDriverInterface, ManageableQueueInt
                 throw new ConnectionLostException($e->getMessage(), $e->getCode(), $e);
             } catch (AMQPRuntimeException $e) {
                 throw new ServerException($e->getMessage(), $e->getCode(), $e);
-            } catch (AMQPExceptionInterface $e) {
+            } catch (ConnectionException $e) {
+                throw $e;
+            } catch (Exception $e) {
                 throw new ConnectionException($e->getMessage(), $e->getCode(), $e);
             }
         }
@@ -262,9 +263,11 @@ class AmqpLibConnection implements ConnectionDriverInterface, ManageableQueueInt
             );
         } catch (AMQPConnectionClosedException $e) {
             throw new ConnectionLostException($e->getMessage(), $e->getCode(), $e);
+        } catch (ConnectionException $e) {
+            throw $e;
         } catch (AMQPRuntimeException $e) {
             throw new ServerException($e->getMessage(), $e->getCode(), $e);
-        } catch (AMQPExceptionInterface $e) {
+        } catch (Exception $e) {
             throw new ConnectionException($e->getMessage(), $e->getCode(), $e);
         }
     }
@@ -283,9 +286,11 @@ class AmqpLibConnection implements ConnectionDriverInterface, ManageableQueueInt
             );
         } catch (AMQPConnectionClosedException $e) {
             throw new ConnectionLostException($e->getMessage(), $e->getCode(), $e);
+        } catch (ConnectionException $e) {
+            throw $e;
         } catch (AMQPRuntimeException $e) {
             throw new ServerException($e->getMessage(), $e->getCode(), $e);
-        } catch (AMQPExceptionInterface $e) {
+        } catch (Exception $e) {
             throw new ConnectionException($e->getMessage(), $e->getCode(), $e);
         }
     }
@@ -320,7 +325,7 @@ class AmqpLibConnection implements ConnectionDriverInterface, ManageableQueueInt
                 throw new ConnectionLostException($e->getMessage(), $e->getCode(), $e);
             } catch (AMQPRuntimeException $e) {
                 throw new ServerException($e->getMessage(), $e->getCode(), $e);
-            } catch (AMQPExceptionInterface $e) {
+            } catch (Exception $e) {
                 throw new ConnectionException($e->getMessage(), $e->getCode(), $e);
             }
         }
@@ -345,9 +350,11 @@ class AmqpLibConnection implements ConnectionDriverInterface, ManageableQueueInt
             );
         } catch (AMQPConnectionClosedException $e) {
             throw new ConnectionLostException($e->getMessage(), $e->getCode(), $e);
+        } catch (ConnectionException $e) {
+            throw $e;
         } catch (AMQPRuntimeException $e) {
             throw new ServerException($e->getMessage(), $e->getCode(), $e);
-        } catch (AMQPExceptionInterface $e) {
+        } catch (Exception $e) {
             throw new ConnectionException($e->getMessage(), $e->getCode(), $e);
         }
     }
@@ -365,9 +372,11 @@ class AmqpLibConnection implements ConnectionDriverInterface, ManageableQueueInt
             );
         } catch (AMQPConnectionClosedException $e) {
             throw new ConnectionLostException($e->getMessage(), $e->getCode(), $e);
+        } catch (ConnectionException $e) {
+            throw $e;
         } catch (AMQPRuntimeException $e) {
             throw new ServerException($e->getMessage(), $e->getCode(), $e);
-        } catch (AMQPExceptionInterface $e) {
+        } catch (Exception $e) {
             throw new ConnectionException($e->getMessage(), $e->getCode(), $e);
         }
     }
@@ -401,9 +410,11 @@ class AmqpLibConnection implements ConnectionDriverInterface, ManageableQueueInt
             }
         } catch (AMQPConnectionClosedException $e) {
             throw new ConnectionLostException($e->getMessage(), $e->getCode(), $e);
+        } catch (ConnectionException $e) {
+            throw $e;
         } catch (AMQPRuntimeException $e) {
             throw new ServerException($e->getMessage(), $e->getCode(), $e);
-        } catch (AMQPExceptionInterface $e) {
+        } catch (Exception $e) {
             throw new ConnectionException($e->getMessage(), $e->getCode(), $e);
         }
 
@@ -436,9 +447,11 @@ class AmqpLibConnection implements ConnectionDriverInterface, ManageableQueueInt
             }
         } catch (AMQPConnectionClosedException $e) {
             throw new ConnectionLostException($e->getMessage(), $e->getCode(), $e);
+        } catch (ConnectionException $e) {
+            throw $e;
         } catch (AMQPRuntimeException $e) {
             throw new ServerException($e->getMessage(), $e->getCode(), $e);
-        } catch (AMQPExceptionInterface $e) {
+        } catch (Exception $e) {
             throw new ConnectionException($e->getMessage(), $e->getCode(), $e);
         }
 
@@ -465,9 +478,11 @@ class AmqpLibConnection implements ConnectionDriverInterface, ManageableQueueInt
             );
         } catch (AMQPConnectionClosedException $e) {
             throw new ConnectionLostException($e->getMessage(), $e->getCode(), $e);
+        } catch (ConnectionException $e) {
+            throw $e;
         } catch (AMQPRuntimeException $e) {
             throw new ServerException($e->getMessage(), $e->getCode(), $e);
-        } catch (AMQPExceptionInterface $e) {
+        } catch (Exception $e) {
             throw new ConnectionException($e->getMessage(), $e->getCode(), $e);
         }
     }

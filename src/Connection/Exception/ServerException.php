@@ -8,5 +8,4 @@ namespace Bdf\Queue\Connection\Exception;
  */
 class ServerException extends ConnectionException
 {
-
 }

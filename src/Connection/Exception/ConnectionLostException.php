@@ -7,5 +7,4 @@ namespace Bdf\Queue\Connection\Exception;
  */
 class ConnectionLostException extends ConnectionException
 {
-
 }

@@ -9,5 +9,4 @@ use RuntimeException;
  */
 class ConnectionException extends RuntimeException
 {
-
 }

@@ -12,8 +12,8 @@ use Bdf\Queue\Connection\Extension\TopicEnvelopeHelper;
 use Bdf\Queue\Connection\TopicDriverInterface;
 use Bdf\Queue\Message\Message;
 use Bdf\Queue\Message\QueueEnvelope;
+use Exception;
 use PhpAmqpLib\Exception\AMQPConnectionClosedException;
-use PhpAmqpLib\Exception\AMQPExceptionInterface;
 use PhpAmqpLib\Exception\AMQPIOWaitException;
 use PhpAmqpLib\Exception\AMQPRuntimeException;
 use PhpAmqpLib\Exception\AMQPTimeoutException;
@@ -142,7 +142,9 @@ class AmqpLibTopic implements TopicDriverInterface
                 throw new ConnectionLostException($e->getMessage(), $e->getCode(), $e);
             } catch (AMQPRuntimeException $e) {
                 throw new ServerException($e->getMessage(), $e->getCode(), $e);
-            } catch (AMQPExceptionInterface $e) {
+            } catch (ConnectionException $e) {
+                throw $e;
+            } catch (Exception $e) {
                 throw new ConnectionException($e->getMessage(), $e->getCode(), $e);
             }
         }
@@ -166,7 +168,9 @@ class AmqpLibTopic implements TopicDriverInterface
             throw new ConnectionLostException($e->getMessage(), $e->getCode(), $e);
         } catch (AMQPRuntimeException $e) {
             throw new ServerException($e->getMessage(), $e->getCode(), $e);
-        } catch (AMQPExceptionInterface $e) {
+        } catch (ConnectionException $e) {
+            throw $e;
+        } catch (Exception $e) {
             throw new ConnectionException($e->getMessage(), $e->getCode(), $e);
         }
 

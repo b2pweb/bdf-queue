@@ -231,6 +231,11 @@ class RdKafkaDriver implements QueueDriverInterface, TopicDriverInterface
 
     /**
      * Transform the kafka exception to one of bdf queue exception
+     *
+     * @return never
+     *
+     * @throws ConnectionLostException If the connection is lost
+     * @throws ServerException For any server side error
      */
     private function handleException(KafkaException $e): void
     {

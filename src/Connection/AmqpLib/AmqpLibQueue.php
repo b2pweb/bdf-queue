@@ -12,8 +12,8 @@ use Bdf\Queue\Connection\QueueDriverInterface;
 use Bdf\Queue\Message\EnvelopeInterface;
 use Bdf\Queue\Message\Message;
 use Bdf\Queue\Message\QueuedMessage;
+use Exception;
 use PhpAmqpLib\Exception\AMQPConnectionClosedException;
-use PhpAmqpLib\Exception\AMQPExceptionInterface;
 use PhpAmqpLib\Exception\AMQPRuntimeException;
 use PhpAmqpLib\Message\AMQPMessage;
 
@@ -94,7 +94,9 @@ class AmqpLibQueue implements QueueDriverInterface
                 throw new ConnectionLostException($e->getMessage(), $e->getCode(), $e);
             } catch (AMQPRuntimeException $e) {
                 throw new ServerException($e->getMessage(), $e->getCode(), $e);
-            } catch (AMQPExceptionInterface $e) {
+            } catch (ConnectionException $e) {
+                throw $e;
+            } catch (Exception $e) {
                 throw new ConnectionException($e->getMessage(), $e->getCode(), $e);
             }
 
@@ -120,7 +122,9 @@ class AmqpLibQueue implements QueueDriverInterface
             throw new ConnectionLostException($e->getMessage(), $e->getCode(), $e);
         } catch (AMQPRuntimeException $e) {
             throw new ServerException($e->getMessage(), $e->getCode(), $e);
-        } catch (AMQPExceptionInterface $e) {
+        } catch (ConnectionException $e) {
+            throw $e;
+        } catch (Exception $e) {
             throw new ConnectionException($e->getMessage(), $e->getCode(), $e);
         }
     }
@@ -136,7 +140,9 @@ class AmqpLibQueue implements QueueDriverInterface
             throw new ConnectionLostException($e->getMessage(), $e->getCode(), $e);
         } catch (AMQPRuntimeException $e) {
             throw new ServerException($e->getMessage(), $e->getCode(), $e);
-        } catch (AMQPExceptionInterface $e) {
+        } catch (ConnectionException $e) {
+            throw $e;
+        } catch (Exception $e) {
             throw new ConnectionException($e->getMessage(), $e->getCode(), $e);
         }
     }
