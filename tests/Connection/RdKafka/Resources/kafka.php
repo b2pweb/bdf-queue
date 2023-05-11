@@ -14,6 +14,12 @@ if (!defined('RD_KAFKA_RESP_ERR__PARTITION_EOF')) {
 if (!defined('RD_KAFKA_RESP_ERR__TIMED_OUT')) {
     define('RD_KAFKA_RESP_ERR__TIMED_OUT', -2);
 }
+if (!defined('RD_KAFKA_RESP_ERR__TRANSPORT')) {
+    define('RD_KAFKA_RESP_ERR__TRANSPORT', -195);
+}
+if (!defined('RD_KAFKA_RESP_ERR_NETWORK_EXCEPTION')) {
+    define('RD_KAFKA_RESP_ERR_NETWORK_EXCEPTION', 13);
+}
 
 if (!class_exists(KafkaConsumer::class)) {
     class KafkaConsumer
@@ -72,5 +78,12 @@ if (!class_exists(ProducerTopic::class)) {
         {
 
         }
+    }
+}
+
+if (!class_exists(Exception::class)) {
+    class Exception extends \Exception
+    {
+
     }
 }
