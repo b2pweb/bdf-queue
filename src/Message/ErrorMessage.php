@@ -28,6 +28,7 @@ class ErrorMessage extends QueuedMessage
         // Disable retry
         $this->setMaxTries(-1);
         $this->setJob('ErrorMessage');
+        $this->disableStore();
     }
 
     /**
