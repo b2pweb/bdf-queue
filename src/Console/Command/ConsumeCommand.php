@@ -2,6 +2,7 @@
 
 namespace Bdf\Queue\Console\Command;
 
+use Bdf\Queue\Connection\Exception\ConnectionFailedException;
 use Bdf\Queue\Connection\Exception\ConnectionLostException;
 use Bdf\Queue\Console\Command\Extension\DestinationExtension;
 use Bdf\Queue\Consumer\Receiver\Builder\ReceiverLoaderInterface;
@@ -100,7 +101,7 @@ class ConsumeCommand extends Command
         try {
             $worker = new Worker($destination->consumer($this->createExtension($input, $output)));
             $worker->run(['duration' => $input->getOption('duration')]);
-        } catch (ConnectionLostException $e) {
+        } catch (ConnectionLostException|ConnectionFailedException $e) {
             $output->writeln('<error>Connection lost</error> : ' . $e->getMessage());
 
             return self::EX_UNAVAILABLE;
