@@ -51,6 +51,13 @@ class RdKafkaConnectionTest extends TestCase
             'partition' => RD_KAFKA_PARTITION_UA,
             'group' => '2',
             'global' => ['metadata.broker.list' => '127.0.0.1'],
+            'partitioner' => null,
+            'shutdown_timeout' => -1,
+            'dr_msg_cb' => null,
+            'error_cb' => null,
+            'rebalance_cb' => null,
+            'stats_cb' => null,
+
         ];
 
         $this->driver->setConfig([]);
