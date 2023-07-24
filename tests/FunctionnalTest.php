@@ -173,6 +173,54 @@ class FunctionnalTest extends TestCase
     /**
      *
      */
+    public function test_error_message_with_store_should_be_ignored()
+    {
+        $failer = new MemoryFailedJobRepository();
+        $this->container->add(FailedJobStorageInterface::class, $failer);
+
+        $destination = $this->manager->queue('test');
+        $destination->raw('empty');
+
+        $builder = new ReceiverBuilder($this->container);
+        $builder
+            ->stopWhenEmpty()
+            ->store()
+            ->max(1)
+            ->handler(function(){})
+        ;
+
+        try {
+            $destination->consumer($builder->build())->consume(0);
+            $this->fail('Should throw exception');
+        } catch (SerializationException $e) {
+            $this->assertEmpty($failer->all());
+        }
+    }
+
+    /**
+     *
+     */
+    public function test_error_message_should_not_retry()
+    {
+        $this->expectException(SerializationException::class);
+
+        $destination = $this->manager->queue('test');
+        $destination->raw('empty');
+
+        $builder = new ReceiverBuilder($this->container);
+        $builder
+            ->stopWhenEmpty()
+            ->retry(5)
+            ->max(1)
+            ->handler(function(){})
+        ;
+
+        $destination->consumer($builder->build())->consume(0);
+    }
+
+    /**
+     *
+     */
     public function test_pop_an_empty_queue()
     {
         $destination = $this->manager->queue(null);

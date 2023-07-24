@@ -253,8 +253,8 @@ class PheanstalkQueue implements QueueDriverInterface, CountableQueueDriverInter
                     $job['job ready id']   = $ready->getId();
                     $job['job ready data'] = $message ? $message->name() : '';
                 }
-            } catch (Exception $e) {
-                // tube not found
+            } catch (\Throwable $exception) {
+                // tube not found or unserialization issue
             }
 
             try {
@@ -264,8 +264,8 @@ class PheanstalkQueue implements QueueDriverInterface, CountableQueueDriverInter
                     $job['job delayed id']   = $delayed->getId();
                     $job['job delayed data'] = $message ? $message->name() : '';
                 }
-            } catch (Exception $e) {
-                // tube not found
+            } catch (\Throwable $exception) {
+                // tube not found or unserialization issue
             }
 
             $jobs[] = $job;
