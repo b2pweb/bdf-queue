@@ -45,6 +45,7 @@ class RdKafkaConnectionTest extends TestCase
     {
         $config = [
             'host' => '127.0.0.1',
+            'port' => null,
             'topic' => [],
             'commitAsync' => false,
             'offset' => null,
