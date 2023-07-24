@@ -380,8 +380,11 @@ class RdKafkaConnection implements ConnectionDriverInterface, ManageableQueueInt
 
     /**
      * Transform the kafka exception to one of bdf queue exception
+     *
+     * @throws ConnectionLostException If the connection is lost
+     * @throws ServerException For any server side error
      */
-    private function handleException(KafkaException $e): void
+    public function handleException(KafkaException $e): void
     {
         switch ($e->getCode()) {
             case RD_KAFKA_RESP_ERR__TRANSPORT:

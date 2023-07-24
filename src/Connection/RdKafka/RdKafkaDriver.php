@@ -53,17 +53,13 @@ class RdKafkaDriver implements QueueDriverInterface, TopicDriverInterface
     {
         $message->setQueuedAt(new \DateTimeImmutable());
 
-        try {
-            $this->produce(
-                $message->queue(),
-                $this->connection->serializer()->serialize($message),
-                (int)$message->header('partition', RD_KAFKA_PARTITION_UA),
-                $message->header('key'),
-                $message->header('headers', [])
-            );
-        } catch (KafkaException $e) {
-            $this->handleException($e);
-        }
+        $this->produce(
+            $message->queue(),
+            $this->connection->serializer()->serialize($message),
+            (int)$message->header('partition', RD_KAFKA_PARTITION_UA),
+            $message->header('key'),
+            $message->header('headers', [])
+        );
     }
 
     /**
@@ -71,11 +67,7 @@ class RdKafkaDriver implements QueueDriverInterface, TopicDriverInterface
      */
     public function pushRaw($raw, string $queue, int $delay = 0): void
     {
-        try {
-            $this->produce($queue, $raw);
-        } catch (KafkaException $e) {
-            $this->handleException($e);
-        }
+        $this->produce($queue, $raw);
     }
 
     /**
@@ -85,17 +77,13 @@ class RdKafkaDriver implements QueueDriverInterface, TopicDriverInterface
     {
         $message->setQueuedAt(new \DateTimeImmutable());
 
-        try {
-            $this->produce(
-                $message->topic(),
-                $this->connection->serializer()->serialize($message),
-                (int)$message->header('partition', RD_KAFKA_PARTITION_UA),
-                $message->header('key'),
-                $message->header('headers', [])
-            );
-        } catch (KafkaException $e) {
-            $this->handleException($e);
-        }
+        $this->produce(
+            $message->topic(),
+            $this->connection->serializer()->serialize($message),
+            (int)$message->header('partition', RD_KAFKA_PARTITION_UA),
+            $message->header('key'),
+            $message->header('headers', [])
+        );
     }
 
     /**
@@ -103,25 +91,25 @@ class RdKafkaDriver implements QueueDriverInterface, TopicDriverInterface
      */
     public function publishRaw(string $topic, $payload): void
     {
-        try {
-            $this->produce($topic, $payload);
-        } catch (KafkaException $e) {
-            $this->handleException($e);
-        }
+        $this->produce($topic, $payload);
     }
 
     private function produce(string $topic, string $payload, int $partition = RD_KAFKA_PARTITION_UA, ?string $key = null, array $headers = []): void
     {
-        $producer = $this->connection->producer();
-        $topic = $producer->newTopic($topic);
+        try {
+            $producer = $this->connection->producer();
+            $topic = $producer->newTopic($topic);
 
-        if ($headers && method_exists($topic, 'producev')) {
-            $topic->producev($partition, 0, $payload, $key, $headers);
-        } else {
-            $topic->produce($partition, 0, $payload, $key);
+            if ($headers && method_exists($topic, 'producev')) {
+                $topic->producev($partition, 0, $payload, $key, $headers);
+            } else {
+                $topic->produce($partition, 0, $payload, $key);
+            }
+
+            $producer->poll(0);
+        } catch (KafkaException $e) {
+            $this->connection->handleException($e);
         }
-
-        $producer->poll(0);
     }
 
     /**
@@ -129,11 +117,7 @@ class RdKafkaDriver implements QueueDriverInterface, TopicDriverInterface
      */
     public function pop(string $queue, int $duration = ConnectionDriverInterface::DURATION): ?EnvelopeInterface
     {
-        try {
-            return $this->popKafkaMessage($this->connection->queueConsumer($queue), $duration);
-        } catch (KafkaException $e) {
-            $this->handleException($e);
-        }
+        return $this->popKafkaMessage($this->connection->queueConsumer($queue), $duration);
     }
 
     /**
@@ -168,7 +152,7 @@ class RdKafkaDriver implements QueueDriverInterface, TopicDriverInterface
         try {
             $kafkaMessage = $consumer->consume($duration > 0 ? $duration * 1000 : 1000); //ms
         } catch (KafkaException $e) {
-            $this->handleException($e);
+            $this->connection->handleException($e);
         }
 
         if ($kafkaMessage !== null) {
@@ -189,8 +173,11 @@ class RdKafkaDriver implements QueueDriverInterface, TopicDriverInterface
 
                 case RD_KAFKA_RESP_ERR__PARTITION_EOF:
                 case RD_KAFKA_RESP_ERR__TIMED_OUT:
-                case RD_KAFKA_RESP_ERR__TRANSPORT:
                     break;
+
+                case RD_KAFKA_RESP_ERR__TRANSPORT:
+                case RD_KAFKA_RESP_ERR_NETWORK_EXCEPTION:
+                    throw new ConnectionLostException($kafkaMessage->errstr(), $kafkaMessage->err);
 
                 default:
                     throw new ServerException($kafkaMessage->errstr(), $kafkaMessage->err);
@@ -212,7 +199,7 @@ class RdKafkaDriver implements QueueDriverInterface, TopicDriverInterface
                 $this->connection->queueConsumer($message->queue())->commit($message->internalJob());
             }
         } catch (KafkaException $e) {
-            $this->handleException($e);
+            $this->connection->handleException($e);
         }
     }
 
@@ -245,25 +232,5 @@ class RdKafkaDriver implements QueueDriverInterface, TopicDriverInterface
     public function stats(): array
     {
         return [];
-    }
-
-    /**
-     * Transform the kafka exception to one of bdf queue exception
-     *
-     * @return never
-     *
-     * @throws ConnectionLostException If the connection is lost
-     * @throws ServerException For any server side error
-     */
-    private function handleException(KafkaException $e): void
-    {
-        switch ($e->getCode()) {
-            case RD_KAFKA_RESP_ERR__TRANSPORT:
-            case RD_KAFKA_RESP_ERR_NETWORK_EXCEPTION:
-                throw new ConnectionLostException($e->getMessage(), $e->getCode(), $e);
-
-            default:
-                throw new ServerException($e->getMessage(), $e->getCode(), $e);
-        }
     }
 }
