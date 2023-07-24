@@ -21,12 +21,12 @@
   },
   "minimum-stability": "dev",
   "require": {
-    "php": "~7.1 || ~8.0.0 || ~8.1.0 || ~8.2.0",
+    "php": "~7.4 || ~8.0.0 || ~8.1.0 || ~8.2.0",
     "ext-pcntl": "*",
     "b2pweb/bdf-dsn": "~1.0",
     "b2pweb/bdf-instantiator": "~1.0",
-    "symfony/console": "~4.3|~5.0|~6.0",
-    "symfony/messenger": "~4.3|~5.0|~6.0"
+    "symfony/console": "~5.4|~6.0",
+    "symfony/messenger": "~5.4|~6.0"
   },
   "require-dev": {
     "b2pweb/bdf-serializer": "~1.0",
@@ -40,10 +40,10 @@
     "pda/pheanstalk": "^3.1@dev",
     "php-amqplib/php-amqplib": "~3.0",
     "phpbench/phpbench": "~0.0|~1.0",
-    "phpunit/phpunit": "~7.0|~8.0",
-    "symfony/error-handler": "~4.3|~5.0|~6.0",
-    "symfony/phpunit-bridge": "~4.3|~5.0|~6.0",
-    "symfony/var-dumper": "~4.3|~5.0|~6.0",
+    "phpunit/phpunit": "~8.0",
+    "symfony/error-handler": "~5.4|~6.0",
+    "symfony/phpunit-bridge": "~5.4|~6.0",
+    "symfony/var-dumper": "~5.4|~6.0",
     "vimeo/psalm": "~4.18",
     "predis/predis": "~1.1.0",
     "friendsofphp/php-cs-fixer": "^3.0"
@@ -57,7 +57,7 @@
     "kwn/php-rdkafka-stubs": "Required to use the Kafka queue driver (~2.0)",
     "ext/rdkafka": "Required to use the Kafka queue driver (~4.0|~5.0|~6.0)",
     "enqueue/enqueue": "Required to use the Enqueue driver (~0.9)",
-    "symfony/var-dumper": "VarDumper could be used for displaying failed message (~4.3|~5.0|~6.0)"
+    "symfony/var-dumper": "VarDumper could be used for displaying failed message (~5.4|~6.0)"
   },
   "scripts": {
     "tests": "phpunit",
