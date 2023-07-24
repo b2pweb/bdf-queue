@@ -86,7 +86,7 @@ class RdKafkaDriverTest extends TestCase
     /**
      *
      */
-    public function test_pop()
+    public function test_pop_kafka_error()
     {
         $this->expectException(\Exception::class);
 
@@ -113,7 +113,7 @@ class RdKafkaDriverTest extends TestCase
     /**
      *
      */
-    public function test_pop_kafka_error()
+    public function test_pop()
     {
         $kafkaMessage = $this->createMock(RdKafkaMessage::class);
         $kafkaMessage->err = RD_KAFKA_RESP_ERR_NO_ERROR;

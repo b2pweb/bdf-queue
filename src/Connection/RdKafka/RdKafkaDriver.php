@@ -94,9 +94,11 @@ class RdKafkaDriver implements QueueDriverInterface, TopicDriverInterface
         $producer = $this->connection->producer();
         $topic = $producer->newTopic($topic);
 
-        $headers && version_compare(phpversion('rdkafka'), '3.1.0', '>')
-            ? $topic->producev($partition, 0, $payload, $key, $headers)
-            : $topic->produce($partition, 0, $payload, $key);
+        if ($headers && method_exists($topic, 'producev')) {
+            $topic->producev($partition, 0, $payload, $key, $headers);
+        } else {
+            $topic->produce($partition, 0, $payload, $key);
+        }
 
         $producer->poll(0);
     }

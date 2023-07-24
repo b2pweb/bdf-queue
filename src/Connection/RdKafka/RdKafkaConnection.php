@@ -55,6 +55,13 @@ class RdKafkaConnection implements ConnectionDriverInterface, ManageableQueueInt
         $this->setSerializer($serializer);
     }
 
+    public function __destruct()
+    {
+        // RdKafkaProducer can store messages internally that need to be delivered before PHP shuts down.
+        // Not calling flush can lead to message lost.
+        $this->flush($this->config['shutdown_timeout']);
+    }
+
     /**
      * {@inheritdoc}
      */
@@ -147,10 +154,6 @@ class RdKafkaConnection implements ConnectionDriverInterface, ManageableQueueInt
     {
         if ($this->producer === null) {
             $this->producer = new KafkaProducer($this->createKafkaConf());
-
-            // RdKafkaProducer can store messages internally that need to be delivered before PHP shuts down.
-            // Not calling flush can lead to message lost.
-            register_shutdown_function([$this, 'flush'], $this->config['shutdown_timeout']);
         }
 
         return $this->producer;
