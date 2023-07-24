@@ -51,7 +51,7 @@ class RdKafkaDriver implements QueueDriverInterface, TopicDriverInterface
         $this->produce(
             $message->queue(),
             $this->connection->serializer()->serialize($message),
-            $message->header('partition', RD_KAFKA_PARTITION_UA),
+            (int)$message->header('partition', RD_KAFKA_PARTITION_UA),
             $message->header('key'),
             $message->header('headers', [])
         );
@@ -75,7 +75,7 @@ class RdKafkaDriver implements QueueDriverInterface, TopicDriverInterface
         $this->produce(
             $message->topic(),
             $this->connection->serializer()->serialize($message),
-            $message->header('partition', RD_KAFKA_PARTITION_UA),
+            (int)$message->header('partition', RD_KAFKA_PARTITION_UA),
             $message->header('key'),
             $message->header('headers', [])
         );
@@ -89,7 +89,7 @@ class RdKafkaDriver implements QueueDriverInterface, TopicDriverInterface
         $this->produce($topic, $payload);
     }
 
-    private function produce(string $topic, string $payload, string $partition = RD_KAFKA_PARTITION_UA, ?string $key = null, array $headers = []): void
+    private function produce(string $topic, string $payload, int $partition = RD_KAFKA_PARTITION_UA, ?string $key = null, array $headers = []): void
     {
         $producer = $this->connection->producer();
         $topic = $producer->newTopic($topic);

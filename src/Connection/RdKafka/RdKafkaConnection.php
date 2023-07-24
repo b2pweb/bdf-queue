@@ -62,6 +62,7 @@ class RdKafkaConnection implements ConnectionDriverInterface, ManageableQueueInt
     {
         $this->config = [
             'host' => $config['host'] ?? '127.0.0.1',
+            'port' => $config['port'] ?? null,
             'global' => $config['global'] ?? [],
             'topic' => $config['topic'] ?? [],
             'commitAsync' => (bool)($config['commitAsync'] ?? false),
