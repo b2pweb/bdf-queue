@@ -13,7 +13,6 @@ use Bdf\Queue\Serializer\SerializerInterface;
 use RdKafka\Conf as KafkaConf;
 use RdKafka\KafkaConsumer;
 use RdKafka\Producer as KafkaProducer;
-use RdKafka\TopicConf;
 use RdKafka\TopicPartition;
 
 /**
@@ -56,19 +55,33 @@ class RdKafkaConnection implements ConnectionDriverInterface, ManageableQueueInt
         $this->setSerializer($serializer);
     }
 
+    public function __destruct()
+    {
+        // RdKafkaProducer can store messages internally that need to be delivered before PHP shuts down.
+        // Not calling flush can lead to message lost.
+        $this->flush($this->config['shutdown_timeout']);
+    }
+
     /**
      * {@inheritdoc}
      */
     public function setConfig(array $config): void
     {
-        $this->config = $config + [
-            'host' => '127.0.0.1',
-            'global' => [],
-            'topic' => [],
-            'commitAsync' => false,
-            'offset' => null,
-            'partition' => RD_KAFKA_PARTITION_UA,
-            'group' => '2',
+        $this->config = [
+            'host' => $config['host'] ?? '127.0.0.1',
+            'port' => $config['port'] ?? null,
+            'global' => $config['global'] ?? [],
+            'topic' => $config['topic'] ?? [],
+            'commitAsync' => (bool)($config['commitAsync'] ?? false),
+            'offset' => $config['offset'] ?? null,
+            'partitioner' => $config['partitioner'] ?? null,
+            'partition' => (int)($config['partition'] ?? RD_KAFKA_PARTITION_UA),
+            'group' => $config['group'] ?? '2',
+            'shutdown_timeout' => (int)($config['shutdown_timeout'] ?? -1),
+            'dr_msg_cb' => $config['dr_msg_cb'] ?? null,
+            'error_cb' => $config['error_cb'] ?? null,
+            'rebalance_cb' => $config['rebalance_cb'] ?? null,
+            'stats_cb' => $config['stats_cb'] ?? null,
         ];
 
         $this->config['global']['metadata.broker.list'] = $this->config['host'];
@@ -95,20 +108,18 @@ class RdKafkaConnection implements ConnectionDriverInterface, ManageableQueueInt
      */
     private function createKafkaConf($group = null)
     {
-        $topicConf = new TopicConf();
-        foreach ($this->config['topic'] as $key => $value) {
-            $topicConf->set($key, $value);
-        }
-
-        if (isset($this->config['partitioner'])) {
-            $topicConf->setPartitioner($this->config['partitioner']);
-        }
-
         $kafkaConf = new KafkaConf();
-        $kafkaConf->setDefaultTopicConf($topicConf);
+
+        foreach ($this->config['topic'] as $key => $value) {
+            $kafkaConf->set($key, $value);
+        }
 
         foreach ($this->config['global'] as $key => $value) {
             $kafkaConf->set($key, $value);
+        }
+
+        if (isset($this->config['partitioner'])) {
+            $kafkaConf->set('partitioner', $this->config['partitioner']);
         }
 
         if (isset($this->config['dr_msg_cb'])) {
@@ -121,6 +132,10 @@ class RdKafkaConnection implements ConnectionDriverInterface, ManageableQueueInt
 
         if (isset($this->config['rebalance_cb'])) {
             $kafkaConf->setRebalanceCb($this->config['rebalance_cb']);
+        }
+
+        if (isset($this->config['stats_cb'])) {
+            $kafkaConf->setStatsCb($this->config['stats_cb']);
         }
 
         if ($group !== null) {
@@ -243,6 +258,19 @@ class RdKafkaConnection implements ConnectionDriverInterface, ManageableQueueInt
         }
 
         $this->consumers = [];
+
+        $this->flush($this->config['shutdown_timeout']);
+    }
+
+    /**
+     * FLush all queued and in-flight requests.
+     */
+    public function flush(int $timeout): void
+    {
+        // Compatibility with phprdkafka 4.0.
+        if ($this->producer !== null && method_exists($this->producer, 'flush')) {
+            $this->producer->flush($timeout);
+        }
     }
 
     /**

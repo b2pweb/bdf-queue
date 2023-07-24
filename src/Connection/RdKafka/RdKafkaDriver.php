@@ -48,12 +48,12 @@ class RdKafkaDriver implements QueueDriverInterface, TopicDriverInterface
     {
         $message->setQueuedAt(new \DateTimeImmutable());
 
-        $topic = $this->connection->producer()->newTopic($message->queue());
-        $topic->produce(
-            $message->header('partition', RD_KAFKA_PARTITION_UA),
-            0,
+        $this->produce(
+            $message->queue(),
             $this->connection->serializer()->serialize($message),
-            $message->header('key')
+            (int)$message->header('partition', RD_KAFKA_PARTITION_UA),
+            $message->header('key'),
+            $message->header('headers', [])
         );
     }
 
@@ -62,8 +62,7 @@ class RdKafkaDriver implements QueueDriverInterface, TopicDriverInterface
      */
     public function pushRaw($raw, string $queue, int $delay = 0): void
     {
-        $topic = $this->connection->producer()->newTopic($queue);
-        $topic->produce(RD_KAFKA_PARTITION_UA, 0, $raw);
+        $this->produce($queue, $raw);
     }
 
     /**
@@ -73,12 +72,12 @@ class RdKafkaDriver implements QueueDriverInterface, TopicDriverInterface
     {
         $message->setQueuedAt(new \DateTimeImmutable());
 
-        $topic = $this->connection->producer()->newTopic($message->topic());
-        $topic->produce(
-            $message->header('partition', RD_KAFKA_PARTITION_UA),
-            0,
+        $this->produce(
+            $message->topic(),
             $this->connection->serializer()->serialize($message),
-            $message->header('key')
+            (int)$message->header('partition', RD_KAFKA_PARTITION_UA),
+            $message->header('key'),
+            $message->header('headers', [])
         );
     }
 
@@ -87,8 +86,21 @@ class RdKafkaDriver implements QueueDriverInterface, TopicDriverInterface
      */
     public function publishRaw(string $topic, $payload): void
     {
-        $topic = $this->connection->producer()->newTopic($topic);
-        $topic->produce(RD_KAFKA_PARTITION_UA, 0, $payload);
+        $this->produce($topic, $payload);
+    }
+
+    private function produce(string $topic, string $payload, int $partition = RD_KAFKA_PARTITION_UA, ?string $key = null, array $headers = []): void
+    {
+        $producer = $this->connection->producer();
+        $topic = $producer->newTopic($topic);
+
+        if ($headers && method_exists($topic, 'producev')) {
+            $topic->producev($partition, 0, $payload, $key, $headers);
+        } else {
+            $topic->produce($partition, 0, $payload, $key);
+        }
+
+        $producer->poll(0);
     }
 
     /**
@@ -138,12 +150,18 @@ class RdKafkaDriver implements QueueDriverInterface, TopicDriverInterface
                     $message->addHeader('partition', $kafkaMessage->partition);
                     $message->addHeader('key', $kafkaMessage->key);
 
+                    // Keep headers from kafka. Could be used if message is sent back to the queue
+                    if (isset($kafkaMessage->headers)) {
+                        $message->addHeader('headers', array_merge($message->header('headers', []), $kafkaMessage->headers));
+                    }
+
                     return $forTopic
                         ? $this->toTopicEnvelope($message)
                         : $this->toQueueEnvelope($message);
 
                 case RD_KAFKA_RESP_ERR__PARTITION_EOF:
                 case RD_KAFKA_RESP_ERR__TIMED_OUT:
+                case RD_KAFKA_RESP_ERR__TRANSPORT:
                     break;
 
                 default:

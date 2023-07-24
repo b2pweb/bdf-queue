@@ -54,6 +54,7 @@ class RdKafkaDriverTest extends TestCase
         $topic->expects($this->once())->method('produce')->with(RD_KAFKA_PARTITION_UA, 0, $this->stringContains('{"job":"test","data":"foo","queuedAt":{"date":'), null);
 
         $this->kafkaProducer->expects($this->once())->method('newTopic')->with('queue')->willReturn($topic);
+        $this->kafkaProducer->expects($this->once())->method('poll')->with(0);
 
         $this->driver->queue()->push($message);
     }
@@ -67,6 +68,7 @@ class RdKafkaDriverTest extends TestCase
         $topic->expects($this->once())->method('produce')->with(RD_KAFKA_PARTITION_UA, 0, 'message');
 
         $this->kafkaProducer->expects($this->once())->method('newTopic')->with('queue')->willReturn($topic);
+        $this->kafkaProducer->expects($this->once())->method('poll')->with(0);
 
         $this->driver->queue()->pushRaw('message', 'queue');
     }
@@ -84,9 +86,37 @@ class RdKafkaDriverTest extends TestCase
     /**
      *
      */
+    public function test_pop_kafka_error()
+    {
+        $this->expectException(\Exception::class);
+
+        $kafkaMessage = $this->createMock(RdKafkaMessage::class);
+        $kafkaMessage->err = -10000;
+
+        $this->kafkaConsumer->expects($this->once())->method('consume')->with(3000)->willReturn($kafkaMessage);
+
+        $this->driver->queue()->pop('queue', 3);
+    }
+
+    /**
+     *
+     */
+    public function test_pop_valid_kafka_error()
+    {
+        $kafkaMessage = $this->createMock(RdKafkaMessage::class);
+        $kafkaMessage->err = RD_KAFKA_RESP_ERR__TIMED_OUT;
+        $this->kafkaConsumer->expects($this->once())->method('consume')->with(3000)->willReturn($kafkaMessage);
+
+        $this->assertNull($this->driver->queue()->pop('queue', 3));
+    }
+
+    /**
+     *
+     */
     public function test_pop()
     {
         $kafkaMessage = $this->createMock(RdKafkaMessage::class);
+        $kafkaMessage->err = RD_KAFKA_RESP_ERR_NO_ERROR;
         $kafkaMessage->payload = '{"data":"foo"}';
         $kafkaMessage->partition = 2;
         $kafkaMessage->key = 'key';
@@ -223,6 +253,7 @@ class RdKafkaDriverTest extends TestCase
         /** @var QueuedMessage $received */
         $received = null;
         $kafkaMessage = $this->createMock(RdKafkaMessage::class);
+        $kafkaMessage->err = RD_KAFKA_RESP_ERR_NO_ERROR;
         $kafkaMessage->payload = '{"data":"foo"}';
         $kafkaMessage->partition = 2;
         $kafkaMessage->key = 'key';
