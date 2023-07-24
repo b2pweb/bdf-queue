@@ -2,6 +2,8 @@
 
 namespace Bdf\Queue\Connection\Gearman;
 
+use Bdf\Queue\Connection\Exception\ConnectionLostException;
+use Bdf\Queue\Connection\Exception\ServerException;
 use Bdf\Queue\Message\Message;
 use Bdf\Queue\Message\QueuedMessage;
 use Bdf\Queue\Serializer\JsonSerializer;
@@ -71,19 +73,28 @@ class GearmanQueueTest extends TestCase
     }
 
     /**
-     *
+     * @dataProvider provideErrors
      */
-    public function test_push_fail()
+    public function test_push_fail($exception, $code)
     {
-        $this->expectException(\RuntimeException::class);
+        $this->expectException($exception);
         $this->expectExceptionMessage('foo');
 
         $this->client->expects($this->once())->method('doBackground')->with('queue', 'test');
-        $this->client->expects($this->once())->method('returnCode')->willReturn(1);
+        $this->client->expects($this->once())->method('returnCode')->willReturn($code);
         $this->client->expects($this->once())->method('error')->willReturn('foo');
         $this->client->expects($this->once())->method('getErrno')->willReturn(123);
 
         $this->driver->queue()->pushRaw('test', 'queue');
+    }
+
+    public function provideErrors()
+    {
+        return [
+            [ServerException::class, 1],
+            [ConnectionLostException::class, GEARMAN_COULD_NOT_CONNECT],
+            [ConnectionLostException::class, GEARMAN_LOST_CONNECTION],
+        ];
     }
 
     /**
@@ -93,6 +104,24 @@ class GearmanQueueTest extends TestCase
     {
         $this->worker->expects($this->once())->method('setTimeout')->with(1000);
         $this->worker->expects($this->once())->method('work');
+
+        $this->assertSame(null, $this->driver->queue()->pop('queue', 1));
+    }
+
+    /**
+     * @dataProvider provideErrors
+     */
+    public function test_pop_error($exception, $code)
+    {
+        $this->expectException($exception);
+        $this->expectExceptionMessage('foo');
+
+        $this->worker->expects($this->once())->method('setTimeout')->with(1000);
+        $this->worker->expects($this->once())->method('work');
+
+        $this->worker->expects($this->once())->method('returnCode')->willReturn($code);
+        $this->worker->expects($this->once())->method('error')->willReturn('foo');
+        $this->worker->expects($this->once())->method('getErrno')->willReturn(123);
 
         $this->assertSame(null, $this->driver->queue()->pop('queue', 1));
     }

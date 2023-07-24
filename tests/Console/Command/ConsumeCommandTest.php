@@ -13,6 +13,8 @@ use Bdf\Queue\Message\Message;
 use Bdf\Queue\Tests\BufferLogger;
 use Bdf\Queue\Tests\QueueServiceProvider;
 use League\Container\Container;
+use PhpAmqpLib\Connection\AbstractConnection;
+use PhpAmqpLib\Exception\AMQPConnectionClosedException;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Console\Application;
@@ -44,10 +46,12 @@ class ConsumeCommandTest extends TestCase
         $this->container->add(InstantiatorInterface::class, new Instantiator($this->container));
         $this->container->add(LoggerInterface::class, $this->logger);
         $this->container->add('queue.connections', [
-            'test' => ['driver' => 'memory', 'prefetch' => 5]
+            'test' => ['driver' => 'memory', 'prefetch' => 5],
+            'lost' => ['driver' => 'amqp-lib'],
         ]);
         $this->container->add('queue.destinations', [
-            'foo' => 'queue://test/bar'
+            'foo' => 'queue://test/bar',
+            'lost' => 'queue://lost/bar',
         ]);
         (new QueueServiceProvider())->configure($this->container);
 
@@ -401,18 +405,45 @@ class ConsumeCommandTest extends TestCase
     {
         yield 'namespace' => [
             [''],
-            ['foo', 'test'],
+            ['foo', 'lost', 'test', 'lost'],
         ];
 
         yield 'namespace started' => [
             ['f'],
-            ['foo', 'test'],
+            ['foo', 'lost', 'test', 'lost'],
         ];
 
         yield 'logger option' => [
             ['--logger'],
             ['default', 'stdout', 'null'],
         ];
+    }
+
+    /**
+     *
+     */
+    public function test_consume_connection_lost()
+    {
+        $conn = $this->createMock(AbstractConnection::class);
+
+        $this->container->get(ConnectionDriverFactoryInterface::class)
+            ->create('lost')
+            ->setAmqpConnection($conn)
+        ;
+
+        $conn->expects($this->once())->method('channel')->willThrowException(new AMQPConnectionClosedException('my error'));
+
+        $command = new ConsumeCommand($this->manager, $this->container->get(ReceiverLoader::class));
+        $tester = new CommandTester($command);
+
+        $code = $tester->execute([
+            'connection' => 'lost',
+            '--max' => 1,
+            '--memory' => 0,
+        ]);
+
+        $this->assertSame(69, $code);
+        $this->assertEquals('Connection lost : my error', trim($tester->getDisplay(true)));
     }
 }
 

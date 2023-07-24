@@ -2,9 +2,17 @@
 
 namespace Bdf\Queue\Connection\AmqpLib;
 
+use Bdf\Queue\Connection\Exception\ConnectionException;
+use Bdf\Queue\Connection\Exception\ConnectionFailedException;
+use Bdf\Queue\Connection\Exception\ConnectionLostException;
+use Bdf\Queue\Connection\Exception\ServerException;
 use Bdf\Queue\Serializer\JsonSerializer;
 use PhpAmqpLib\Channel\AMQPChannel;
 use PhpAmqpLib\Connection\AbstractConnection;
+use PhpAmqpLib\Exception\AMQPConnectionClosedException;
+use PhpAmqpLib\Exception\AMQPIOException;
+use PhpAmqpLib\Exception\AMQPProtocolException;
+use PhpAmqpLib\Exception\AMQPRuntimeException;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 
@@ -148,4 +156,125 @@ class AmqpLibConnectionTest extends TestCase
         // close once
         $this->driver->close();
     }
+
+    public function test_connection_invalid()
+    {
+        $this->expectException(ConnectionFailedException::class);
+
+        $driver = new AmqpLibConnection('foo', new JsonSerializer());
+        $driver->setConfig(['host' => 'invalid']);
+        $driver->connection();
+    }
+
+    public function test_channel_connection_close()
+    {
+        $this->expectException(ConnectionLostException::class);
+
+        $driver = new AmqpLibConnection('foo', new JsonSerializer());
+        $driver->setConfig([]);
+        $driver->setAmqpConnection($this->connection);
+
+        $this->connection->expects($this->once())->method('channel')->willReturn($this->channel);
+        $this->channel->expects($this->once())->method('basic_qos')->willThrowException(new AMQPConnectionClosedException());
+
+        $driver->channel();
+    }
+
+    public function test_channel_server_exception()
+    {
+        $this->expectException(ServerException::class);
+
+        $driver = new AmqpLibConnection('foo', new JsonSerializer());
+        $driver->setConfig([]);
+        $driver->setAmqpConnection($this->connection);
+
+        $this->connection->expects($this->once())->method('channel')->willReturn($this->channel);
+        $this->channel->expects($this->once())->method('basic_qos')->willThrowException(new AMQPRuntimeException());
+
+        $driver->channel();
+    }
+
+    public function test_channel_base_exception()
+    {
+        $this->expectException(ConnectionException::class);
+
+        $driver = new AmqpLibConnection('foo', new JsonSerializer());
+        $driver->setConfig([]);
+        $driver->setAmqpConnection($this->connection);
+
+        $this->connection->expects($this->once())->method('channel')->willReturn($this->channel);
+        $this->channel->expects($this->once())->method('basic_qos')->willThrowException(new AMQPProtocolException(0, '', []));
+
+        $driver->channel();
+    }
+
+    /**
+     * @dataProvider provideExceptions
+     */
+    public function test_declareQueue_errors($expected, $internal)
+    {
+        $this->expectException($expected);
+
+        $this->channel->expects($this->once())->method('queue_declare')->willThrowException($internal);
+        $this->driver->setConfig([]);
+        $this->driver->declareQueue('foo');
+    }
+
+    /**
+     * @dataProvider provideExceptions
+     */
+    public function test_deleteQueue_errors($expected, $internal)
+    {
+        $this->expectException($expected);
+
+        $this->channel->expects($this->once())->method('queue_delete')->willThrowException($internal);
+        $this->driver->setConfig([]);
+        $this->driver->deleteQueue('foo');
+    }
+
+    /**
+     * @dataProvider provideExceptions
+     */
+    public function test_declareDelayedQueue_errors($expected, $internal)
+    {
+        $this->expectException($expected);
+
+        $this->channel->expects($this->once())->method('queue_declare')->willThrowException($internal);
+        $this->driver->setConfig([]);
+        $this->driver->declareDelayedQueue('foo', 1);
+    }
+
+    /**
+     * @dataProvider provideExceptions
+     */
+    public function test_declareTopic_errors($expected, $internal)
+    {
+        $this->expectException($expected);
+
+        $this->channel->expects($this->once())->method('exchange_declare')->willThrowException($internal);
+        $this->driver->setConfig([]);
+        $this->driver->declareTopic('foo');
+    }
+
+    /**
+     * @dataProvider provideExceptions
+     */
+    public function test_deleteTopic_errors($expected, $internal)
+    {
+        $this->expectException($expected);
+
+        $this->channel->expects($this->once())->method('exchange_delete')->willThrowException($internal);
+        $this->driver->setConfig([]);
+        $this->driver->deleteTopic('foo');
+    }
+
+    public function provideExceptions()
+    {
+        return [
+            [ConnectionLostException::class, new AMQPConnectionClosedException()],
+            [ServerException::class, new AMQPRuntimeException()],
+            [ConnectionException::class, new AMQPIOException()],
+        ];
+    }
+
 }

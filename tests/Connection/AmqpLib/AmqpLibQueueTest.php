@@ -3,6 +3,10 @@
 namespace Bdf\Queue\Connection\AmqpLib;
 
 use Bdf\Instantiator\Instantiator;
+use Bdf\Queue\Connection\Exception\ConnectionException;
+use Bdf\Queue\Connection\Exception\ConnectionFailedException;
+use Bdf\Queue\Connection\Exception\ConnectionLostException;
+use Bdf\Queue\Connection\Exception\ServerException;
 use Bdf\Queue\Connection\Factory\ResolverConnectionDriverFactory;
 use Bdf\Queue\Consumer\Receiver\Builder\ReceiverBuilder;
 use Bdf\Queue\Destination\ConfigurationDestinationFactory;
@@ -17,7 +21,9 @@ use Bdf\Queue\Serializer\JsonSerializer;
 use League\Container\Container;
 use PhpAmqpLib\Channel\AMQPChannel;
 use PhpAmqpLib\Connection\AbstractConnection;
+use PhpAmqpLib\Exception\AMQPConnectionClosedException;
 use PhpAmqpLib\Exception\AMQPIOException;
+use PhpAmqpLib\Exception\AMQPRuntimeException;
 use PhpAmqpLib\Message\AMQPMessage;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
@@ -146,6 +152,45 @@ class AmqpLibQueueTest extends TestCase
     /**
      *
      */
+    public function test_push_connection_lost()
+    {
+        $this->expectException(ConnectionLostException::class);
+
+        $this->channel->expects($this->once())->method('basic_publish')->willThrowException(new AMQPConnectionClosedException());
+
+        $this->driver->setConfig(['auto_declare' => true]);
+        $this->driver->queue()->pushRaw('test', 'queue');
+    }
+
+    /**
+     *
+     */
+    public function test_push_server_exception()
+    {
+        $this->expectException(ServerException::class);
+
+        $this->channel->expects($this->once())->method('basic_publish')->willThrowException(new AMQPRuntimeException());
+
+        $this->driver->setConfig(['auto_declare' => true]);
+        $this->driver->queue()->pushRaw('test', 'queue');
+    }
+
+    /**
+     *
+     */
+    public function test_push_undefined_error()
+    {
+        $this->expectException(ConnectionException::class);
+
+        $this->channel->expects($this->once())->method('basic_publish')->willThrowException(new AMQPIOException());
+
+        $this->driver->setConfig(['auto_declare' => true]);
+        $this->driver->queue()->pushRaw('test', 'queue');
+    }
+
+    /**
+     *
+     */
     public function test_push_with_delay()
     {
         $message = new AMQPMessage('test', [
@@ -231,6 +276,39 @@ class AmqpLibQueueTest extends TestCase
     /**
      *
      */
+    public function test_pop_connection_lost()
+    {
+        $this->expectException(ConnectionLostException::class);
+        $this->channel->expects($this->any())->method('basic_get')->willThrowException(new AMQPConnectionClosedException());
+
+        $this->assertSame(null, $this->driver->queue()->pop('queue', 1));
+    }
+
+    /**
+     *
+     */
+    public function test_pop_server_exception()
+    {
+        $this->expectException(ServerException::class);
+        $this->channel->expects($this->any())->method('basic_get')->willThrowException(new AMQPRuntimeException());
+
+        $this->assertSame(null, $this->driver->queue()->pop('queue', 1));
+    }
+
+    /**
+     *
+     */
+    public function test_pop_unknown_error()
+    {
+        $this->expectException(ConnectionException::class);
+        $this->channel->expects($this->any())->method('basic_get')->willThrowException(new AMQPIOException());
+
+        $this->assertSame(null, $this->driver->queue()->pop('queue', 1));
+    }
+
+    /**
+     *
+     */
     public function test_acknowledge()
     {
         $message = new QueuedMessage();
@@ -244,6 +322,32 @@ class AmqpLibQueueTest extends TestCase
     }
 
     /**
+     * @dataProvider provideExceptions
+     */
+    public function test_acknowledge_errors($expectedException, $internalException)
+    {
+        $this->expectException($expectedException);
+
+        $message = new QueuedMessage();
+        $message->setInternalJob($this->createMock(AMQPMessage::class));
+        $message->setQueue('queue');
+        $message->internalJob()->delivery_info['delivery_tag'] = 1;
+
+        $this->channel->expects($this->once())->method('basic_ack')->willThrowException($internalException);
+
+        $this->driver->queue()->acknowledge($message);
+    }
+
+    public function provideExceptions()
+    {
+        return [
+            [ConnectionLostException::class, new AMQPConnectionClosedException()],
+            [ServerException::class, new AMQPRuntimeException()],
+            [ConnectionException::class, new AMQPIOException()],
+        ];
+    }
+
+    /**
      *
      */
     public function test_release()
@@ -254,6 +358,23 @@ class AmqpLibQueueTest extends TestCase
         $message->internalJob()->delivery_info['delivery_tag'] = 1;
 
         $this->channel->expects($this->once())->method('basic_nack')->with(1);
+
+        $this->driver->queue()->release($message);
+    }
+
+    /**
+     * @dataProvider provideExceptions
+     */
+    public function test_release_errors($expectedException, $internalException)
+    {
+        $this->expectException($expectedException);
+
+        $message = new QueuedMessage();
+        $message->setInternalJob($this->createMock(AMQPMessage::class));
+        $message->setQueue('queue');
+        $message->internalJob()->delivery_info['delivery_tag'] = 1;
+
+        $this->channel->expects($this->once())->method('basic_nack')->willThrowException($internalException);
 
         $this->driver->queue()->release($message);
     }
@@ -296,7 +417,7 @@ class AmqpLibQueueTest extends TestCase
 
         try {
             $destination->declare();
-        } catch (AMQPIOException $e) {
+        } catch (ConnectionFailedException $e) {
             if (stripos($e->getMessage(), 'Unable to connect to') !== false) {
                 $this->markTestSkipped('RabbitMQ not started');
             }

@@ -4,6 +4,18 @@ if (!defined('GEARMAN_SUCCESS')) {
     define('GEARMAN_SUCCESS', 0);
 }
 
+if (!defined('GEARMAN_COULD_NOT_CONNECT')) {
+    define('GEARMAN_COULD_NOT_CONNECT', 26);
+}
+
+if (!defined('GEARMAN_LOST_CONNECTION')) {
+    define('GEARMAN_LOST_CONNECTION', 14);
+}
+
+if (!defined('GEARMAN_TIMEOUT')) {
+    define('GEARMAN_TIMEOUT', 47);
+}
+
 if (!class_exists(GearmanClient::class)) {
     class GearmanClient {
         public function __construct() {}

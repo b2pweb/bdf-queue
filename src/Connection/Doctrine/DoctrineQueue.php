@@ -4,6 +4,8 @@ namespace Bdf\Queue\Connection\Doctrine;
 
 use Bdf\Queue\Connection\ConnectionDriverInterface;
 use Bdf\Queue\Connection\CountableQueueDriverInterface;
+use Bdf\Queue\Connection\Exception\ConnectionLostException;
+use Bdf\Queue\Connection\Exception\ServerException;
 use Bdf\Queue\Connection\Extension\QueueEnvelopeHelper;
 use Bdf\Queue\Connection\PeekableQueueDriverInterface;
 use Bdf\Queue\Connection\QueueDriverInterface;
@@ -13,6 +15,8 @@ use Bdf\Queue\Message\Message;
 use Bdf\Queue\Message\QueuedMessage;
 use DateTime;
 use Doctrine\DBAL\Connection;
+use Doctrine\DBAL\Exception;
+use Doctrine\DBAL\Exception\ConnectionLost;
 use Doctrine\DBAL\Types\Types;
 use Ramsey\Uuid\Uuid;
 
@@ -72,11 +76,17 @@ class DoctrineQueue implements QueueDriverInterface, ReservableQueueDriverInterf
             'created_at'    => Types::DATETIME_MUTABLE,
         ];
 
-        $this->connection->connection()->insert(
-            $this->connection->table(),
-            $this->entity($delay, $queue, $raw),
-            $types
-        );
+        try {
+            $this->connection->connection()->insert(
+                $this->connection->table(),
+                $this->entity($delay, $queue, $raw),
+                $types
+            );
+        } catch (ConnectionLost $e) {
+            throw new ConnectionLostException($e->getMessage(), $e->getCode(), $e);
+        } catch (Exception $e) {
+            throw new ServerException($e->getMessage(), $e->getCode(), $e);
+        }
     }
 
     /**
@@ -101,7 +111,7 @@ class DoctrineQueue implements QueueDriverInterface, ReservableQueueDriverInterf
               WHERE queue = :queue AND reserved = :reserved AND available_at <= :available_at
               ORDER BY available_at, created_at LIMIT '.((int)$number).' '.$doctrine->getDatabasePlatform()->getForUpdateSql();
 
-        $dbJobs = $doctrine->transactional(function () use ($sql, $queue, $doctrine) {
+        $task = function () use ($sql, $queue, $doctrine) {
             $dbJobs = $doctrine->executeQuery(
                 $sql,
                 [
@@ -142,7 +152,15 @@ class DoctrineQueue implements QueueDriverInterface, ReservableQueueDriverInterf
             }
 
             return $dbJobs;
-        });
+        };
+
+        try {
+            $dbJobs = $doctrine->transactional($task);
+        } catch (ConnectionLost $e) {
+            throw new ConnectionLostException($e->getMessage(), $e->getCode(), $e);
+        } catch (Exception $e) {
+            throw new ServerException($e->getMessage(), $e->getCode(), $e);
+        }
 
         // Message instantiation: this creation is done after le transaction
         // This allows the lock to be removed asap
@@ -166,10 +184,16 @@ class DoctrineQueue implements QueueDriverInterface, ReservableQueueDriverInterf
      */
     public function acknowledge(QueuedMessage $message): void
     {
-        $this->connection->connection()->delete(
-            $this->connection->table(),
-            ['id' => $message->internalJob()['id']]
-        );
+        try {
+            $this->connection->connection()->delete(
+                $this->connection->table(),
+                ['id' => $message->internalJob()['id']]
+            );
+        } catch (ConnectionLost $e) {
+            throw new ConnectionLostException($e->getMessage(), $e->getCode(), $e);
+        } catch (Exception $e) {
+            throw new ServerException($e->getMessage(), $e->getCode(), $e);
+        }
     }
 
     /**
@@ -191,11 +215,17 @@ class DoctrineQueue implements QueueDriverInterface, ReservableQueueDriverInterf
                 ->setParameter('available_at', new DateTime("+{$message->delay()} seconds"), Types::DATETIME_MUTABLE);
         }
 
-        // Doctrine 3 compatibility
-        if (method_exists($update, 'executeStatement')) {
-            $update->executeStatement();
-        } else {
-            $update->execute();
+        try {
+            // Doctrine 3 compatibility
+            if (method_exists($update, 'executeStatement')) {
+                $update->executeStatement();
+            } else {
+                $update->execute();
+            }
+        } catch (ConnectionLost $e) {
+            throw new ConnectionLostException($e->getMessage(), $e->getCode(), $e);
+        } catch (Exception $e) {
+            throw new ServerException($e->getMessage(), $e->getCode(), $e);
         }
     }
 
@@ -210,9 +240,15 @@ class DoctrineQueue implements QueueDriverInterface, ReservableQueueDriverInterf
             ->andWhere('queue = :queue')
             ->setParameter('queue', $name);
 
-        $result = method_exists($query, 'executeQuery') ? $query->executeQuery() : $query->execute();
+        try {
+            $result = method_exists($query, 'executeQuery') ? $query->executeQuery() : $query->execute();
 
-        return $result->fetchOne();
+            return $result->fetchOne();
+        } catch (ConnectionLost $e) {
+            throw new ConnectionLostException($e->getMessage(), $e->getCode(), $e);
+        } catch (Exception $e) {
+            throw new ServerException($e->getMessage(), $e->getCode(), $e);
+        }
     }
 
     /**
@@ -229,8 +265,14 @@ class DoctrineQueue implements QueueDriverInterface, ReservableQueueDriverInterf
             ->setFirstResult($rowCount * ($page - 1))
             ->setMaxResults($rowCount);
 
-        $result = method_exists($query, 'executeQuery') ? $query->executeQuery() : $query->execute();
-        $dbJobs = $result->fetchAllAssociative();
+        try {
+            $result = method_exists($query, 'executeQuery') ? $query->executeQuery() : $query->execute();
+            $dbJobs = $result->fetchAllAssociative();
+        } catch (ConnectionLost $e) {
+            throw new ConnectionLostException($e->getMessage(), $e->getCode(), $e);
+        } catch (Exception $e) {
+            throw new ServerException($e->getMessage(), $e->getCode(), $e);
+        }
 
         $messages = [];
         foreach ($dbJobs as $job) {
@@ -259,8 +301,14 @@ class DoctrineQueue implements QueueDriverInterface, ReservableQueueDriverInterf
             ->groupBy('queue')
             ->setParameter('reserved', true, Types::BOOLEAN);
 
-        $result = method_exists($query, 'executeQuery') ? $query->executeQuery() : $query->execute();
-        $result = $result->fetchAllAssociative();
+        try {
+            $result = method_exists($query, 'executeQuery') ? $query->executeQuery() : $query->execute();
+            $result = $result->fetchAllAssociative();
+        } catch (ConnectionLost $e) {
+            throw new ConnectionLostException($e->getMessage(), $e->getCode(), $e);
+        } catch (Exception $e) {
+            throw new ServerException($e->getMessage(), $e->getCode(), $e);
+        }
 
         foreach ($result as $row) {
             $queueReserved[$row['queue']] = (int)$row['nb'];
@@ -274,8 +322,14 @@ class DoctrineQueue implements QueueDriverInterface, ReservableQueueDriverInterf
             ->groupBy('queue')
             ->setParameter('available_at', new DateTime(), Types::DATETIME_MUTABLE);
 
-        $result = method_exists($query, 'executeQuery') ? $query->executeQuery() : $query->execute();
-        $result = $result->fetchAllAssociative();
+        try {
+            $result = method_exists($query, 'executeQuery') ? $query->executeQuery() : $query->execute();
+            $result = $result->fetchAllAssociative();
+        } catch (ConnectionLost $e) {
+            throw new ConnectionLostException($e->getMessage(), $e->getCode(), $e);
+        } catch (Exception $e) {
+            throw new ServerException($e->getMessage(), $e->getCode(), $e);
+        }
 
         foreach ($result as $row) {
             $queueDelayed[$row['queue']] = (int)$row['nb'];
@@ -286,8 +340,14 @@ class DoctrineQueue implements QueueDriverInterface, ReservableQueueDriverInterf
             ->select('queue, COUNT(*) as nb')
             ->from($this->connection->table());
 
-        $result = method_exists($query, 'executeQuery') ? $query->executeQuery() : $query->execute();
-        $result = $result->fetchAllAssociative();
+        try {
+            $result = method_exists($query, 'executeQuery') ? $query->executeQuery() : $query->execute();
+            $result = $result->fetchAllAssociative();
+        } catch (ConnectionLost $e) {
+            throw new ConnectionLostException($e->getMessage(), $e->getCode(), $e);
+        } catch (Exception $e) {
+            throw new ServerException($e->getMessage(), $e->getCode(), $e);
+        }
 
         // build stats result.
         foreach ($result as $row) {

@@ -3,6 +3,9 @@
 namespace Bdf\Queue\Connection\Doctrine;
 
 use Bdf\Queue\Connection\ConnectionDriverInterface;
+use Bdf\Queue\Connection\Exception\ConnectionFailedException;
+use Bdf\Queue\Connection\Exception\ConnectionLostException;
+use Bdf\Queue\Connection\Exception\ServerException;
 use Bdf\Queue\Connection\Extension\ConnectionNamed;
 use Bdf\Queue\Connection\ManageableQueueInterface;
 use Bdf\Queue\Connection\QueueDriverInterface;
@@ -12,6 +15,8 @@ use Bdf\Queue\Message\MessageSerializationTrait;
 use Bdf\Queue\Serializer\SerializerInterface;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\DriverManager;
+use Doctrine\DBAL\Exception;
+use Doctrine\DBAL\Exception\ConnectionLost;
 use Doctrine\DBAL\Schema\Table;
 use Doctrine\DBAL\Types\Types;
 
@@ -56,8 +61,12 @@ class DoctrineConnection implements ConnectionDriverInterface, ManageableQueueIn
     public function connection(): Connection
     {
         if ($this->connection === null) {
-            $this->connection = DriverManager::getConnection($this->config);
-            $this->connection->connect();
+            try {
+                $this->connection = DriverManager::getConnection($this->config);
+                $this->connection->connect();
+            } catch (Exception $e) {
+                throw new ConnectionFailedException($e->getMessage(), $e->getCode(), $e);
+            }
         }
 
         return $this->connection;
@@ -130,28 +139,34 @@ class DoctrineConnection implements ConnectionDriverInterface, ManageableQueueIn
      */
     public function schema()
     {
-        $connection = $this->connection();
-        $schema = method_exists($connection, 'createSchemaManager')
-            ? $connection->createSchemaManager()
-            : $connection->getSchemaManager()
-        ;
+        try {
+            $connection = $this->connection();
+            $schema = method_exists($connection, 'createSchemaManager')
+                ? $connection->createSchemaManager()
+                : $connection->getSchemaManager()
+            ;
 
-        if ($schema->tablesExist([$this->table()])) {
-            return;
+            if ($schema->tablesExist([$this->table()])) {
+                return;
+            }
+
+            $table = new Table($this->table());
+            $table->addColumn('id', Types::GUID, ['length' => 16, 'fixed' => true]);
+            $table->addColumn('queue', Types::STRING, ['length' => 90]);
+            $table->addColumn('raw', Types::TEXT);
+            $table->addColumn('reserved', Types::BOOLEAN);
+            $table->addColumn('reserved_at', Types::DATETIME_MUTABLE, ['notnull' => false]);
+            $table->addColumn('available_at', Types::DATETIME_MUTABLE);
+            $table->addColumn('created_at', Types::DATETIME_MUTABLE);
+            $table->addIndex(['queue', 'reserved']);
+            $table->setPrimaryKey(['id']);
+
+            $schema->createTable($table);
+        } catch (ConnectionLost $e) {
+            throw new ConnectionLostException($e->getMessage(), $e->getCode(), $e);
+        } catch (Exception $e) {
+            throw new ServerException($e->getMessage(), $e->getCode(), $e);
         }
-
-        $table = new Table($this->table());
-        $table->addColumn('id', Types::GUID, ['length' => 16, 'fixed' => true]);
-        $table->addColumn('queue', Types::STRING, ['length' => 90]);
-        $table->addColumn('raw', Types::TEXT);
-        $table->addColumn('reserved', Types::BOOLEAN);
-        $table->addColumn('reserved_at', Types::DATETIME_MUTABLE, ['notnull' => false]);
-        $table->addColumn('available_at', Types::DATETIME_MUTABLE);
-        $table->addColumn('created_at', Types::DATETIME_MUTABLE);
-        $table->addIndex(['queue', 'reserved']);
-        $table->setPrimaryKey(['id']);
-
-        $schema->createTable($table);
     }
 
     /**
@@ -160,13 +175,20 @@ class DoctrineConnection implements ConnectionDriverInterface, ManageableQueueIn
     public function dropSchema()
     {
         $connection = $this->connection();
-        $schema = method_exists($connection, 'createSchemaManager')
-            ? $connection->createSchemaManager()
-            : $connection->getSchemaManager()
-        ;
 
-        if ($schema->tablesExist([$this->table()])) {
-            $schema->dropTable($this->table());
+        try {
+            $schema = method_exists($connection, 'createSchemaManager')
+                ? $connection->createSchemaManager()
+                : $connection->getSchemaManager()
+            ;
+
+            if ($schema->tablesExist([$this->table()])) {
+                $schema->dropTable($this->table());
+            }
+        } catch (ConnectionLost $e) {
+            throw new ConnectionLostException($e->getMessage(), $e->getCode(), $e);
+        } catch (Exception $e) {
+            throw new ServerException($e->getMessage(), $e->getCode(), $e);
         }
     }
 

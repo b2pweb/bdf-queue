@@ -2,6 +2,7 @@
 
 namespace Bdf\Queue\Connection\Doctrine;
 
+use Bdf\Queue\Connection\Exception\ServerException;
 use Bdf\Queue\Message\Message;
 use Bdf\Queue\Message\QueuedMessage;
 use Bdf\Queue\Message\QueueEnvelope;
@@ -66,6 +67,29 @@ class DoctrineQueueTest extends TestCase
         $this->assertStringContainsString('{"job":"test","data":"foo","queuedAt":{"date"', $message->message()->raw());
         $this->assertSame('queue', $message->message()->queue());
         $this->assertRegExp('/[\w\d\-]+/', $message->message()->internalJob()['id']);
+    }
+
+    /**
+     *
+     */
+    public function test_push_error()
+    {
+        $this->expectException(ServerException::class);
+
+        $message = Message::createFromJob('test', 'foo', 'queue');
+        $this->connection->setConfig(['table' => "\0", 'vendor' => 'pdo_sqlite', 'memory' => true]);
+        $this->queue->push($message);
+    }
+
+    /**
+     *
+     */
+    public function test_pop_error()
+    {
+        $this->expectException(ServerException::class);
+
+        $this->connection->setConfig(['table' => "\0", 'vendor' => 'pdo_sqlite', 'memory' => true]);
+        $this->queue->pop('queue', 0);
     }
 
     /**
@@ -167,6 +191,16 @@ class DoctrineQueueTest extends TestCase
     /**
      *
      */
+    public function test_acknowledge_error()
+    {
+        $this->expectException(ServerException::class);
+        $this->connection->setConfig(['table' => "\0", 'vendor' => 'pdo_sqlite', 'memory' => true]);
+        $this->queue->acknowledge((new QueuedMessage())->setInternalJob(['id' => 'foo']));
+    }
+
+    /**
+     *
+     */
     public function test_release_message()
     {
         $this->queue->pushRaw('{"data":"foo"}', 'queue');
@@ -179,6 +213,16 @@ class DoctrineQueueTest extends TestCase
 
         $this->assertEquals(1, $stats['jobs awaiting']);
         $this->assertEquals(0, $stats['jobs delayed']);
+    }
+
+    /**
+     *
+     */
+    public function test_release_error()
+    {
+        $this->expectException(ServerException::class);
+        $this->connection->setConfig(['table' => "\0", 'vendor' => 'pdo_sqlite', 'memory' => true]);
+        $this->queue->release((new QueuedMessage())->setInternalJob(['id' => 'foo']));
     }
 
     /**
@@ -234,6 +278,26 @@ class DoctrineQueueTest extends TestCase
 
         $this->queue->pushRaw('{"data":"foo"}', 'queue');
         $this->assertEquals(2, $this->queue->count('queue'));
+    }
+
+    /**
+     *
+     */
+    public function test_count_error()
+    {
+        $this->expectException(ServerException::class);
+        $this->connection->setConfig(['table' => "\0", 'vendor' => 'pdo_sqlite', 'memory' => true]);
+        $this->queue->count('test');
+    }
+
+    /**
+     *
+     */
+    public function test_peek_error()
+    {
+        $this->expectException(ServerException::class);
+        $this->connection->setConfig(['table' => "\0", 'vendor' => 'pdo_sqlite', 'memory' => true]);
+        $this->queue->peek('test');
     }
 
     /**

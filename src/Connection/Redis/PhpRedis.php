@@ -2,7 +2,11 @@
 
 namespace Bdf\Queue\Connection\Redis;
 
+use Bdf\Queue\Connection\Exception\ConnectionFailedException;
+use Bdf\Queue\Connection\Exception\ConnectionLostException;
+use Bdf\Queue\Connection\Exception\ServerException;
 use Redis;
+use RedisException;
 
 /**
  * PhpRedis
@@ -50,24 +54,28 @@ class PhpRedis implements RedisInterface
      */
     private function connect()
     {
-        $this->redis = new Redis();
+        try {
+            $this->redis = new Redis();
 
-        $host = isset($this->config['scheme']) && $this->config['scheme'] === 'unix' ? $this->config['path'] : $this->config['host'];
-        $port = $this->config['port'] ?? 6379;
-        $timeout = $this->config['timeout'] ?? 0.0;
+            $host = isset($this->config['scheme']) && $this->config['scheme'] === 'unix' ? $this->config['path'] : $this->config['host'];
+            $port = $this->config['port'] ?? 6379;
+            $timeout = $this->config['timeout'] ?? 0.0;
 
-        if (empty($this->config['persistent'])) {
-            $this->redis->connect($host, $port, $timeout);
-        } else {
-            $this->redis->pconnect($host, $port, $timeout);
-        }
+            if (empty($this->config['persistent'])) {
+                $this->redis->connect($host, $port, $timeout);
+            } else {
+                $this->redis->pconnect($host, $port, $timeout);
+            }
 
-        if (!empty($this->config['password'])) {
-            $this->redis->auth($this->config['password']);
-        }
+            if (!empty($this->config['password'])) {
+                $this->redis->auth($this->config['password']);
+            }
 
-        if (isset($this->config['database'])) {
-            $this->redis->select($this->config['database']);
+            if (isset($this->config['database'])) {
+                $this->redis->select($this->config['database']);
+            }
+        } catch (RedisException $e) {
+            throw new ConnectionFailedException($e->getMessage(), $e->getCode(), $e);
         }
     }
 
@@ -84,8 +92,12 @@ class PhpRedis implements RedisInterface
      */
     public function sAdd($key, $value)
     {
-        /** @psalm-suppress InvalidCast */
-        return (int) $this->redis->sAdd($key, $value);
+        try {
+            /** @psalm-suppress InvalidCast */
+            return (int) $this->checkError($this->redis->sAdd($key, $value));
+        } catch (RedisException $e) {
+            throw new ConnectionLostException($e->getMessage(), $e->getCode(), $e);
+        }
     }
 
     /**
@@ -93,8 +105,12 @@ class PhpRedis implements RedisInterface
      */
     public function sRem($key, $member)
     {
-        /** @psalm-suppress InvalidCast */
-        return (int) $this->redis->sRem($key, $member);
+        try {
+            /** @psalm-suppress InvalidCast */
+            return (int) $this->checkError($this->redis->sRem($key, $member));
+        } catch (RedisException $e) {
+            throw new ConnectionLostException($e->getMessage(), $e->getCode(), $e);
+        }
     }
 
     /**
@@ -102,8 +118,12 @@ class PhpRedis implements RedisInterface
      */
     public function del($key)
     {
-        /** @psalm-suppress InvalidCast */
-        return (int) $this->redis->del($key);
+        try {
+            /** @psalm-suppress InvalidCast */
+            return (int) $this->checkError($this->redis->del($key));
+        } catch (RedisException $e) {
+            throw new ConnectionLostException($e->getMessage(), $e->getCode(), $e);
+        }
     }
 
     /**
@@ -111,7 +131,11 @@ class PhpRedis implements RedisInterface
      */
     public function zAdd($key, $score, $value)
     {
-        return $this->redis->zAdd($key, $score, $value);
+        try {
+            return $this->checkError($this->redis->zAdd($key, $score, $value));
+        } catch (RedisException $e) {
+            throw new ConnectionLostException($e->getMessage(), $e->getCode(), $e);
+        }
     }
 
     /**
@@ -119,7 +143,11 @@ class PhpRedis implements RedisInterface
      */
     public function rPush($key, $value)
     {
-        return $this->redis->rPush($key, $value);
+        try {
+            return $this->checkError($this->redis->rPush($key, $value));
+        } catch (RedisException $e) {
+            throw new ConnectionLostException($e->getMessage(), $e->getCode(), $e);
+        }
     }
 
     /**
@@ -127,7 +155,11 @@ class PhpRedis implements RedisInterface
      */
     public function blPop(array $keys, $timeout)
     {
-        return $this->redis->blPop($keys, $timeout);
+        try {
+            return $this->checkError($this->redis->blPop($keys, $timeout));
+        } catch (RedisException $e) {
+            throw new ConnectionLostException($e->getMessage(), $e->getCode(), $e);
+        }
     }
 
     /**
@@ -135,7 +167,11 @@ class PhpRedis implements RedisInterface
      */
     public function evaluate($script, array $keys = [], array $args = [])
     {
-        return $this->redis->evaluate($script, array_merge($keys, $args), count($keys));
+        try {
+            return $this->checkError($this->redis->evaluate($script, array_merge($keys, $args), count($keys)));
+        } catch (RedisException $e) {
+            throw new ConnectionLostException($e->getMessage(), $e->getCode(), $e);
+        }
     }
 
     /**
@@ -143,7 +179,11 @@ class PhpRedis implements RedisInterface
      */
     public function lLen($key)
     {
-        return $this->redis->lLen($key);
+        try {
+            return $this->checkError($this->redis->lLen($key));
+        } catch (RedisException $e) {
+            throw new ConnectionLostException($e->getMessage(), $e->getCode(), $e);
+        }
     }
 
     /**
@@ -151,7 +191,11 @@ class PhpRedis implements RedisInterface
      */
     public function zCard($key)
     {
-        return $this->redis->zCard($key);
+        try {
+            return $this->checkError($this->redis->zCard($key));
+        } catch (RedisException $e) {
+            throw new ConnectionLostException($e->getMessage(), $e->getCode(), $e);
+        }
     }
 
     /**
@@ -159,7 +203,11 @@ class PhpRedis implements RedisInterface
      */
     public function sMembers($key)
     {
-        return $this->redis->sMembers($key);
+        try {
+            return $this->checkError($this->redis->sMembers($key));
+        } catch (RedisException $e) {
+            throw new ConnectionLostException($e->getMessage(), $e->getCode(), $e);
+        }
     }
 
     /**
@@ -175,7 +223,11 @@ class PhpRedis implements RedisInterface
      */
     public function publish($channel, $message)
     {
-        return $this->redis->publish($channel, $message);
+        try {
+            return $this->checkError($this->redis->publish($channel, $message));
+        } catch (RedisException $e) {
+            throw new ConnectionLostException($e->getMessage(), $e->getCode(), $e);
+        }
     }
 
     /**
@@ -191,7 +243,7 @@ class PhpRedis implements RedisInterface
                 ++$count;
                 $callback($filter, $channel, $payload);
             });
-        } catch (\RedisException $exception) {
+        } catch (RedisException $exception) {
             // Read timeout or internal error. We reset the connection.
             $this->redis->close();
 
@@ -202,5 +254,26 @@ class PhpRedis implements RedisInterface
         }
 
         return $count;
+    }
+
+    /**
+     * Check the result of a Redis command, and throw an exception if it failed.
+     *
+     * @param T $result
+     * @return T
+     *
+     * @template T
+     * @throws ServerException
+     */
+    private function checkError($result)
+    {
+        if ($result === false) {
+            $error = $this->redis->getLastError();
+            $this->redis->clearLastError();
+
+            throw new ServerException($error);
+        }
+
+        return $result;
     }
 }

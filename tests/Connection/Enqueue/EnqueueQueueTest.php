@@ -2,6 +2,7 @@
 
 namespace Bdf\Queue\Connection\Enqueue;
 
+use Bdf\Queue\Connection\Exception\ConnectionFailedException;
 use Bdf\Queue\Message\Message;
 use Bdf\Queue\Message\QueueEnvelope;
 use Bdf\Queue\Serializer\Serializer;

@@ -3,6 +3,7 @@
 namespace Bdf\Queue\Connection\AmqpLib;
 
 use Bdf\Instantiator\Instantiator;
+use Bdf\Queue\Connection\Exception\ConnectionFailedException;
 use Bdf\Queue\Connection\Factory\ResolverConnectionDriverFactory;
 use Bdf\Queue\Consumer\Receiver\Builder\ReceiverBuilder;
 use Bdf\Queue\Destination\ConfigurationDestinationFactory;
@@ -47,7 +48,7 @@ class AmqpLibTopicTest extends TestCase
 
         try {
             $destination->declare();
-        } catch (AMQPIOException $e) {
+        } catch (ConnectionFailedException $e) {
             if (stripos($e->getMessage(), 'Unable to connect to') !== false) {
                 $this->markTestSkipped('RabbitMQ not started');
             }

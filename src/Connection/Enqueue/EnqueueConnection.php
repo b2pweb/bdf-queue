@@ -3,6 +3,8 @@
 namespace Bdf\Queue\Connection\Enqueue;
 
 use Bdf\Queue\Connection\ConnectionDriverInterface;
+use Bdf\Queue\Connection\Exception\ConnectionException;
+use Bdf\Queue\Connection\Exception\ConnectionFailedException;
 use Bdf\Queue\Connection\Extension\ConnectionNamed;
 use Bdf\Queue\Connection\ManageableQueueInterface;
 use Bdf\Queue\Connection\ManageableTopicInterface;
@@ -12,6 +14,7 @@ use Bdf\Queue\Message\MessageSerializationTrait;
 use Bdf\Queue\Serializer\SerializerInterface;
 use Enqueue\ConnectionFactoryFactory;
 use Enqueue\ConnectionFactoryFactoryInterface;
+use Exception;
 use Interop\Amqp\AmqpContext;
 use Interop\Amqp\AmqpTopic;
 use Interop\Queue\Context;
@@ -116,10 +119,14 @@ class EnqueueConnection implements ConnectionDriverInterface, ManageableQueueInt
      */
     public function declareQueue(string $queue): void
     {
-        $context = $this->context;
+        $context = $this->context();
 
         if ($context instanceof AmqpContext) {
-            $context->declareQueue($context->createQueue($queue));
+            try {
+                $context->declareQueue($context->createQueue($queue));
+            } catch (Exception $e) {
+                throw new ConnectionException($e->getMessage(), $e->getCode(), $e);
+            }
         }
     }
 
@@ -128,12 +135,16 @@ class EnqueueConnection implements ConnectionDriverInterface, ManageableQueueInt
      */
     public function deleteQueue(string $queue): void
     {
-        $context = $this->context;
+        $context = $this->context();
 
         // method_exists must be used : some connections (like redis) provide this method
         // but do not implements AmqpContext or any other interface providing createQueue method
         if (method_exists($context, 'deleteQueue')) {
-            $context->deleteQueue($context->createQueue($queue));
+            try {
+                $context->deleteQueue($context->createQueue($queue));
+            } catch (Exception $e) {
+                throw new ConnectionException($e->getMessage(), $e->getCode(), $e);
+            }
         }
     }
 
@@ -145,7 +156,11 @@ class EnqueueConnection implements ConnectionDriverInterface, ManageableQueueInt
         $context = $this->context();
 
         if ($context instanceof AmqpContext) {
-            $context->declareTopic($context->createTopic($topic));
+            try {
+                $context->declareTopic($context->createTopic($topic));
+            } catch (Exception $e) {
+                throw new ConnectionException($e->getMessage(), $e->getCode(), $e);
+            }
         }
     }
 
@@ -157,7 +172,11 @@ class EnqueueConnection implements ConnectionDriverInterface, ManageableQueueInt
         $context = $this->context();
 
         if ($context instanceof AmqpContext) {
-            $context->deleteTopic($context->createTopic($topic));
+            try {
+                $context->deleteTopic($context->createTopic($topic));
+            } catch (Exception $e) {
+                throw new ConnectionException($e->getMessage(), $e->getCode(), $e);
+            }
         }
     }
 
@@ -168,14 +187,22 @@ class EnqueueConnection implements ConnectionDriverInterface, ManageableQueueInt
      * @param string $queue The queue name
      *
      * @return Queue
+     *
+     * @throws ConnectionFailedException If the connection cannot be established
+     * @throws ConnectionException If an error occurs while declaring the queue
      */
     public function queueDestination(string $queue): Queue
     {
         $context = $this->context();
-        $queue = $context->createQueue($queue);
 
-        if ($this->config['auto_declare'] && $context instanceof AmqpContext) {
-            $context->declareQueue($queue);
+        try {
+            $queue = $context->createQueue($queue);
+
+            if ($this->config['auto_declare'] && $context instanceof AmqpContext) {
+                $context->declareQueue($queue);
+            }
+        } catch (Exception $e) {
+            throw new ConnectionException($e->getMessage(), $e->getCode(), $e);
         }
 
         return $queue;
@@ -188,6 +215,9 @@ class EnqueueConnection implements ConnectionDriverInterface, ManageableQueueInt
      * @param string $topic The topic name
      *
      * @return Topic
+     *
+     * @throws ConnectionFailedException If the connection cannot be established
+     * @throws ConnectionException If an error occurs while declaring the topic
      */
     public function topicDestination(string $topic): Topic
     {
@@ -200,7 +230,11 @@ class EnqueueConnection implements ConnectionDriverInterface, ManageableQueueInt
         }
 
         if ($this->config['auto_declare'] && $context instanceof AmqpContext) {
-            $context->declareTopic($topic);
+            try {
+                $context->declareTopic($topic);
+            } catch (Exception $e) {
+                throw new ConnectionException($e->getMessage(), $e->getCode(), $e);
+            }
         }
 
         return $topic;
@@ -210,6 +244,7 @@ class EnqueueConnection implements ConnectionDriverInterface, ManageableQueueInt
      * Get the connection context
      *
      * @return Context
+     * @throws ConnectionFailedException If the connection cannot be established
      */
     public function context()
     {
@@ -217,7 +252,11 @@ class EnqueueConnection implements ConnectionDriverInterface, ManageableQueueInt
             return $this->context;
         }
 
-        return $this->context = $this->factory->create(self::configToDsn($this->config))->createContext();
+        try {
+            return $this->context = $this->factory->create(self::configToDsn($this->config))->createContext();
+        } catch (Exception $e) {
+            throw new ConnectionFailedException($e->getMessage(), $e->getCode(), $e);
+        }
     }
 
     /**

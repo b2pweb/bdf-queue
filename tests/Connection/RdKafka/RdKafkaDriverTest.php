@@ -2,6 +2,8 @@
 
 namespace Bdf\Queue\Connection\RdKafka;
 
+use Bdf\Queue\Connection\Exception\ConnectionLostException;
+use Bdf\Queue\Connection\Exception\ServerException;
 use Bdf\Queue\Message\EnvelopeInterface;
 use Bdf\Queue\Message\Message;
 use Bdf\Queue\Message\QueuedMessage;
@@ -60,6 +62,31 @@ class RdKafkaDriverTest extends TestCase
     }
 
     /**
+     * @dataProvider provideExceptions
+     */
+    public function test_push_error($expected, $internal)
+    {
+        $this->expectException($expected);
+        $message = Message::createFromJob('test', 'foo', 'queue');
+
+        $topic = $this->createMock(ProducerTopic::class);
+        $topic->expects($this->once())->method('produce')->willThrowException($internal);
+
+        $this->kafkaProducer->expects($this->once())->method('newTopic')->with('queue')->willReturn($topic);
+
+        $this->driver->queue()->push($message);
+    }
+
+    public function provideExceptions()
+    {
+        return [
+            [ConnectionLostException::class, new \RdKafka\Exception('', RD_KAFKA_RESP_ERR__TRANSPORT)],
+            [ConnectionLostException::class, new \RdKafka\Exception('', RD_KAFKA_RESP_ERR_NETWORK_EXCEPTION)],
+            [ServerException::class, new \RdKafka\Exception()],
+        ];
+    }
+
+    /**
      *
      */
     public function test_push_raw()
@@ -74,6 +101,20 @@ class RdKafkaDriverTest extends TestCase
     }
 
     /**
+     * @dataProvider provideExceptions
+     */
+    public function test_push_raw_error($expected, $internal)
+    {
+        $this->expectException($expected);
+        $topic = $this->createMock(ProducerTopic::class);
+        $topic->expects($this->once())->method('produce')->willThrowException($internal);
+
+        $this->kafkaProducer->expects($this->once())->method('newTopic')->with('queue')->willReturn($topic);
+
+        $this->driver->queue()->pushRaw('message', 'queue');
+    }
+
+    /**
      *
      */
     public function test_pop_empty()
@@ -81,6 +122,17 @@ class RdKafkaDriverTest extends TestCase
         $this->kafkaConsumer->expects($this->once())->method('consume')->with(3000);
 
         $this->assertNull($this->driver->queue()->pop('queue', 3));
+    }
+
+    /**
+     * @dataProvider provideExceptions
+     */
+    public function test_pop_error($expected, $internal)
+    {
+        $this->expectException($expected);
+        $this->kafkaConsumer->expects($this->once())->method('consume')->willThrowException($internal);
+
+        $this->driver->queue()->pop('queue', 3);
     }
 
     /**
@@ -150,6 +202,22 @@ class RdKafkaDriverTest extends TestCase
     }
 
     /**
+     * @dataProvider provideExceptions
+     */
+    public function test_acknowledge_error($expected, $internal)
+    {
+        $this->expectException($expected);
+        $kafkaMessage = $this->createMock(RdKafkaMessage::class);
+        $this->kafkaConsumer->expects($this->once())->method('commit')->willThrowException($internal);
+
+        $message = new QueuedMessage();
+        $message->setQueue('queue');
+        $message->setInternalJob($kafkaMessage);
+
+        $this->driver->queue()->acknowledge($message);
+    }
+
+    /**
      *
      */
     public function test_acknowledge_async()
@@ -175,6 +243,22 @@ class RdKafkaDriverTest extends TestCase
         $topic = $this->createMock(ProducerTopic::class);
         $topic->expects($this->once())->method('produce');
         $this->kafkaProducer->expects($this->once())->method('newTopic')->with('queue')->willReturn($topic);
+
+        $message = new QueuedMessage();
+        $message->setQueue('queue');
+        $message->setInternalJob($kafkaMessage);
+
+        $this->driver->queue()->release($message);
+    }
+
+    /**
+     * @dataProvider provideExceptions
+     */
+    public function test_release_error($expected, $internal)
+    {
+        $this->expectException($expected);
+        $kafkaMessage = $this->createMock(RdKafkaMessage::class);
+        $this->kafkaConsumer->expects($this->once())->method('commit')->willThrowException($internal);
 
         $message = new QueuedMessage();
         $message->setQueue('queue');
@@ -220,12 +304,42 @@ class RdKafkaDriverTest extends TestCase
     }
 
     /**
+     * @dataProvider provideExceptions
+     */
+    public function test_publish_error($expected, $internal)
+    {
+        $this->expectException($expected);
+        $message = Message::createForTopic('queue', 'foo');
+
+        $topic = $this->createMock(ProducerTopic::class);
+        $topic->expects($this->once())->method('produce')->willThrowException($internal);
+
+        $this->kafkaProducer->expects($this->once())->method('newTopic')->with('queue')->willReturn($topic);
+
+        $this->driver->topic()->publish($message);
+    }
+
+    /**
      *
      */
     public function test_publish_raw()
     {
         $topic = $this->createMock(ProducerTopic::class);
         $topic->expects($this->once())->method('produce')->with(RD_KAFKA_PARTITION_UA, 0, 'message');
+
+        $this->kafkaProducer->expects($this->once())->method('newTopic')->with('queue')->willReturn($topic);
+
+        $this->driver->topic()->publishRaw('queue', 'message');
+    }
+
+    /**
+     * @dataProvider provideExceptions
+     */
+    public function test_publish_raw_error($expected, $internal)
+    {
+        $this->expectException($expected);
+        $topic = $this->createMock(ProducerTopic::class);
+        $topic->expects($this->once())->method('produce')->willThrowException($internal);
 
         $this->kafkaProducer->expects($this->once())->method('newTopic')->with('queue')->willReturn($topic);
 
@@ -267,5 +381,19 @@ class RdKafkaDriverTest extends TestCase
 
         $this->assertSame(1, $topic->consume(3));
         $this->assertSame($kafkaMessage, $received->internalJob());
+    }
+
+    /**
+     * @dataProvider provideExceptions
+     */
+    public function test_consume_error($expected, $internal)
+    {
+        $this->expectException($expected);
+        $this->kafkaConsumer->expects($this->once())->method('consume')->willThrowException($internal);
+
+        $topic = $this->driver->topic();
+        $topic->subscribe(['queue'], function() {});
+
+        $this->assertSame(0, $topic->consume(3));
     }
 }

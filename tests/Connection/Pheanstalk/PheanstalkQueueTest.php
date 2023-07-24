@@ -2,9 +2,13 @@
 
 namespace Bdf\Queue\Connection\Pheanstalk;
 
+use Bdf\Queue\Connection\Exception\ConnectionException;
+use Bdf\Queue\Connection\Exception\ConnectionLostException;
+use Bdf\Queue\Connection\Exception\ServerException;
 use Bdf\Queue\Message\Message;
 use Bdf\Queue\Message\QueuedMessage;
 use Bdf\Queue\Serializer\JsonSerializer;
+use Pheanstalk\Exception\SocketException;
 use Pheanstalk\Job as PheanstalkJob;
 use Pheanstalk\Pheanstalk;
 use Pheanstalk\PheanstalkInterface;
@@ -69,12 +73,59 @@ class PheanstalkQueueTest extends TestCase
     }
 
     /**
+     * @dataProvider provideExceptions
+     */
+    public function test_push_error($expected, $internal)
+    {
+        $this->expectException($expected);
+
+        $message = Message::createFromJob('test', 'foo', 'queue', 1);
+        $message->addHeader('priority', 2);
+        $message->addHeader('ttr', 3);
+
+        $regex = preg_quote('{"job":"test","data":"foo","queuedAt":{"date":"').
+            '[0-9- \.\:]+'.
+            preg_quote('","timezone_type":').
+            '[0-9]+'.
+            preg_quote(',"timezone":"').
+            '[\w\/\\\]+'.
+            preg_quote('"},"headers":{"priority":2,"ttr":3}}');
+
+        $this->pheanstalk->expects($this->once())->method('useTube')->with('queue')->willReturnSelf();
+        $this->pheanstalk->expects($this->once())->method('put')->willThrowException($internal);
+
+        $this->driver->push($message);
+    }
+
+    public function provideExceptions()
+    {
+        return [
+            [ConnectionLostException::class, new SocketException()],
+            [ServerException::class, new \Pheanstalk\Exception\ServerException()],
+            [ConnectionException::class, new \Pheanstalk\Exception\ClientException()],
+        ];
+    }
+
+    /**
      *
      */
     public function test_push_raw()
     {
         $this->pheanstalk->expects($this->once())->method('useTube')->with('queue')->willReturnSelf();
         $this->pheanstalk->expects($this->once())->method('put')->with('test', Pheanstalk::DEFAULT_PRIORITY, 1);
+
+        $this->driver->pushRaw('test', 'queue', 1);
+    }
+
+    /**
+     * @dataProvider provideExceptions
+     */
+    public function test_pushRaw_error($expected, $internal)
+    {
+        $this->expectException($expected);
+
+        $this->pheanstalk->expects($this->once())->method('useTube')->with('queue')->willReturnSelf();
+        $this->pheanstalk->expects($this->once())->method('put')->willThrowException($internal);
 
         $this->driver->pushRaw('test', 'queue', 1);
     }
@@ -111,6 +162,18 @@ class PheanstalkQueueTest extends TestCase
     }
 
     /**
+     * @dataProvider provideExceptions
+     */
+    public function test_pop_error($expected, $internal)
+    {
+        $this->expectException($expected);
+        $this->pheanstalk->expects($this->once())->method('watchOnly')->willReturnSelf();
+        $this->pheanstalk->expects($this->once())->method('reserve')->willThrowException($internal);
+
+        $this->driver->pop('queue', 1);
+    }
+
+    /**
      *
      */
     public function test_acknowledge()
@@ -120,6 +183,21 @@ class PheanstalkQueueTest extends TestCase
         $message->setQueue('queue');
 
         $this->pheanstalk->expects($this->once())->method('delete')->with($message->internalJob());
+
+        $this->driver->acknowledge($message);
+    }
+
+    /**
+     * @dataProvider provideExceptions
+     */
+    public function test_acknowledge_error($expected, $internal)
+    {
+        $this->expectException($expected);
+        $message = new QueuedMessage();
+        $message->setInternalJob($this->createMock(PheanstalkJob::class));
+        $message->setQueue('queue');
+
+        $this->pheanstalk->expects($this->once())->method('delete')->willThrowException($internal);
 
         $this->driver->acknowledge($message);
     }
@@ -139,6 +217,21 @@ class PheanstalkQueueTest extends TestCase
     }
 
     /**
+     * @dataProvider provideExceptions
+     */
+    public function test_release_error($expected, $internal)
+    {
+        $this->expectException($expected);
+        $message = new QueuedMessage();
+        $message->setInternalJob($this->createMock(PheanstalkJob::class));
+        $message->setQueue('queue');
+
+        $this->pheanstalk->expects($this->once())->method('release')->willThrowException($internal);
+
+        $this->driver->release($message);
+    }
+
+    /**
      *
      */
     public function test_count()
@@ -146,5 +239,15 @@ class PheanstalkQueueTest extends TestCase
         $this->pheanstalk->expects($this->once())->method('statsTube')->with('queue')->willReturn(['current-jobs-ready' => 1]);
 
         $this->assertSame(1, $this->driver->count('queue'));
+    }
+
+    /**
+     * @dataProvider provideExceptions
+     */
+    public function test_count_error($expected, $internal)
+    {
+        $this->pheanstalk->expects($this->once())->method('statsTube')->with('queue')->willThrowException($internal);
+
+        $this->assertSame(0, $this->driver->count('queue'));
     }
 }

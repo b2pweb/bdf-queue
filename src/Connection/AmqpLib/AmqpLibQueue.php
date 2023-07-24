@@ -3,12 +3,18 @@
 namespace Bdf\Queue\Connection\AmqpLib;
 
 use Bdf\Queue\Connection\ConnectionDriverInterface;
+use Bdf\Queue\Connection\Exception\ConnectionException;
+use Bdf\Queue\Connection\Exception\ConnectionLostException;
+use Bdf\Queue\Connection\Exception\ServerException;
 use Bdf\Queue\Connection\Extension\ConnectionBearer;
 use Bdf\Queue\Connection\Extension\QueueEnvelopeHelper;
 use Bdf\Queue\Connection\QueueDriverInterface;
 use Bdf\Queue\Message\EnvelopeInterface;
 use Bdf\Queue\Message\Message;
 use Bdf\Queue\Message\QueuedMessage;
+use Exception;
+use PhpAmqpLib\Exception\AMQPConnectionClosedException;
+use PhpAmqpLib\Exception\AMQPRuntimeException;
 use PhpAmqpLib\Message\AMQPMessage;
 
 /**
@@ -79,10 +85,20 @@ class AmqpLibQueue implements QueueDriverInterface
         $flags = $this->connection->consumerFlags();
 
         while (time() < $expire) {
-            $message = $this->connection->channel()->basic_get(
-                $queue,
-                (bool) ($flags & AmqpLibConnection::FLAG_CONSUMER_NOACK)
-            );
+            try {
+                $message = $this->connection->channel()->basic_get(
+                    $queue,
+                    (bool) ($flags & AmqpLibConnection::FLAG_CONSUMER_NOACK)
+                );
+            } catch (AMQPConnectionClosedException $e) {
+                throw new ConnectionLostException($e->getMessage(), $e->getCode(), $e);
+            } catch (AMQPRuntimeException $e) {
+                throw new ServerException($e->getMessage(), $e->getCode(), $e);
+            } catch (ConnectionException $e) {
+                throw $e;
+            } catch (Exception $e) {
+                throw new ConnectionException($e->getMessage(), $e->getCode(), $e);
+            }
 
             if ($message instanceof AMQPMessage) {
                 return $this->toQueueEnvelope($this->connection->toQueuedMessage($message->body, $queue, $message));
@@ -100,7 +116,17 @@ class AmqpLibQueue implements QueueDriverInterface
      */
     public function acknowledge(QueuedMessage $message): void
     {
-        $this->connection->channel()->basic_ack($message->internalJob()->delivery_info['delivery_tag']);
+        try {
+            $this->connection->channel()->basic_ack($message->internalJob()->delivery_info['delivery_tag']);
+        } catch (AMQPConnectionClosedException $e) {
+            throw new ConnectionLostException($e->getMessage(), $e->getCode(), $e);
+        } catch (AMQPRuntimeException $e) {
+            throw new ServerException($e->getMessage(), $e->getCode(), $e);
+        } catch (ConnectionException $e) {
+            throw $e;
+        } catch (Exception $e) {
+            throw new ConnectionException($e->getMessage(), $e->getCode(), $e);
+        }
     }
 
     /**
@@ -108,7 +134,17 @@ class AmqpLibQueue implements QueueDriverInterface
      */
     public function release(QueuedMessage $message): void
     {
-        $this->connection->channel()->basic_nack($message->internalJob()->delivery_info['delivery_tag'], false, true);
+        try {
+            $this->connection->channel()->basic_nack($message->internalJob()->delivery_info['delivery_tag'], false, true);
+        } catch (AMQPConnectionClosedException $e) {
+            throw new ConnectionLostException($e->getMessage(), $e->getCode(), $e);
+        } catch (AMQPRuntimeException $e) {
+            throw new ServerException($e->getMessage(), $e->getCode(), $e);
+        } catch (ConnectionException $e) {
+            throw $e;
+        } catch (Exception $e) {
+            throw new ConnectionException($e->getMessage(), $e->getCode(), $e);
+        }
     }
 
     /**

@@ -2,6 +2,10 @@
 
 namespace Bdf\Queue\Connection;
 
+use Bdf\Queue\Connection\Exception\ConnectionException;
+use Bdf\Queue\Connection\Exception\ConnectionFailedException;
+use Bdf\Queue\Connection\Exception\ConnectionLostException;
+use Bdf\Queue\Connection\Exception\ServerException;
 use Bdf\Queue\Message\EnvelopeInterface;
 use Bdf\Queue\Message\Message;
 use Bdf\Queue\Message\QueuedMessage;
@@ -22,6 +26,11 @@ interface QueueDriverInterface
      * Push a message onto the queue.
      *
      * @param Message $message
+     *
+     * @throws ConnectionLostException If the connection is lost
+     * @throws ServerException For any server side error
+     * @throws ConnectionFailedException If the connection cannot be established
+     * @throws ConnectionException For any connection error
      */
     public function push(Message $message): void;
 
@@ -31,6 +40,11 @@ interface QueueDriverInterface
      * @param mixed $raw
      * @param string $queue
      * @param int $delay
+     *
+     * @throws ConnectionLostException If the connection is lost
+     * @throws ServerException For any server side error
+     * @throws ConnectionFailedException If the connection cannot be established
+     * @throws ConnectionException For any connection error
      */
     public function pushRaw($raw, string $queue, int $delay = 0): void;
 
@@ -43,6 +57,11 @@ interface QueueDriverInterface
      * @param int $duration  Number of seconds to keep polling for messages
      *
      * @return EnvelopeInterface|null
+     *
+     * @throws ConnectionLostException If the connection is lost
+     * @throws ServerException For any server side error
+     * @throws ConnectionFailedException If the connection cannot be established
+     * @throws ConnectionException For any connection error
      */
     public function pop(string $queue, int $duration = ConnectionDriverInterface::DURATION): ?EnvelopeInterface;
 
@@ -50,6 +69,11 @@ interface QueueDriverInterface
      * Acknowledge the message from the queue.
      *
      * @param QueuedMessage $message
+     *
+     * @throws ConnectionLostException If the connection is lost
+     * @throws ServerException For any server side error
+     * @throws ConnectionFailedException If the connection cannot be established
+     * @throws ConnectionException For any connection error
      */
     public function acknowledge(QueuedMessage $message): void;
 
@@ -57,6 +81,11 @@ interface QueueDriverInterface
      * Release a reserved message from the queue. No attempts should be increase.
      *
      * @param QueuedMessage $message
+     *
+     * @throws ConnectionLostException If the connection is lost
+     * @throws ServerException For any server side error
+     * @throws ConnectionFailedException If the connection cannot be established
+     * @throws ConnectionException For any connection error
      */
     public function release(QueuedMessage $message): void;
 
@@ -73,6 +102,11 @@ interface QueueDriverInterface
      * </code>
      *
      * @return array
+     *
+     * @throws ConnectionLostException If the connection is lost
+     * @throws ServerException For any server side error
+     * @throws ConnectionFailedException If the connection cannot be established
+     * @throws ConnectionException For any connection error
      */
     public function stats(): array;
 }

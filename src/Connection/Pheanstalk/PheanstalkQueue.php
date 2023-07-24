@@ -4,6 +4,10 @@ namespace Bdf\Queue\Connection\Pheanstalk;
 
 use Bdf\Queue\Connection\ConnectionDriverInterface;
 use Bdf\Queue\Connection\CountableQueueDriverInterface;
+use Bdf\Queue\Connection\Exception\ConnectionException;
+use Bdf\Queue\Connection\Exception\ConnectionFailedException;
+use Bdf\Queue\Connection\Exception\ConnectionLostException;
+use Bdf\Queue\Connection\Exception\ServerException;
 use Bdf\Queue\Connection\Extension\ConnectionBearer;
 use Bdf\Queue\Connection\Extension\QueueEnvelopeHelper;
 use Bdf\Queue\Connection\QueueDriverInterface;
@@ -11,6 +15,9 @@ use Bdf\Queue\Message\EnvelopeInterface;
 use Bdf\Queue\Message\Message;
 use Bdf\Queue\Message\QueuedMessage;
 use Exception;
+use Pheanstalk\Exception\ClientException;
+use Pheanstalk\Exception\ServerException as BaseServerException;
+use Pheanstalk\Exception\SocketException;
 use Pheanstalk\Job as PheanstalkJob;
 use Pheanstalk\Pheanstalk;
 
@@ -40,12 +47,20 @@ class PheanstalkQueue implements QueueDriverInterface, CountableQueueDriverInter
         $message->setQueuedAt(new \DateTimeImmutable());
         $pheanstalk = $this->connection->pheanstalk();
 
-        $pheanstalk->useTube($message->queue())->put(
-            $this->connection->serializer()->serialize($message),
-            $message->header('priority', Pheanstalk::DEFAULT_PRIORITY),
-            $message->delay(),
-            $message->header('ttr', $this->connection->timeToRun())
-        );
+        try {
+            $pheanstalk->useTube($message->queue())->put(
+                $this->connection->serializer()->serialize($message),
+                $message->header('priority', Pheanstalk::DEFAULT_PRIORITY),
+                $message->delay(),
+                $message->header('ttr', $this->connection->timeToRun())
+            );
+        } catch (SocketException $e) {
+            throw new ConnectionLostException($e->getMessage(), $e->getCode(), $e);
+        } catch (BaseServerException $e) {
+            throw new ServerException($e->getMessage(), $e->getCode(), $e);
+        } catch (ClientException $e) {
+            throw new ConnectionException($e->getMessage(), $e->getCode(), $e);
+        }
     }
 
     /**
@@ -55,12 +70,20 @@ class PheanstalkQueue implements QueueDriverInterface, CountableQueueDriverInter
     {
         $pheanstalk = $this->connection->pheanstalk();
 
-        $pheanstalk->useTube($queue)->put(
-            $raw,
-            Pheanstalk::DEFAULT_PRIORITY,
-            $delay,
-            $this->connection->timeToRun()
-        );
+        try {
+            $pheanstalk->useTube($queue)->put(
+                $raw,
+                Pheanstalk::DEFAULT_PRIORITY,
+                $delay,
+                $this->connection->timeToRun()
+            );
+        } catch (SocketException $e) {
+            throw new ConnectionLostException($e->getMessage(), $e->getCode(), $e);
+        } catch (BaseServerException $e) {
+            throw new ServerException($e->getMessage(), $e->getCode(), $e);
+        } catch (ClientException $e) {
+            throw new ConnectionException($e->getMessage(), $e->getCode(), $e);
+        }
     }
 
     /**
@@ -70,7 +93,15 @@ class PheanstalkQueue implements QueueDriverInterface, CountableQueueDriverInter
     {
         $pheanstalk = $this->connection->pheanstalk();
 
-        $job = $pheanstalk->watchOnly($queue)->reserve($duration);
+        try {
+            $job = $pheanstalk->watchOnly($queue)->reserve($duration);
+        } catch (SocketException $e) {
+            throw new ConnectionLostException($e->getMessage(), $e->getCode(), $e);
+        } catch (BaseServerException $e) {
+            throw new ServerException($e->getMessage(), $e->getCode(), $e);
+        } catch (ClientException $e) {
+            throw new ConnectionException($e->getMessage(), $e->getCode(), $e);
+        }
 
         if (!$job instanceof PheanstalkJob) {
             return null;
@@ -86,7 +117,15 @@ class PheanstalkQueue implements QueueDriverInterface, CountableQueueDriverInter
      */
     public function acknowledge(QueuedMessage $message): void
     {
-        $this->connection->pheanstalk()->delete($message->internalJob());
+        try {
+            $this->connection->pheanstalk()->delete($message->internalJob());
+        } catch (SocketException $e) {
+            throw new ConnectionLostException($e->getMessage(), $e->getCode(), $e);
+        } catch (BaseServerException $e) {
+            throw new ServerException($e->getMessage(), $e->getCode(), $e);
+        } catch (ClientException $e) {
+            throw new ConnectionException($e->getMessage(), $e->getCode(), $e);
+        }
     }
 
     /**
@@ -94,11 +133,19 @@ class PheanstalkQueue implements QueueDriverInterface, CountableQueueDriverInter
      */
     public function release(QueuedMessage $message): void
     {
-        $this->connection->pheanstalk()->release(
-            $message->internalJob(),
-            $message->header('priority', Pheanstalk::DEFAULT_PRIORITY),
-            $message->delay()
-        );
+        try {
+            $this->connection->pheanstalk()->release(
+                $message->internalJob(),
+                $message->header('priority', Pheanstalk::DEFAULT_PRIORITY),
+                $message->delay()
+            );
+        } catch (SocketException $e) {
+            throw new ConnectionLostException($e->getMessage(), $e->getCode(), $e);
+        } catch (BaseServerException $e) {
+            throw new ServerException($e->getMessage(), $e->getCode(), $e);
+        } catch (ClientException $e) {
+            throw new ConnectionException($e->getMessage(), $e->getCode(), $e);
+        }
     }
 
     /**
@@ -124,8 +171,16 @@ class PheanstalkQueue implements QueueDriverInterface, CountableQueueDriverInter
         foreach ($this->connection->getActiveHost() as $host => $port) {
             $pheanstalk = new Pheanstalk($host, $port);
 
-            $queuesInfo = array_merge($queuesInfo, $this->queuesInfo($pheanstalk));
-            $workersInfo = array_merge($workersInfo, $this->workersInfo($pheanstalk));
+            try {
+                $queuesInfo = array_merge($queuesInfo, $this->queuesInfo($pheanstalk));
+                $workersInfo = array_merge($workersInfo, $this->workersInfo($pheanstalk));
+            } catch (SocketException $e) {
+                throw new ConnectionLostException($e->getMessage(), $e->getCode(), $e);
+            } catch (BaseServerException $e) {
+                throw new ServerException($e->getMessage(), $e->getCode(), $e);
+            } catch (ClientException $e) {
+                throw new ConnectionException($e->getMessage(), $e->getCode(), $e);
+            }
         }
 
         return [

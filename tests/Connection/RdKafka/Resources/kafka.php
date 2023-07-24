@@ -17,6 +17,9 @@ if (!defined('RD_KAFKA_RESP_ERR__TIMED_OUT')) {
 if (!defined('RD_KAFKA_RESP_ERR__TRANSPORT')) {
     define('RD_KAFKA_RESP_ERR__TRANSPORT', -195);
 }
+if (!defined('RD_KAFKA_RESP_ERR_NETWORK_EXCEPTION')) {
+    define('RD_KAFKA_RESP_ERR_NETWORK_EXCEPTION', 13);
+}
 
 if (!class_exists(Conf::class)) {
     class TopicConf
@@ -224,5 +227,12 @@ if (!class_exists(TopicPartition::class)) {
         public function setTopic($topic_name)
         {
         }
+    }
+}
+
+if (!class_exists(Exception::class)) {
+    class Exception extends \Exception
+    {
+
     }
 }
