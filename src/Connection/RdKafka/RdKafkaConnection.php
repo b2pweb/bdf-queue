@@ -61,13 +61,6 @@ class RdKafkaConnection implements ConnectionDriverInterface, ManageableQueueInt
         $this->setSerializer($serializer);
     }
 
-    public function __destruct()
-    {
-        // RdKafkaProducer can store messages internally that need to be delivered before PHP shuts down.
-        // Not calling flush can lead to message lost.
-        $this->flush($this->config['shutdown_timeout']);
-    }
-
     /**
      * {@inheritdoc}
      */
@@ -77,23 +70,41 @@ class RdKafkaConnection implements ConnectionDriverInterface, ManageableQueueInt
             'host' => $config['host'] ?? '127.0.0.1',
             'port' => $config['port'] ?? null,
             'global' => $config['global'] ?? [],
-            'topic' => $config['topic'] ?? [],
+            'producer' => $config['producer'] ?? [],
+            'consumer' => $config['consumer'] ?? [],
             'commitAsync' => (bool)($config['commitAsync'] ?? false),
             'offset' => $config['offset'] ?? null,
             'partitioner' => $config['partitioner'] ?? null,
             'partition' => (int)($config['partition'] ?? RD_KAFKA_PARTITION_UA),
             'group' => $config['group'] ?? '2',
-            'shutdown_timeout' => (int)($config['shutdown_timeout'] ?? -1),
+            'flush_timeout' => (int)($config['flush_timeout'] ?? 100),
+            'poll_timeout' => (int)($config['poll_timeout'] ?? 0),
             'dr_msg_cb' => $config['dr_msg_cb'] ?? null,
             'error_cb' => $config['error_cb'] ?? null,
             'rebalance_cb' => $config['rebalance_cb'] ?? null,
             'stats_cb' => $config['stats_cb'] ?? null,
         ];
 
+        if (isset($config['topic'])) {
+            @trigger_error('Usage of option "topic" is deprecated. Use global option instead.', E_USER_DEPRECATED);
+
+            $this->config['global'] = array_merge($this->config['global'], $config['topic']);
+        }
+
         $this->config['global']['metadata.broker.list'] = $this->config['host'];
+
 
         if (isset($this->config['port'])) {
             $this->config['global']['metadata.broker.list'] .= ':'.$this->config['port'];
+        }
+
+        if (isset($this->config['partitioner']) && !$this->config['producer']['partitioner']) {
+            $this->config['producer']['partitioner'] = $this->config['partitioner'];
+            unset($this->config['partitioner']);
+        }
+
+        if (!isset($this->config['producer']['log_level'])) {
+            $this->config['producer']['log_level'] = 0;
         }
     }
 
@@ -108,15 +119,16 @@ class RdKafkaConnection implements ConnectionDriverInterface, ManageableQueueInt
     /**
      * Create the kafka config
      *
+     * @param string|null $for
      * @param string|null $group
      *
      * @return KafkaConf
      */
-    private function createKafkaConf($group = null)
+    private function createKafkaConf($for, $group = null)
     {
         $kafkaConf = new KafkaConf();
 
-        foreach ($this->config['topic'] as $key => $value) {
+        foreach ($this->config[$for] ?? [] as $key => $value) {
             $kafkaConf->set($key, $value);
         }
 
@@ -124,11 +136,7 @@ class RdKafkaConnection implements ConnectionDriverInterface, ManageableQueueInt
             $kafkaConf->set($key, $value);
         }
 
-        if (isset($this->config['partitioner'])) {
-            $kafkaConf->set('partitioner', $this->config['partitioner']);
-        }
-
-        if (isset($this->config['dr_msg_cb'])) {
+        if (isset($this->config['dr_msg_cb']) && $for === 'producer') {
             $kafkaConf->setDrMsgCb($this->config['dr_msg_cb']);
         }
 
@@ -136,7 +144,7 @@ class RdKafkaConnection implements ConnectionDriverInterface, ManageableQueueInt
             $kafkaConf->setErrorCb($this->config['error_cb']);
         }
 
-        if (isset($this->config['rebalance_cb'])) {
+        if (isset($this->config['rebalance_cb']) && $for === 'consumer') {
             $kafkaConf->setRebalanceCb($this->config['rebalance_cb']);
         }
 
@@ -159,7 +167,7 @@ class RdKafkaConnection implements ConnectionDriverInterface, ManageableQueueInt
     public function producer()
     {
         if ($this->producer === null) {
-            $this->producer = new KafkaProducer($this->createKafkaConf());
+            $this->producer = new KafkaProducer($this->createKafkaConf('producer'));
         }
 
         return $this->producer;
@@ -283,19 +291,6 @@ class RdKafkaConnection implements ConnectionDriverInterface, ManageableQueueInt
         }
 
         $this->consumers = [];
-
-        $this->flush($this->config['shutdown_timeout']);
-    }
-
-    /**
-     * FLush all queued and in-flight requests.
-     */
-    public function flush(int $timeout): void
-    {
-        // Compatibility with phprdkafka 4.0.
-        if ($this->producer !== null && method_exists($this->producer, 'flush')) {
-            $this->producer->flush($timeout);
-        }
     }
 
     /**
@@ -323,10 +318,9 @@ class RdKafkaConnection implements ConnectionDriverInterface, ManageableQueueInt
      */
     public function declareQueue(string $queue): void
     {
-        // Create consumer is enough to create queue.
-        // Queues have to be created before consumers start.
-        // Otherwise the n first messages will be lost.
-        $this->queueConsumer($queue);
+        // Kafka could auto create queues if the parameter "auto.create.topics.enable" is set to "true" on the broker.
+        // The produce will auto create the queue on push but the message will be lost.
+        // The consumer could create the queue on consume if the option 'allow.auto.create.topics' is set to true.
     }
 
     /**
@@ -342,7 +336,9 @@ class RdKafkaConnection implements ConnectionDriverInterface, ManageableQueueInt
      */
     public function declareTopic(string $topic): void
     {
-        $this->topicConsumer([$topic]);
+        // Kafka could auto create topics if the parameter "auto.create.topics.enable" is set to "true" on the broker.
+        // The produce will auto create the topic on publish but the message will be lost.
+        // The consumer could create the topic on consume if the option 'allow.auto.create.topics' is set to true.
     }
 
     /**
@@ -364,6 +360,26 @@ class RdKafkaConnection implements ConnectionDriverInterface, ManageableQueueInt
     }
 
     /**
+     * Get the timeout in milliseconds of the flush method (producer)
+     *
+     * @return int
+     */
+    public function flushTimeout(): int
+    {
+        return $this->config['flush_timeout'];
+    }
+
+    /**
+     * Get the timeout in milliseconds of the poll method (producer)
+     *
+     * @return int
+     */
+    public function pollTimeout(): int
+    {
+        return $this->config['poll_timeout'];
+    }
+
+    /**
      * @param string|null $group The group id
      * @return KafkaConsumer
      *
@@ -372,7 +388,7 @@ class RdKafkaConnection implements ConnectionDriverInterface, ManageableQueueInt
     private function createConsumer(?string $group): KafkaConsumer
     {
         try {
-            return new KafkaConsumer($this->createKafkaConf($group));
+            return new KafkaConsumer($this->createKafkaConf('consumer', $group));
         } catch (Exception $e) {
             throw new ConnectionFailedException($e->getMessage(), $e->getCode(), $e);
         }

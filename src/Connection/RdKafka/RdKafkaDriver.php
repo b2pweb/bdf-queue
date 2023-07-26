@@ -106,7 +106,11 @@ class RdKafkaDriver implements QueueDriverInterface, TopicDriverInterface
                 $topic->produce($partition, 0, $payload, $key);
             }
 
-            $producer->poll(0);
+            $producer->poll($this->connection->pollTimeout());
+
+            // RdKafkaProducer can store messages internally that need to be delivered before PHP shuts down.
+            // Not calling flush can lead to message lost.
+            $producer->flush($this->connection->flushTimeout());
         } catch (KafkaException $e) {
             $this->connection->handleException($e);
         }

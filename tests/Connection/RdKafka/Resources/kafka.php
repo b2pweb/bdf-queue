@@ -177,6 +177,9 @@ if (!class_exists(Producer::class)) {
         public function poll(int $timeoutMs)
         {
         }
+        public function flush(int $timeoutMs)
+        {
+        }
     }
 }
 
