@@ -141,9 +141,11 @@ class RdKafkaDriverTest extends TestCase
     public function test_pop_kafka_error()
     {
         $this->expectException(\Exception::class);
+        $this->expectExceptionMessage('error');
 
         $kafkaMessage = $this->createMock(RdKafkaMessage::class);
         $kafkaMessage->err = -10000;
+        $kafkaMessage->expects($this->once())->method('errstr')->willReturn('error');
 
         $this->kafkaConsumer->expects($this->once())->method('consume')->with(3000)->willReturn($kafkaMessage);
 
