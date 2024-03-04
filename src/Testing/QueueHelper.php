@@ -187,6 +187,7 @@ class QueueHelper
         if (is_string($configurator)) {
             @trigger_error("Since 1.2: parameter queue is deprecated. Use destination or 'connectionName::queue' syntax. Will be removed in 2.0", \E_USER_DEPRECATED);
 
+            /** @psalm-suppress InvalidCast */
             $destination = "$destination::$configurator";
             $configurator = null;
         }

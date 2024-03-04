@@ -41,6 +41,7 @@ class RedisConnection implements ConnectionDriverInterface, ManageableQueueInter
      *     path?: string,
      *     scheme?: string,
      *     password?: string,
+     *     user?: string,
      *     database?: int,
      *     persistent?: bool,
      * }

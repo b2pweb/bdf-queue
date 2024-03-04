@@ -47,8 +47,10 @@ class QueuedMessage extends Message
 
     /**
      * {@inheritdoc}
+     *
+     * @return static
      */
-    public static function fromQueue($data): Message
+    public static function fromQueue($data): QueuedMessage
     {
         $message = parent::fromQueue($data);
 

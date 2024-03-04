@@ -2,17 +2,21 @@
 
 namespace Bdf\Queue\Testing;
 
+use ArrayAccess;
 use Bdf\Queue\Consumer\ConsumerInterface;
 use Bdf\Queue\Consumer\ReceiverInterface;
 use Bdf\Queue\Message\EnvelopeInterface;
+use Countable;
 
 /**
  * Simple outlet receiver for stack received messages
+ *
+ * @implements ArrayAccess<int, EnvelopeInterface>
  */
-class StackMessagesReceiver implements ReceiverInterface, \ArrayAccess, \Countable
+class StackMessagesReceiver implements ReceiverInterface, ArrayAccess, Countable
 {
     /**
-     * @var EnvelopeInterface[]
+     * @var list<EnvelopeInterface>
      */
     private $messages = [];
 
