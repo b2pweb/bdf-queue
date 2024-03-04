@@ -69,7 +69,7 @@ jobs:
       run: composer install --prefer-dist --no-progress
 
     - name: Install kafka stubs
-      run: composer require --ignore-platform-req=ext-rdkafka "kwn/php-rdkafka-stubs:~1.3.0"
+      run: composer require --ignore-platform-req=ext-rdkafka "kwn/php-rdkafka-stubs:~2.0"
 
     - name: Run type coverage
       run: composer run-script psalm
