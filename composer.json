@@ -46,8 +46,7 @@
     "symfony/var-dumper": "~5.4|~6.0",
     "vimeo/psalm": "~5.22",
     "predis/predis": "~1.1.0",
-    "friendsofphp/php-cs-fixer": "^3.0",
-    "kwn/php-rdkafka-stubs": "~2.0"
+    "friendsofphp/php-cs-fixer": "^3.0"
   },
   "suggest": {
     "ext-redis": "Required to use the Redis queue driver",
