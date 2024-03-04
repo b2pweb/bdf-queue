@@ -37,7 +37,7 @@ class ForgetCommandTest extends TestCase
 
         $tester->execute(['id' => $id]);
 
-        $this->assertRegExp('/^Failed job deleted successfully/', $tester->getDisplay());
+        $this->assertMatchesRegularExpression('/^Failed job deleted successfully/', $tester->getDisplay());
     }
 
     /**
@@ -53,6 +53,6 @@ class ForgetCommandTest extends TestCase
 
         $tester->execute(['id' => 'unknown']);
 
-        $this->assertRegExp('/^No failed job matches the given ID/', $tester->getDisplay());
+        $this->assertMatchesRegularExpression('/^No failed job matches the given ID/', $tester->getDisplay());
     }
 }

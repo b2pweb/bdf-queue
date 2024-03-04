@@ -101,7 +101,7 @@ class AmqpLibConnectionTest extends TestCase
      */
     public function test_delete_queue()
     {
-        $this->channel->expects($this->at(0))->method('queue_delete')->with('queue', false, false, false);
+        $this->channel->expects($this->once())->method('queue_delete')->with('queue', false, false, false);
 
         $this->driver->setConfig([]);
         $this->driver->deleteQueue('queue');

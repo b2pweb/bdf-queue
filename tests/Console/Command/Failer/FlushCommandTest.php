@@ -24,6 +24,6 @@ class FlushCommandTest extends TestCase
 
         $tester->execute([]);
 
-        $this->assertRegExp('/^All failed jobs deleted successfully/', $tester->getDisplay());
+        $this->assertMatchesRegularExpression('/^All failed jobs deleted successfully/', $tester->getDisplay());
     }
 }

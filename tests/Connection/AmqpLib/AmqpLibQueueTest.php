@@ -72,7 +72,7 @@ class AmqpLibQueueTest extends TestCase
         $this->channel->expects($this->once())->method('basic_publish')
             ->with($this->callback(function(AMQPMessage $amqpMessageCandidate) use($message, $amqpMessage) {
                 $candidate = json_decode($amqpMessageCandidate->body, true);
-                $this->assertRegExp('/[0-9\-\:\. ]+/', $candidate['queuedAt']['date']);
+                $this->assertMatchesRegularExpression('/[0-9\-\:\. ]+/', $candidate['queuedAt']['date']);
 
                 $expected = $message->toQueue();
                 unset($candidate['queuedAt']);
@@ -117,7 +117,7 @@ class AmqpLibQueueTest extends TestCase
         $this->channel->expects($this->once())->method('basic_publish')
             ->with($this->callback(function(AMQPMessage $amqpMessageCandidate) use($message, $amqpMessage) {
                 $candidate = json_decode($amqpMessageCandidate->body, true);
-                $this->assertRegExp('/[0-9\-\:\. ]+/', $candidate['queuedAt']['date']);
+                $this->assertMatchesRegularExpression('/[0-9\-\:\. ]+/', $candidate['queuedAt']['date']);
 
                 $expected = $message->toQueue();
                 unset($candidate['queuedAt']);
@@ -198,7 +198,7 @@ class AmqpLibQueueTest extends TestCase
             'delivery_mode' => AMQPMessage::DELIVERY_MODE_PERSISTENT,
         ]);
 
-        $this->channel->expects($this->at(0))->method('queue_declare')->with('queue_deferred_1')->willReturn(['queue_deferred_1']);
+        $this->channel->expects($this->once())->method('queue_declare')->with('queue_deferred_1')->willReturn(['queue_deferred_1']);
         $this->channel->expects($this->once())->method('basic_publish')->with($message, '', 'queue_deferred_1');
 
         $this->driver->queue()->pushRaw('test', 'queue', 1);

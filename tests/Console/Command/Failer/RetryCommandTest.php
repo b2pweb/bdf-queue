@@ -72,7 +72,7 @@ class RetryCommandTest extends TestCase
         $tester->execute(['id' => '1']);
 
         $this->assertEquals(0, $this->queue->count($this->defaultQueue));
-        $this->assertRegExp('/^No failed job matches the given ID/', $tester->getDisplay());
+        $this->assertMatchesRegularExpression('/^No failed job matches the given ID/', $tester->getDisplay());
     }
     
     /**
@@ -94,7 +94,7 @@ class RetryCommandTest extends TestCase
         
         $this->assertEquals(0, count($failer->all()));
         $this->assertEquals(1, $this->queue->count($this->defaultQueue));
-        $this->assertRegExp('/^Job #1 has been pushed back onto the queue/', $tester->getDisplay());
+        $this->assertMatchesRegularExpression('/^Job #1 has been pushed back onto the queue/', $tester->getDisplay());
     }
     
     /**
@@ -115,7 +115,7 @@ class RetryCommandTest extends TestCase
 
         $this->assertEquals(0, count($failer->all()));
         $this->assertEquals(0, $this->queue->count($this->defaultQueue));
-        $this->assertRegExp('/^Job #1 has been pushed back onto the queue/', $tester->getDisplay());
+        $this->assertMatchesRegularExpression('/^Job #1 has been pushed back onto the queue/', $tester->getDisplay());
     }
 
     /**
@@ -142,8 +142,8 @@ class RetryCommandTest extends TestCase
 
         $this->assertEquals(0, count($failer->all()));
         $this->assertEquals(2, $this->queue->count($this->defaultQueue));
-        $this->assertRegExp('/^Job #1 has been pushed back onto the queue/', $tester->getDisplay());
-        $this->assertRegExp('/Job #2 has been pushed back onto the queue/', $tester->getDisplay());
+        $this->assertMatchesRegularExpression('/^Job #1 has been pushed back onto the queue/', $tester->getDisplay());
+        $this->assertMatchesRegularExpression('/Job #2 has been pushed back onto the queue/', $tester->getDisplay());
     }
 
     /**
@@ -186,7 +186,7 @@ class RetryCommandTest extends TestCase
         $this->assertEquals(count($ids), $this->queue->count($this->defaultQueue));
 
         foreach ($ids as $id) {
-            $this->assertRegExp('/Job #' . $id . ' has been pushed back onto the queue/', $tester->getDisplay());
+            $this->assertMatchesRegularExpression('/Job #' . $id . ' has been pushed back onto the queue/', $tester->getDisplay());
         }
     }
 
@@ -229,7 +229,7 @@ class RetryCommandTest extends TestCase
         $this->assertEquals(2, count($failer->all()));
         $this->assertEquals(1, $this->queue->count($this->defaultQueue));
 
-        $this->assertRegExp('/^Job #1 has been pushed back onto the queue/', $tester->getDisplay());
+        $this->assertMatchesRegularExpression('/^Job #1 has been pushed back onto the queue/', $tester->getDisplay());
     }
 
     public function provideOptions()

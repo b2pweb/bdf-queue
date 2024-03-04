@@ -110,13 +110,13 @@ class JobLoggerReceiverTest extends TestCase
         $this->assertCount(3, $output);
 
         $regex = '/^\[' . str_replace('/', '\\/', date('Y-m-d H:i')) . ':[0-9]{2}\] INFO: \[test-connection::test-queue\] "test-job" starting/';
-        $this->assertRegExp($regex, $output[0]['formatted']);
+        $this->assertMatchesRegularExpression($regex, $output[0]['formatted']);
 
         $regex = '/^\[' . str_replace('/', '\\/', date('Y-m-d H:i')) . ':[0-9]{2}\] DEBUG: {"name":"foo"}/';
-        $this->assertRegExp($regex, $output[1]['formatted']);
+        $this->assertMatchesRegularExpression($regex, $output[1]['formatted']);
 
         $regex = '/^\[' . str_replace('/', '\\/', date('Y-m-d H:i')) . ':[0-9]{2}\] INFO: \[test-connection::test-queue\] "test-job" succeed/';
-        $this->assertRegExp($regex, $output[2]['formatted']);
+        $this->assertMatchesRegularExpression($regex, $output[2]['formatted']);
     }
 
     /**
@@ -131,13 +131,13 @@ class JobLoggerReceiverTest extends TestCase
         $this->assertCount(3, $output);
 
         $regex = '/^\[' . str_replace('/', '\\/', date('Y-m-d H:i')) . ':[0-9]{2}\] INFO: \[test-connection::test-queue\] "test-job" starting/';
-        $this->assertRegExp($regex, $output[0]['formatted']);
+        $this->assertMatchesRegularExpression($regex, $output[0]['formatted']);
 
         $regex = '/^\[' . str_replace('/', '\\/', date('Y-m-d H:i')) . ':[0-9]{2}\] DEBUG: {"name":"foo"}/';
-        $this->assertRegExp($regex, $output[1]['formatted']);
+        $this->assertMatchesRegularExpression($regex, $output[1]['formatted']);
 
         $regex = '/^\[' . str_replace('/', '\\/', date('Y-m-d H:i')) . ':[0-9]{2}\] INFO: \[test-connection::test-queue\] "test-job" succeed/';
-        $this->assertRegExp($regex, $output[2]['formatted']);
+        $this->assertMatchesRegularExpression($regex, $output[2]['formatted']);
     }
 
     /**
@@ -184,7 +184,7 @@ class JobLoggerReceiverTest extends TestCase
         $this->assertCount(3, $output);
 
         $regex = '/^\[' . str_replace('/', '\\/', date('Y-m-d H:i')) . ':[0-9]{2}\] CRITICAL: \[test-connection::test-queue\] "test-job" failed/';
-        $this->assertRegExp($regex, $output[2]['formatted']);
+        $this->assertMatchesRegularExpression($regex, $output[2]['formatted']);
     }
 
     /**
@@ -205,7 +205,7 @@ class JobLoggerReceiverTest extends TestCase
         $this->assertCount(3, $output);
 
         $regex = '/^\[' . str_replace('/', '\\/', date('Y-m-d H:i')) . ':[0-9]{2}\] CRITICAL: \[test-connection::test-queue\] "test-job" failed/';
-        $this->assertRegExp($regex, $output[2]['formatted']);
+        $this->assertMatchesRegularExpression($regex, $output[2]['formatted']);
     }
 
     /**
@@ -220,7 +220,7 @@ class JobLoggerReceiverTest extends TestCase
 
         $regex = '/^\[' . str_replace('/', '\\/', date('Y-m-d H:i')) . ':[0-9]{2}\] INFO: stopping worker/';
 
-        $this->assertRegExp($regex, $this->buffer->getRecords()[0]['formatted']);
+        $this->assertMatchesRegularExpression($regex, $this->buffer->getRecords()[0]['formatted']);
     }
 
     /**
@@ -235,6 +235,6 @@ class JobLoggerReceiverTest extends TestCase
 
         $regex = '/^\[' . str_replace('/', '\\/', date('Y-m-d H:i')) . ':[0-9]{2}\] INFO: stopping worker/';
 
-        $this->assertRegExp($regex, $this->buffer->getRecords()[0]['formatted']);
+        $this->assertMatchesRegularExpression($regex, $this->buffer->getRecords()[0]['formatted']);
     }
 }

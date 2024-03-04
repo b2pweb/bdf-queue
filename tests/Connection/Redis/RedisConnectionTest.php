@@ -70,10 +70,17 @@ class RedisConnectionTest extends TestCase
     public function test_delete_queue()
     {
         $this->redis->expects($this->once())->method('sRem')->with(RedisConnection::QUEUE_KEY, 'queue');
-        $this->redis->expects($this->at(1))->method('del')->with('queues:queue');
-        $this->redis->expects($this->at(2))->method('del')->with('queues:queue:delayed');
+
+        $names = [];
+
+        $this->redis->expects($this->exactly(2))->method('del')->with($this->callback(function($name) use (&$names) {
+            $names[] = $name;
+
+            return true;
+        }));
 
         $this->driver->deleteQueue('queue');
+        $this->assertSame(['queues:queue', 'queues:queue:delayed'], $names);
     }
 
     /**

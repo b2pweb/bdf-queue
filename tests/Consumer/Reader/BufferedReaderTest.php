@@ -46,16 +46,10 @@ class BufferedReaderTest extends TestCase
             $this->createMock(EnvelopeInterface::class),
         ];
 
-        $driver->expects($this->at(0))
+        $driver->expects($this->exactly(2))
             ->method('reserve')
             ->with(2, 'my-queue', 0)
-            ->willReturn($messages)
-        ;
-
-        $driver->expects($this->at(1))
-            ->method('reserve')
-            ->with(2, 'my-queue', 0)
-            ->willReturn([])
+            ->willReturnOnConsecutiveCalls($messages, [])
         ;
 
         $this->assertSame($messages[0], $reader->read(0));

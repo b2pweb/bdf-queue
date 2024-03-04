@@ -66,7 +66,7 @@ class DoctrineQueueTest extends TestCase
         $this->assertSame('foo', $message->message()->data());
         $this->assertStringContainsString('{"job":"test","data":"foo","queuedAt":{"date"', $message->message()->raw());
         $this->assertSame('queue', $message->message()->queue());
-        $this->assertRegExp('/[\w\d\-]+/', $message->message()->internalJob()['id']);
+        $this->assertMatchesRegularExpression('/[\w\d\-]+/', $message->message()->internalJob()['id']);
     }
 
     /**

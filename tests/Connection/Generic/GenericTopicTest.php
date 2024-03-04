@@ -61,6 +61,7 @@ class GenericTopicTest extends TestCase
         $queue = $this->createMock(QueueDriverInterface::class);
 
         $this->driver->expects($this->once())->method('queue')->willReturn($queue);
+
         $queue->expects($this->once())->method('stats')->willReturn([
             'queues' => [
                 ['queue' => 'group1/foo'],
@@ -69,18 +70,16 @@ class GenericTopicTest extends TestCase
             ]
         ]);
 
-        $queue->expects($this->at(1))
+        $queue->expects($this->exactly(2))
             ->method('push')
-            ->with($this->callback(function($message) {
-                return $message->queue() === 'group1/my-topic';
-            }))
-        ;
-
-        $queue->expects($this->at(2))
-            ->method('push')
-            ->with($this->callback(function($message) {
-                return $message->queue() === 'group2/my-*';
-            }))
+            ->willReturnMap([
+                [$this->callback(function($message) {
+                    return $message->queue() === 'group1/my-topic';
+                }), null],
+                [$this->callback(function($message) {
+                    return $message->queue() === 'group2/my-*';
+                }), null]
+            ])
         ;
 
         $topic->publish((new Message('foo'))->setTopic('my-topic'));

@@ -36,7 +36,7 @@ class BindCommandTest extends TestCase
             'channels' => ['bar.*'],
         ]);
 
-        $this->assertRegExp('/^Channels bar.* have been binded to topic bar/', $tester->getDisplay());
+        $this->assertMatchesRegularExpression('/^Channels bar.* have been binded to topic bar/', $tester->getDisplay());
     }
 
     /**
@@ -58,7 +58,7 @@ class BindCommandTest extends TestCase
             'channels' => ['bar.*'],
         ]);
 
-        $this->assertRegExp('/^The connection "foo" does not manage binding route/', $tester->getDisplay());
+        $this->assertMatchesRegularExpression('/^The connection "foo" does not manage binding route/', $tester->getDisplay());
     }
 
     /**

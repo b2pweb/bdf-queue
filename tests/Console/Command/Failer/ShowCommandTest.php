@@ -36,7 +36,7 @@ class ShowCommandTest extends TestCase
 
         $tester->execute([]);
 
-        $this->assertRegExp('/^No failed jobs/', $tester->getDisplay());
+        $this->assertMatchesRegularExpression('/^No failed jobs/', $tester->getDisplay());
     }
     
     /**
@@ -58,9 +58,9 @@ class ShowCommandTest extends TestCase
 
         $display = $tester->getDisplay();
         
-        $this->assertRegExp('/ queue-connection /', $display);
-        $this->assertRegExp('/ queue /', $display);
-        $this->assertRegExp('/ showCommand@test /', $display);
+        $this->assertMatchesRegularExpression('/ queue-connection /', $display);
+        $this->assertMatchesRegularExpression('/ queue /', $display);
+        $this->assertMatchesRegularExpression('/ showCommand@test /', $display);
     }
 
     /**
@@ -88,11 +88,11 @@ class ShowCommandTest extends TestCase
 
         $display = $tester->getDisplay();
 
-        $this->assertRegExp('/ queue-connection /', $display);
-        $this->assertRegExp('/ queue /', $display);
-        $this->assertRegExp('/ showCommand@other /', $display);
+        $this->assertMatchesRegularExpression('/ queue-connection /', $display);
+        $this->assertMatchesRegularExpression('/ queue /', $display);
+        $this->assertMatchesRegularExpression('/ showCommand@other /', $display);
 
-        $this->assertNotRegExp('/ showCommand@test /', $display);
+        $this->assertDoesNotMatchRegularExpression('/ showCommand@test /', $display);
     }
 
     /**
@@ -131,6 +131,6 @@ array:1 [
 ]
 EOF;
         $this->assertStringContainsString($expected, $tester->getDisplay());
-        $this->assertRegExp('/failed at....... [0-9\: \/]+/', $tester->getDisplay());
+        $this->assertMatchesRegularExpression('/failed at....... [0-9\: \/]+/', $tester->getDisplay());
     }
 }

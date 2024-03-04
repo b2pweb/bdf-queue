@@ -59,7 +59,7 @@ class SetupCommandTest extends TestCase
             '--queue'    => $this->defaultQueue,
         ]);
 
-        $this->assertRegExp('/^The destination "test" has been declared/', $tester->getDisplay());
+        $this->assertMatchesRegularExpression('/^The destination "test" has been declared/', $tester->getDisplay());
         $this->assertArrayHasKey($this->defaultQueue, $this->connection->storage()->queues);
     }
 
@@ -75,7 +75,7 @@ class SetupCommandTest extends TestCase
             'connection' => 'foo',
         ]);
 
-        $this->assertRegExp('/^The destination "foo" has been declared/', $tester->getDisplay());
+        $this->assertMatchesRegularExpression('/^The destination "foo" has been declared/', $tester->getDisplay());
         $this->assertArrayHasKey('bar', $this->connection->storage()->queues);
     }
 
@@ -92,7 +92,7 @@ class SetupCommandTest extends TestCase
             '--topic'    => $this->defaultQueue,
         ]);
 
-        $this->assertRegExp('/^The destination "test" has been declared/', $tester->getDisplay());
+        $this->assertMatchesRegularExpression('/^The destination "test" has been declared/', $tester->getDisplay());
         // Could not test topic declaration: assert topic name has not been declare as queue
         $this->assertArrayNotHasKey($this->defaultQueue, $this->connection->storage()->queues);
     }
@@ -112,7 +112,7 @@ class SetupCommandTest extends TestCase
             '--drop' => true,
         ]);
 
-        $this->assertRegExp('/^The destination "foo" has been deleted/', $tester->getDisplay());
+        $this->assertMatchesRegularExpression('/^The destination "foo" has been deleted/', $tester->getDisplay());
         $this->assertArrayNotHasKey('bar', $this->connection->storage()->queues);
     }
 

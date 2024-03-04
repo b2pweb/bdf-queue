@@ -46,7 +46,7 @@ class DeleteCommandTest extends TestCase
 
         $tester->execute(['id' => '1']);
 
-        $this->assertRegExp('/^No failed job matches the given ID/', $tester->getDisplay());
+        $this->assertMatchesRegularExpression('/^No failed job matches the given ID/', $tester->getDisplay());
     }
     
     /**
@@ -67,7 +67,7 @@ class DeleteCommandTest extends TestCase
         $tester->execute(['id' => '1']);
         
         $this->assertEquals(0, count($failer->all()));
-        $this->assertRegExp('/^Failed job deleted successfully/', $tester->getDisplay());
+        $this->assertMatchesRegularExpression('/^Failed job deleted successfully/', $tester->getDisplay());
     }
 
     /**
@@ -93,7 +93,7 @@ class DeleteCommandTest extends TestCase
         $tester->execute([]);
 
         $this->assertEquals(0, count($failer->all()));
-        $this->assertRegExp('/^2 failed jobs deleted successfully/', $tester->getDisplay());
+        $this->assertMatchesRegularExpression('/^2 failed jobs deleted successfully/', $tester->getDisplay());
     }
 
     /**
@@ -139,7 +139,7 @@ class DeleteCommandTest extends TestCase
         $tester->execute($options);
 
         $this->assertEquals(3 - count($ids), count($failer->all()));
-        $this->assertRegExp('/^' . count($ids) . ' failed jobs deleted successfully/', $tester->getDisplay());
+        $this->assertMatchesRegularExpression('/^' . count($ids) . ' failed jobs deleted successfully/', $tester->getDisplay());
     }
 
     /**
@@ -183,7 +183,7 @@ class DeleteCommandTest extends TestCase
 
         $this->assertEquals(2, count($failer->all()));
 
-        $this->assertRegExp('/^1 failed jobs deleted successfully/', $tester->getDisplay());
+        $this->assertMatchesRegularExpression('/^1 failed jobs deleted successfully/', $tester->getDisplay());
     }
 
     public function provideOptions()
