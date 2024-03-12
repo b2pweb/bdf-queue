@@ -17,9 +17,18 @@ use Bdf\Queue\Consumer\Receiver\TimeLimiterReceiver;
 use Bdf\Queue\Consumer\ReceiverInterface;
 use Bdf\Queue\Failer\FailedJobStorageInterface;
 use Bdf\Queue\Testing\MessageWatcherReceiver;
+use Closure;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
+
+use ReflectionFunction;
+use ReflectionMethod;
+use ReflectionNamedType;
+
+use function is_array;
+use function is_object;
+use function is_string;
 
 /**
  *
@@ -204,27 +213,29 @@ class ReceiverFactory
      * @internal Used for compatibility, will be removed in 2.0
      *
      * @param string $middleware Middleware name
+     * @param bool $hasParameters Whether if parameters are given to the factory
      *
      * @return bool
      */
-    public function factoryTakeNextReceiverAsFirstParameter(string $middleware): bool
+    public function factoryTakeNextReceiverAsFirstParameter(string $middleware, bool $hasParameters = true): bool
     {
-        // No factory registered : instantiation will be forwarded to instantiator
+        // No factory registered : instantiation will be forwarded to instantiator if it's not explicitly defined in the container
+        // Or if it has parameters
         // This is a deprecated behavior, so assume that is follows the legacy behavior
         if (!$factory = $this->factories[$middleware] ?? null) {
-            return true;
+            return $hasParameters || !$this->container->has($middleware);
         }
 
         if (isset($this->factoryTakeNextReceiverAsFirstParameter[$middleware])) {
             return $this->factoryTakeNextReceiverAsFirstParameter[$middleware];
         }
 
-        if (is_string($factory) || $factory instanceof \Closure) {
-            $reflection = new \ReflectionFunction($factory);
+        if (is_string($factory) || $factory instanceof Closure) {
+            $reflection = new ReflectionFunction($factory);
         } elseif (is_object($factory)) {
-            $reflection = new \ReflectionMethod($factory, '__invoke');
+            $reflection = new ReflectionMethod($factory, '__invoke');
         } elseif (is_array($factory) && is_object($factory[0])) {
-            $reflection = new \ReflectionMethod($factory[0], $factory[1]);
+            $reflection = new ReflectionMethod($factory[0], $factory[1]);
         } else {
             return true; // Should not occur
         }
@@ -233,7 +244,7 @@ class ReceiverFactory
         if (
             $reflection->getNumberOfParameters() < 2
             || !$reflection->getParameters()[1]->hasType()
-            || !($type = $reflection->getParameters()[1]->getType()) instanceof \ReflectionNamedType
+            || !($type = $reflection->getParameters()[1]->getType()) instanceof ReflectionNamedType
             || $type->getName() !== ReceiverInterface::class
         ) {
             return $this->factoryTakeNextReceiverAsFirstParameter[$middleware] = false;

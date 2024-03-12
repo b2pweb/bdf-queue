@@ -158,7 +158,6 @@ class AmqpLibQueue implements QueueDriverInterface
     {
         @trigger_error("Since 1.2: Amqp does not support count method. Will be removed in 2.0", \E_USER_DEPRECATED);
 
-//        return $this->connection->channel()->queue_declare($queue, true)[1];
         return null;
     }
 

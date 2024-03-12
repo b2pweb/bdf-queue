@@ -19,8 +19,7 @@ interface EnvelopeInterface
      *
      * @return ConnectionDriverInterface
      */
-    public function connection();
-//    public function connection(): ConnectionDriverInterface;
+    public function connection()/*: ConnectionDriverInterface*/;
 
     /**
      * Informs the message broker the message was processed successfully.

@@ -30,6 +30,9 @@ use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 
+use function array_unshift;
+use function count;
+
 /**
  * Builder for creates the receivers stack
  *
@@ -476,7 +479,7 @@ class ReceiverBuilder
             }
 
             // Factory do not take next receiver : simply push to the pipeline
-            if (!$this->factory->factoryTakeNextReceiverAsFirstParameter($middleware)) {
+            if (!$this->factory->factoryTakeNextReceiverAsFirstParameter($middleware, $parameters !== [])) {
                 array_unshift($stack, $this->factory->create($middleware, $parameters));
                 continue;
             }
