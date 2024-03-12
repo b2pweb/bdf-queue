@@ -105,6 +105,10 @@ class ReceiverFactoryTest extends TestCase
         $this->assertFalse($this->factory->addFactory('no_typehint', function (ReceiverFactory $factory, $foo) {})->factoryTakeNextReceiverAsFirstParameter('no_typehint'));
 
         $this->assertFalse($this->factory->factoryTakeNextReceiverAsFirstParameter('bench'));
+
+        $this->container->add('test', new \stdClass());
+        $this->assertFalse($this->factory->factoryTakeNextReceiverAsFirstParameter('test', false));
+        $this->assertTrue($this->factory->factoryTakeNextReceiverAsFirstParameter('test', true));
     }
 
     /**
@@ -146,6 +150,17 @@ class ReceiverFactoryTest extends TestCase
     {
         $this->assertInstanceOf(MyNoFactoryReceiver::class, $receiver = $this->factory->create(MyNoFactoryReceiver::class, ['foo']));
         $this->assertSame('foo', $receiver->foo);
+    }
+
+    /**
+     *
+     */
+    public function test_receiver_creation_use_service_from_container()
+    {
+        $this->container->add('my_receiver', MyNoFactoryReceiver::class)->addArgument('bar');
+
+        $this->assertInstanceOf(MyNoFactoryReceiver::class, $receiver = $this->factory->create('my_receiver'));
+        $this->assertSame('bar', $receiver->foo);
     }
 }
 

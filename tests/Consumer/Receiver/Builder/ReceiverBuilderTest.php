@@ -117,6 +117,24 @@ class ReceiverBuilderTest extends TestCase
     /**
      *
      */
+    public function test_add_with_container_service()
+    {
+        $this->container->add('my_receiver', MyNoFactoryReceiver::class)->addArgument('bar');
+
+        $this->builder->add('my_receiver');
+
+        $this->assertEquals(
+            new ReceiverPipeline([
+                new MyNoFactoryReceiver('bar'),
+                new ProcessorReceiver(new JobHintProcessorResolver($this->container->get(InstantiatorInterface::class))),
+            ]),
+            $this->builder->build()
+        );
+    }
+
+    /**
+     *
+     */
     public function test_add_only_legacy()
     {
         // Redefine factory to force legacy behavior
