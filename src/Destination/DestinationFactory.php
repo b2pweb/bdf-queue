@@ -6,7 +6,6 @@ use Bdf\Dsn\Dsn;
 use Bdf\Dsn\DsnRequest;
 use Bdf\Queue\Connection\ConnectionDriverInterface;
 use Bdf\Queue\Connection\Factory\ConnectionDriverFactoryInterface;
-
 use Bdf\Queue\Destination\Queue\MultiQueueDestination;
 use Bdf\Queue\Destination\Queue\QueueDestination;
 use Bdf\Queue\Destination\Topic\TopicDestinationFactory;

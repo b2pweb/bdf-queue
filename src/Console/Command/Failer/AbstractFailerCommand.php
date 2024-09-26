@@ -30,7 +30,7 @@ abstract class AbstractFailerCommand extends Command
      */
     public function __construct(FailedJobStorageInterface $storage)
     {
-        parent::__construct(static::$defaultName);
+        parent::__construct(static::$defaultName ?? null);
 
         $this->repository = FailedJobRepositoryAdapter::adapt($storage);
     }

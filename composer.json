@@ -25,8 +25,8 @@
     "ext-pcntl": "*",
     "b2pweb/bdf-dsn": "~1.0",
     "b2pweb/bdf-instantiator": "~1.0",
-    "symfony/console": "~5.4|~6.0",
-    "symfony/messenger": "~5.4|~6.0"
+    "symfony/console": "~5.4|~6.0|~7.0",
+    "symfony/messenger": "~5.4|~6.0|~7.0"
   },
   "require-dev": {
     "b2pweb/bdf-serializer": "~1.0",
@@ -41,9 +41,9 @@
     "php-amqplib/php-amqplib": "~3.0",
     "phpbench/phpbench": "~0.0|~1.0",
     "phpunit/phpunit": "~9.6",
-    "symfony/error-handler": "~5.4|~6.0",
-    "symfony/phpunit-bridge": "~5.4|~6.0",
-    "symfony/var-dumper": "~5.4|~6.0",
+    "symfony/error-handler": "~5.4|~6.0|~7.0",
+    "symfony/phpunit-bridge": "~5.4|~6.0|~7.0",
+    "symfony/var-dumper": "~5.4|~6.0|~7.0",
     "vimeo/psalm": "~5.22",
     "predis/predis": "~1.1.0",
     "friendsofphp/php-cs-fixer": "^3.0"
@@ -57,7 +57,7 @@
     "kwn/php-rdkafka-stubs": "Required to use the Kafka queue driver (~2.0)",
     "ext/rdkafka": "Required to use the Kafka queue driver (~4.0|~5.0|~6.0)",
     "enqueue/enqueue": "Required to use the Enqueue driver (~0.9)",
-    "symfony/var-dumper": "VarDumper could be used for displaying failed message (~5.4|~6.0)"
+    "symfony/var-dumper": "VarDumper could be used for displaying failed message (~5.4|~6.0|~7.0)"
   },
   "scripts": {
     "tests": "phpunit",

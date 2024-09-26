@@ -18,6 +18,7 @@ class ErrorMessage extends QueuedMessage
      * ErrorMessage constructor.
      *
      * @param \Throwable $exception
+     * @psalm-suppress ParamNameMismatch
      */
     public function __construct(\Throwable $exception)
     {
