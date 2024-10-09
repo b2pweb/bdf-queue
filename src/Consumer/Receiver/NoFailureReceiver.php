@@ -22,7 +22,7 @@ class NoFailureReceiver implements ReceiverInterface
      *
      * @param ReceiverInterface|null $delegate
      */
-    public function __construct(ReceiverInterface $delegate = null)
+    public function __construct(?ReceiverInterface $delegate = null)
     {
         $this->delegate = $delegate;
     }

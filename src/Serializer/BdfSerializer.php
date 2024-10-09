@@ -48,7 +48,7 @@ class BdfSerializer implements SerializerInterface
      * @param string $format
      * @param array $options
      */
-    public function __construct(BaseSerializer $serializer = null, $format = 'json', array $options = [])
+    public function __construct(?BaseSerializer $serializer = null, $format = 'json', array $options = [])
     {
         $this->serializer = $serializer ?: (new SerializerBuilder())->build();
         $this->format = $format;

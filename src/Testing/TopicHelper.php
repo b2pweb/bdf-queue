@@ -73,7 +73,7 @@ class TopicHelper
      *
      * @return DestinationInterface
      */
-    public function destination(string $destination = null): DestinationInterface
+    public function destination(?string $destination = null): DestinationInterface
     {
         if ($destination === null) {
             $destination = $this->defaultDestination;
@@ -96,7 +96,7 @@ class TopicHelper
      *
      * @see TopicHelper::consumeAll() For consume all intialized topics
      */
-    public function consume(string $destination = null, bool $reinit = false): TopicHelper
+    public function consume(?string $destination = null, bool $reinit = false): TopicHelper
     {
         $destination = $destination ?: $this->defaultDestination;
         $this->consumer($destination)->consume(0);
@@ -144,7 +144,7 @@ class TopicHelper
      *
      * @return TopicEnvelope[]
      */
-    public function messages(string $destination = null): array
+    public function messages(?string $destination = null): array
     {
         return $this->received[$destination ?: $this->defaultDestination] ?? [];
     }
@@ -157,7 +157,7 @@ class TopicHelper
      *
      * @return QueuedMessage[]
      */
-    public function peek(string $destination = null, int $count = 20, int $page = 1): array
+    public function peek(?string $destination = null, int $count = 20, int $page = 1): array
     {
         $destination = $this->destination($destination);
 
@@ -186,7 +186,7 @@ class TopicHelper
      *
      * @return bool
      */
-    public function contains($expected, string $destination = null): bool
+    public function contains($expected, ?string $destination = null): bool
     {
         $messages = $this->messages($destination);
 
@@ -245,7 +245,7 @@ class TopicHelper
      *
      * @return TopicConsumer
      */
-    private function consumer(string $destination = null): TopicConsumer
+    private function consumer(?string $destination = null): TopicConsumer
     {
         $destination = $destination ?: $this->defaultDestination;
 

@@ -58,7 +58,7 @@ class ConsumeCommand extends Command
      * @param ReceiverLoaderInterface $receivers
      * @param LoggerInterface|null $logger
      */
-    public function __construct(DestinationManager $manager, ReceiverLoaderInterface $receivers, LoggerInterface $logger = null)
+    public function __construct(DestinationManager $manager, ReceiverLoaderInterface $receivers, ?LoggerInterface $logger = null)
     {
         $this->manager = $manager;
         $this->receivers = $receivers;

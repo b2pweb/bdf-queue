@@ -56,9 +56,9 @@ class EnqueueConnection implements ConnectionDriverInterface, ManageableQueueInt
      *
      * @param string $name The connection name
      * @param SerializerInterface $serializer
-     * @param ConnectionFactoryFactoryInterface $factory
+     * @param ConnectionFactoryFactoryInterface|null $factory
      */
-    public function __construct(string $name, SerializerInterface $serializer, ConnectionFactoryFactoryInterface $factory = null)
+    public function __construct(string $name, SerializerInterface $serializer, ?ConnectionFactoryFactoryInterface $factory = null)
     {
         $this->setName($name);
         $this->serializer = $serializer;

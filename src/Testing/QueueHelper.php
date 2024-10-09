@@ -38,11 +38,11 @@ class QueueHelper
     /**
      * Initialize destinations for message reception
      *
-     * @param string $destination
+     * @param string|null $destination
      *
      * @return $this
      */
-    public function init(string $destination = null): QueueHelper
+    public function init(?string $destination = null): QueueHelper
     {
         if (func_num_args() > 1) {
             @trigger_error("Since 1.2: use destination or 'connectionName::queue' syntax instead of. Will be removed in 2.0", \E_USER_DEPRECATED);
@@ -242,7 +242,7 @@ class QueueHelper
      * @return DestinationInterface|DestinationManager
      * @psalm-return (func_num_args() is 0 ? DestinationManager : DestinationInterface)
      */
-    public function destination(string $destination = null)/*: DestinationInterface*/
+    public function destination(?string $destination = null)/*: DestinationInterface*/
     {
         if (func_num_args() === 0) {
             @trigger_error("Since 1.2: destination manager should be get with destinations() method. Will be removed in 2.0", \E_USER_DEPRECATED);

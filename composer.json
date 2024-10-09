@@ -21,7 +21,7 @@
   },
   "minimum-stability": "dev",
   "require": {
-    "php": "~7.4 || ~8.0.0 || ~8.1.0 || ~8.2.0 || ~8.3.0",
+    "php": "~7.4 || ~8.0.0 || ~8.1.0 || ~8.2.0 || ~8.3.0 || ~8.4.0",
     "ext-pcntl": "*",
     "b2pweb/bdf-dsn": "~1.0",
     "b2pweb/bdf-instantiator": "~1.0",

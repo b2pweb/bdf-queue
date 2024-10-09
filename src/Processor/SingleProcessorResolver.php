@@ -23,9 +23,9 @@ class SingleProcessorResolver implements ProcessorResolverInterface
      * SingleProcessorResolver
      *
      * @param string|callable|ProcessorInterface $endPoint
-     * @param InstantiatorInterface $instantiator = null
+     * @param InstantiatorInterface|null $instantiator = null
      */
-    public function __construct($endPoint, InstantiatorInterface $instantiator = null)
+    public function __construct($endPoint, ?InstantiatorInterface $instantiator = null)
     {
         $this->endPoint = $this->createProcessor($endPoint, $instantiator);
     }

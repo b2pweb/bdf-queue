@@ -107,7 +107,7 @@ class FailedJob
      *
      * @return FailedJob
      */
-    public static function create(QueuedMessage $message, \Throwable $exception = null)
+    public static function create(QueuedMessage $message, ?\Throwable $exception = null)
     {
         // Reset the attemps before the message is stored
         $message = clone $message;

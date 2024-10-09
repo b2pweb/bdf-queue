@@ -75,9 +75,9 @@ class AmqpLibConnection implements ConnectionDriverInterface, ManageableQueueInt
      *
      * @param string $name
      * @param SerializerInterface $serializer
-     * @param ExchangeResolverInterface $exchangeResolver
+     * @param ExchangeResolverInterface|null $exchangeResolver
      */
-    public function __construct(string $name, SerializerInterface $serializer, ExchangeResolverInterface $exchangeResolver = null)
+    public function __construct(string $name, SerializerInterface $serializer, ?ExchangeResolverInterface $exchangeResolver = null)
     {
         $this->name = $name;
         $this->exchangeResolver = $exchangeResolver ?: new NamespaceExchangeResolver();

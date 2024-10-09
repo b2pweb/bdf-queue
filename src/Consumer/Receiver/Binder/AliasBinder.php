@@ -27,9 +27,9 @@ final class AliasBinder implements BinderInterface
      * AliasBinder constructor.
      *
      * @param string[] $mapping The class name mapping with the event name as key and the event class name as value
-     * @param SerializerInterface $serializer The serializer
+     * @param SerializerInterface|null $serializer The serializer
      */
-    public function __construct(array $mapping, SerializerInterface $serializer = null)
+    public function __construct(array $mapping, ?SerializerInterface $serializer = null)
     {
         $this->mapping = $mapping;
         $this->serializer = $serializer ?: (new SerializerBuilder())->build();

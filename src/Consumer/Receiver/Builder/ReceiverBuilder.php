@@ -98,10 +98,10 @@ class ReceiverBuilder
      * ReceiverBuilder constructor.
      *
      * @param ContainerInterface $container
-     * @param InstantiatorInterface $instantiator
-     * @param ReceiverFactory $factory
+     * @param InstantiatorInterface|null $instantiator
+     * @param ReceiverFactory|null $factory
      */
-    public function __construct(ContainerInterface $container, InstantiatorInterface $instantiator = null, ReceiverFactory $factory = null)
+    public function __construct(ContainerInterface $container, ?InstantiatorInterface $instantiator = null, ?ReceiverFactory $factory = null)
     {
         $this->container = $container;
         $this->instantiator = $instantiator ?: $container->get(InstantiatorInterface::class);
@@ -175,7 +175,7 @@ class ReceiverBuilder
      *
      * @see MessageLoggerReceiver
      */
-    public function log(LoggerInterface $logger = null): ReceiverBuilder
+    public function log(?LoggerInterface $logger = null): ReceiverBuilder
     {
         if ($logger) {
             $this->factory->setLogger($logger);
@@ -243,7 +243,7 @@ class ReceiverBuilder
      *
      * @see MemoryLimiterReceiver
      */
-    public function memory(int $bytes, callable $memoryResolver = null): ReceiverBuilder
+    public function memory(int $bytes, ?callable $memoryResolver = null): ReceiverBuilder
     {
         return $this->add(new MemoryLimiterReceiver($bytes, $this->logger, $memoryResolver));
     }
@@ -371,7 +371,7 @@ class ReceiverBuilder
      *
      * @see ClassNameBinder
      */
-    public function bindByClassName(callable $validator = null): ReceiverBuilder
+    public function bindByClassName(?callable $validator = null): ReceiverBuilder
     {
         return $this->binder(
             new ClassNameBinder(
@@ -453,7 +453,7 @@ class ReceiverBuilder
      *
      * @return $this
      */
-    public function mapProcessor(array $mapping, callable $keyBuilder = null): ReceiverBuilder
+    public function mapProcessor(array $mapping, ?callable $keyBuilder = null): ReceiverBuilder
     {
         return $this->outlet(new ProcessorReceiver(
             new MapProcessorResolver($mapping, new JobHintProcessorResolver($this->instantiator), $keyBuilder)

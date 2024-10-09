@@ -66,9 +66,9 @@ class ReceiverFactory
      * ReceiverBuilder constructor.
      *
      * @param ContainerInterface $container
-     * @param InstantiatorInterface $instantiator
+     * @param InstantiatorInterface|null $instantiator
      */
-    public function __construct(ContainerInterface $container, InstantiatorInterface $instantiator = null)
+    public function __construct(ContainerInterface $container, ?InstantiatorInterface $instantiator = null)
     {
         $this->container = $container;
         $this->instantiator = $instantiator ?: $container->get(InstantiatorInterface::class);
@@ -85,7 +85,7 @@ class ReceiverFactory
             return new MessageCountLimiterReceiver($number, $factory->logger());
         }, false);
 
-        $this->addFactory(MemoryLimiterReceiver::class, function (ReceiverFactory $factory, int $bytes, callable $memoryResolver = null) {
+        $this->addFactory(MemoryLimiterReceiver::class, function (ReceiverFactory $factory, int $bytes, ?callable $memoryResolver = null) {
             return new MemoryLimiterReceiver($bytes, $factory->logger(), $memoryResolver);
         }, false);
 
@@ -113,7 +113,7 @@ class ReceiverFactory
             return new BinderReceiver($binders);
         }, false);
 
-        $this->addFactory(MessageWatcherReceiver::class, function (ReceiverFactory $factory, callable $callable = null) {
+        $this->addFactory(MessageWatcherReceiver::class, function (ReceiverFactory $factory, ?callable $callable = null) {
             return new MessageWatcherReceiver($callable);
         }, false);
 

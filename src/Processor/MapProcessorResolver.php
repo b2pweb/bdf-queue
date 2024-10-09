@@ -42,10 +42,10 @@ class MapProcessorResolver implements ProcessorResolverInterface
      * MapProcessorResolver
      *
      * @param array $map
-     * @param ProcessorResolverInterface $delegate
-     * @param callable $keyBuilder
+     * @param ProcessorResolverInterface|null $delegate
+     * @param callable|null $keyBuilder
      */
-    public function __construct(array $map, ProcessorResolverInterface $delegate = null, callable $keyBuilder = null)
+    public function __construct(array $map, ?ProcessorResolverInterface $delegate = null, ?callable $keyBuilder = null)
     {
         $this->map = $map;
         $this->delegate = $delegate;

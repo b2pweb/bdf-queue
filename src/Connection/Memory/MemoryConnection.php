@@ -31,9 +31,9 @@ class MemoryConnection implements ConnectionDriverInterface, ManageableQueueInte
      * MemoryConnection constructor.
      *
      * @param string $name
-     * @param SerializerInterface $serializer
+     * @param SerializerInterface|null $serializer
      */
-    public function __construct(string $name = 'memory', SerializerInterface $serializer = null)
+    public function __construct(string $name = 'memory', ?SerializerInterface $serializer = null)
     {
         $this->name = $name;
         $this->storage = new Storage();

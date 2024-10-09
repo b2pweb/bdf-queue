@@ -25,7 +25,7 @@ class StopWhenEmptyReceiver implements ReceiverInterface
      * @param ReceiverInterface|LoggerInterface|null $delegate Previous receiver
      * @param LoggerInterface|null $logger Logger. Null value can be set instead of NullLogger
      */
-    public function __construct($delegate = null, LoggerInterface $logger = null)
+    public function __construct($delegate = null, ?LoggerInterface $logger = null)
     {
         if ($delegate instanceof ReceiverInterface) {
             @trigger_error('Passing delegate in constructor of receiver is deprecated since 1.4', E_USER_DEPRECATED);

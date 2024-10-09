@@ -26,10 +26,10 @@ final class ClassNameBinder implements BinderInterface
     /**
      * ClassNameBinder constructor.
      *
-     * @param SerializerInterface $serializer The serializer
+     * @param SerializerInterface|null $serializer The serializer
      * @param callable|null $validator Validator for the class name or data. Take the class and data as parameters, and returns a boolean (true if valid)
      */
-    public function __construct(SerializerInterface $serializer = null, callable $validator = null)
+    public function __construct(?SerializerInterface $serializer = null, ?callable $validator = null)
     {
         $this->serializer = $serializer ?: (new SerializerBuilder())->build();
         $this->validator = $validator;
