@@ -4,7 +4,6 @@ namespace Bdf\Queue\Serializer;
 
 use Bdf\Queue\Exception\SerializationException;
 use Bdf\Queue\Message\Message;
-use Bdf\Serializer\Normalizer\ClosureNormalizer;
 use Bdf\Serializer\SerializerBuilder;
 use PHPUnit\Framework\TestCase;
 
@@ -24,9 +23,6 @@ class BdfSerializerTest extends TestCase
     protected function setUp(): void
     {
         $serializer = (new SerializerBuilder())->build();
-        $serializer->getLoader()
-            ->addNormalizer(new ClosureNormalizer());
-
         $this->serializer = new BdfSerializer($serializer);
     }
 

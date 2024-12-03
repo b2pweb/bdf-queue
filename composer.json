@@ -20,6 +20,7 @@
     }
   },
   "minimum-stability": "dev",
+  "prefer-stable": true,
   "require": {
     "php": "~7.4 || ~8.0.0 || ~8.1.0 || ~8.2.0 || ~8.3.0 || ~8.4.0",
     "ext-pcntl": "*",
@@ -34,7 +35,6 @@
     "ramsey/uuid": "~3.0|~4.0",
     "enqueue/enqueue": "~0.9",
     "enqueue/fs": "~0.9",
-    "jeremeamia/superclosure": "~2.1",
     "league/container": "~3.0",
     "monolog/monolog": "~2.0",
     "pda/pheanstalk": "^3.1@dev",
@@ -44,7 +44,7 @@
     "symfony/error-handler": "~5.4|~6.0|~7.0",
     "symfony/phpunit-bridge": "~5.4|~6.0|~7.0",
     "symfony/var-dumper": "~5.4|~6.0|~7.0",
-    "vimeo/psalm": "~5.22",
+    "vimeo/psalm": "~5.22 | ~6.0",
     "predis/predis": "~1.1.0",
     "friendsofphp/php-cs-fixer": "^3.0"
   },
