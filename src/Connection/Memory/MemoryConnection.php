@@ -5,18 +5,20 @@ namespace Bdf\Queue\Connection\Memory;
 use Bdf\Queue\Connection\ConnectionDriverInterface;
 use Bdf\Queue\Connection\Extension\ConfigurableConnection;
 use Bdf\Queue\Connection\ManageableQueueInterface;
+use Bdf\Queue\Connection\ManageableTopicInterface;
 use Bdf\Queue\Connection\QueueDriverInterface;
 use Bdf\Queue\Connection\TopicDriverInterface;
 use Bdf\Queue\Connection\Extension\ConnectionNamed;
 use Bdf\Queue\Message\MessageSerializationTrait;
 use Bdf\Queue\Serializer\Serializer;
 use Bdf\Queue\Serializer\SerializerInterface;
+use Bdf\Queue\Util\TopicMatcher;
 use SplObjectStorage;
 
 /**
  * MemoryConnection
  */
-class MemoryConnection implements ConnectionDriverInterface, ManageableQueueInterface
+class MemoryConnection implements ConnectionDriverInterface, ManageableQueueInterface, ManageableTopicInterface
 {
     use ConfigurableConnection;
     use ConnectionNamed;
@@ -83,6 +85,36 @@ class MemoryConnection implements ConnectionDriverInterface, ManageableQueueInte
     public function deleteQueue(string $queue): void
     {
         unset($this->storage->queues[$queue]);
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function declareTopic(string $topic): void
+    {
+        // Don't need to declare a topic
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function deleteTopic(string $topic): void
+    {
+        foreach ($this->storage->awaitings as $consumerId => $queue) {
+            $newQueue = [];
+
+            foreach ($queue as $metadata) {
+                if (!TopicMatcher::match($topic, $metadata['topic'])) {
+                    $newQueue[] = $metadata;
+                }
+            }
+
+            if (!$newQueue) {
+                unset($this->storage->awaitings[$consumerId]);
+            } else {
+                $this->storage->awaitings[$consumerId] = $newQueue;
+            }
+        }
     }
 
     /**

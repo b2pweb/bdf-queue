@@ -22,6 +22,8 @@ class Storage
     /**
      * The subscribers
      *
+     * @deprecated This attribute is always empty
+     *
      * @var array
      */
     public $listeners = [];

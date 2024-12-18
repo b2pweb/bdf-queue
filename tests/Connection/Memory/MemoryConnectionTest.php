@@ -2,6 +2,7 @@
 
 namespace Bdf\Queue\Connection\Memory;
 
+use Bdf\Queue\Message\Message;
 use Bdf\Queue\Serializer\JsonSerializer;
 use PHPUnit\Framework\TestCase;
 
@@ -38,11 +39,34 @@ class MemoryConnectionTest extends TestCase
     /**
      *
      */
-    public function test_declare_queues()
+    public function test_declare_delete_queue()
     {
         $this->connection->declareQueue('foo');
 
         $this->assertSame(['foo'], $this->connection->getQueues());
+
+        $this->connection->deleteQueue('foo');
+
+        $this->assertSame([], $this->connection->getQueues());
+    }
+
+    /**
+     *
+     */
+    public function test_declare_delete_topic()
+    {
+        $this->connection->declareTopic('topic');
+        $driver = $this->connection->topic();
+
+        $driver->subscribe(['topic', 'other'], function() {});
+        $driver->publish(Message::createForTopic('topic', ['content'], 'TestEvent'));
+        $driver->publish(Message::createForTopic('topic', ['content'], 'TestEvent'));
+        $driver->publish(Message::createForTopic('other', ['content'], 'TestEvent'));
+
+        $this->assertSame(3, $driver->awaiting());
+
+        $this->connection->deleteTopic('topic');
+        $this->assertSame(1, $driver->awaiting());
     }
 
     /**
