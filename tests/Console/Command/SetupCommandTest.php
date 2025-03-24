@@ -82,6 +82,22 @@ class SetupCommandTest extends TestCase
     /**
      *
      */
+    public function test_declare_all()
+    {
+        $command = new SetupCommand($this->manager);
+        $tester = new CommandTester($command);
+
+        $tester->execute([
+            '--all' => true,
+        ]);
+
+        $this->assertMatchesRegularExpression('/^The destination "foo" has been declared/', $tester->getDisplay());
+        $this->assertArrayHasKey('bar', $this->connection->storage()->queues);
+    }
+
+    /**
+     *
+     */
     public function test_create_with_topic()
     {
         $command = new SetupCommand($this->manager);
@@ -110,6 +126,25 @@ class SetupCommandTest extends TestCase
         $tester->execute([
             'connection' => 'foo',
             '--drop' => true,
+        ]);
+
+        $this->assertMatchesRegularExpression('/^The destination "foo" has been deleted/', $tester->getDisplay());
+        $this->assertArrayNotHasKey('bar', $this->connection->storage()->queues);
+    }
+
+    /**
+     *
+     */
+    public function test_drop_all()
+    {
+        $this->connection->storage()->queues['bar'] = [];
+
+        $command = new SetupCommand($this->manager);
+        $tester = new CommandTester($command);
+
+        $tester->execute([
+            '--drop' => true,
+            '--all' => true,
         ]);
 
         $this->assertMatchesRegularExpression('/^The destination "foo" has been deleted/', $tester->getDisplay());

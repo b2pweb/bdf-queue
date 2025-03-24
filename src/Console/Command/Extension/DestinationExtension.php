@@ -44,9 +44,9 @@ trait DestinationExtension
      *
      * @param InputDefinition $definition
      */
-    public function configureDestinationOptions(InputDefinition $definition)
+    public function configureDestinationOptions(InputDefinition $definition, bool $connectionIsRequired = true)
     {
-        $definition->addArgument(new InputArgument('connection', InputArgument::REQUIRED, 'The name of connection'));
+        $definition->addArgument(new InputArgument('connection', $connectionIsRequired ? InputArgument::REQUIRED : InputArgument::OPTIONAL, 'The name of connection'));
         $definition->addOption(new InputOption('queue', null, InputOption::VALUE_REQUIRED, 'The queues to listen on. can be separated by comma (only for reading).'));
         $definition->addOption(new InputOption('topic', null, InputOption::VALUE_REQUIRED, 'The topic to subscribe.'));
     }
