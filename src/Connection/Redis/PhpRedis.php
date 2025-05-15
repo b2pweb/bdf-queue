@@ -168,7 +168,7 @@ class PhpRedis implements RedisInterface
     public function evaluate($script, array $keys = [], array $args = [])
     {
         try {
-            return $this->checkError($this->redis->evaluate($script, array_merge($keys, $args), count($keys)));
+            return $this->checkError($this->redis->eval($script, array_merge($keys, $args), count($keys)));
         } catch (RedisException $e) {
             throw new ConnectionLostException($e->getMessage(), $e->getCode(), $e);
         }
