@@ -59,6 +59,9 @@
     "enqueue/enqueue": "Required to use the Enqueue driver (~0.9)",
     "symfony/var-dumper": "VarDumper could be used for displaying failed message (~5.4|~6.0|~7.0)"
   },
+  "conflict": {
+    "enqueue/dsn": "0.10.25"
+  },
   "scripts": {
     "tests": "phpunit",
     "tests-with-coverage": "phpunit --coverage-clover coverage.xml",
