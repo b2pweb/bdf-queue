@@ -21,6 +21,8 @@ use Pheanstalk\Exception\SocketException;
 use Pheanstalk\Job as PheanstalkJob;
 use Pheanstalk\Pheanstalk;
 
+use function method_exists;
+
 /**
  * PheanstalkDriver
  */
@@ -94,7 +96,14 @@ class PheanstalkQueue implements QueueDriverInterface, CountableQueueDriverInter
         $pheanstalk = $this->connection->pheanstalk();
 
         try {
-            $job = $pheanstalk->watchOnly($queue)->reserve($duration);
+            $pheanstalk = $pheanstalk->watchOnly($queue);
+
+            if (method_exists($pheanstalk, 'reserveWithTimeout')) {
+                $job = $pheanstalk->reserveWithTimeout($duration);
+            } else {
+                // Support for Pheanstalk 3
+                $job = $pheanstalk->reserve($duration);
+            }
         } catch (SocketException $e) {
             throw new ConnectionLostException($e->getMessage(), $e->getCode(), $e);
         } catch (BaseServerException $e) {
@@ -169,11 +178,14 @@ class PheanstalkQueue implements QueueDriverInterface, CountableQueueDriverInter
         $workersInfo = [];
 
         foreach ($this->connection->getActiveHost() as $host => $port) {
-            $pheanstalk = new Pheanstalk($host, $port);
+            $pheanstalk = method_exists(Pheanstalk::class, 'create')
+                ? Pheanstalk::create($host, (int) $port)
+                : new Pheanstalk($host, $port)
+            ;
 
             try {
-                $queuesInfo = array_merge($queuesInfo, $this->queuesInfo($pheanstalk));
-                $workersInfo = array_merge($workersInfo, $this->workersInfo($pheanstalk));
+                $queuesInfo = array_merge($queuesInfo, $this->queuesInfo($pheanstalk, $host, $port));
+                $workersInfo = array_merge($workersInfo, $this->workersInfo($pheanstalk, $host, $port));
             } catch (SocketException $e) {
                 throw new ConnectionLostException($e->getMessage(), $e->getCode(), $e);
             } catch (BaseServerException $e) {
@@ -196,7 +208,7 @@ class PheanstalkQueue implements QueueDriverInterface, CountableQueueDriverInter
      *
      * @return array
      */
-    private function queuesInfo($pheanstalk)
+    private function queuesInfo($pheanstalk, string $host, int $port): array
     {
         $status = [];
 
@@ -206,7 +218,7 @@ class PheanstalkQueue implements QueueDriverInterface, CountableQueueDriverInter
                 $stats = $pheanstalk->statsTube($tube);
 
                 $status[] = [
-                    'host'              => $pheanstalk->getConnection()->getHost().':'.$pheanstalk->getConnection()->getPort(),
+                    'host'              => $host.':'.$port,
                     'queue'             => $stats['name'],
                     'jobs in queue'     => $stats['current-jobs-ready'],
                     'jobs running'      => $stats['current-jobs-reserved'],
@@ -232,13 +244,13 @@ class PheanstalkQueue implements QueueDriverInterface, CountableQueueDriverInter
      *
      * @return array
      */
-    private function workersInfo($pheanstalk)
+    private function workersInfo($pheanstalk, string $host, int $port): array
     {
         $jobs = [];
 
         foreach ($pheanstalk->listTubes() as $tube) {
             $job = [
-                'host'              => $pheanstalk->getConnection()->getHost().':'.$pheanstalk->getConnection()->getPort(),
+                'host'              => $host.':'.$port,
                 'queue'             => $tube,
                 'job ready id'      => '',
                 'job ready data'    => '',

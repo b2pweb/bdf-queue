@@ -8,12 +8,17 @@ use Bdf\Queue\Connection\Exception\ServerException;
 use Bdf\Queue\Message\Message;
 use Bdf\Queue\Message\QueuedMessage;
 use Bdf\Queue\Serializer\JsonSerializer;
+use Pheanstalk\Contract\PheanstalkInterface;
+use Pheanstalk\Contract\ResponseInterface;
 use Pheanstalk\Exception\SocketException;
 use Pheanstalk\Job as PheanstalkJob;
 use Pheanstalk\Pheanstalk;
-use Pheanstalk\PheanstalkInterface;
+use Pheanstalk\Response\ArrayResponse;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
+
+use function class_exists;
+use function method_exists;
 
 /**
  * @group Bdf_Queue
@@ -37,6 +42,7 @@ class PheanstalkQueueTest extends TestCase
      */
     public function setUp(): void
     {
+        class_exists(PheanstalkConnection::class); // Autoload Pheanstalk classes to ensure that interface alias is defined
         $this->pheanstalk = $this->createMock(PheanstalkInterface::class);
 
         $connection = new PheanstalkConnection('foo', new JsonSerializer());
@@ -139,7 +145,12 @@ class PheanstalkQueueTest extends TestCase
         $job->expects($this->once())->method('getData')->willReturn('{"data":"foo"}');
 
         $this->pheanstalk->expects($this->once())->method('watchOnly')->with('queue')->willReturnSelf();
-        $this->pheanstalk->expects($this->once())->method('reserve')->with(1)->willReturn($job);
+
+        if (method_exists(Pheanstalk::class, 'reserveWithTimeout')) {
+            $this->pheanstalk->expects($this->once())->method('reserveWithTimeout')->with(1)->willReturn($job);
+        } else {
+            $this->pheanstalk->expects($this->once())->method('reserve')->with(1)->willReturn($job);
+        }
 
         $message = $this->driver->pop('queue', 1)->message();
 
@@ -156,7 +167,12 @@ class PheanstalkQueueTest extends TestCase
     public function test_pop_end_of_queue()
     {
         $this->pheanstalk->expects($this->once())->method('watchOnly')->willReturnSelf();
-        $this->pheanstalk->expects($this->once())->method('reserve')->willReturn(null);
+
+        if (method_exists(Pheanstalk::class, 'reserveWithTimeout')) {
+            $this->pheanstalk->expects($this->once())->method('reserveWithTimeout')->willReturn(null);
+        } else {
+            $this->pheanstalk->expects($this->once())->method('reserve')->willReturn(null);
+        }
 
         $this->assertSame(null, $this->driver->pop('queue', 1));
     }
@@ -168,7 +184,11 @@ class PheanstalkQueueTest extends TestCase
     {
         $this->expectException($expected);
         $this->pheanstalk->expects($this->once())->method('watchOnly')->willReturnSelf();
-        $this->pheanstalk->expects($this->once())->method('reserve')->willThrowException($internal);
+        if (method_exists(Pheanstalk::class, 'reserveWithTimeout')) {
+            $this->pheanstalk->expects($this->once())->method('reserveWithTimeout')->willThrowException($internal);
+        } else {
+            $this->pheanstalk->expects($this->once())->method('reserve')->willThrowException($internal);
+        }
 
         $this->driver->pop('queue', 1);
     }
@@ -236,7 +256,7 @@ class PheanstalkQueueTest extends TestCase
      */
     public function test_count()
     {
-        $this->pheanstalk->expects($this->once())->method('statsTube')->with('queue')->willReturn(['current-jobs-ready' => 1]);
+        $this->pheanstalk->expects($this->once())->method('statsTube')->with('queue')->willReturn(new ArrayResponse('', ['current-jobs-ready' => 1]));
 
         $this->assertSame(1, $this->driver->count('queue'));
     }

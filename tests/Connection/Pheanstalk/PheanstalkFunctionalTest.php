@@ -48,7 +48,7 @@ class PheanstalkFunctionalTest extends TestCase
 
         $message->acknowledge();
 
-        $this->assertNull($queue->pop('test'));
+        $this->assertNull($queue->pop('test', 1));
     }
 
     public function test_queueRelease()

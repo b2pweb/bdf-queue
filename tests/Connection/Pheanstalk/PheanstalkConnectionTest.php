@@ -5,9 +5,12 @@ namespace Bdf\Queue\Connection\Pheanstalk;
 use Bdf\Queue\Connection\Generic\GenericTopic;
 use Bdf\Queue\Serializer\JsonSerializer;
 use Pheanstalk\Connection;
-use Pheanstalk\PheanstalkInterface;
+use Pheanstalk\Contract\PheanstalkInterface;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
+
+use function class_exists;
+use function method_exists;
 
 /**
  * @group Bdf_Queue
@@ -31,6 +34,7 @@ class PheanstalkConnectionTest extends TestCase
      */
     public function setUp(): void
     {
+        class_exists(PheanstalkConnection::class); // Autoload Pheanstalk classes to ensure that interface alias is defined
         $this->pheanstalk = $this->createMock(PheanstalkInterface::class);
 
         $this->connection = new PheanstalkConnection('foo', new JsonSerializer());
@@ -70,6 +74,10 @@ class PheanstalkConnectionTest extends TestCase
      */
     public function test_close()
     {
+        if (!method_exists($this->pheanstalk, 'getConnection')) {
+            $this->markTestSkipped('Pheanstalk < 4.0 does not support connection closing');
+        }
+
         $connection = $this->createMock(Connection::class);
         $connection->expects($this->once())->method('disconnect');
         $this->pheanstalk->expects($this->once())->method('getConnection')->willReturn($connection);

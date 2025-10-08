@@ -11,9 +11,19 @@ use Bdf\Queue\Exception\ServerNotAvailableException;
 use Bdf\Queue\Message\MessageSerializationTrait;
 use Bdf\Queue\Serializer\SerializerInterface;
 use Bdf\Queue\Util\MultiServer;
-use Pheanstalk\Connection;
 use Pheanstalk\Pheanstalk;
-use Pheanstalk\PheanstalkInterface;
+use Pheanstalk\Contract\PheanstalkInterface;
+
+use function class_alias;
+use function fclose;
+use function fsockopen;
+use function interface_exists;
+use function method_exists;
+
+// Support for Pheanstalk 3
+if (!interface_exists(PheanstalkInterface::class)) {
+    class_alias(\Pheanstalk\PheanstalkInterface::class, PheanstalkInterface::class);
+}
 
 /**
  * PheanstalkConnection
@@ -84,7 +94,12 @@ class PheanstalkConnection implements ConnectionDriverInterface
             // Set the first available server
             // Pheanstalk manage a lazy connection. We can instantiate the client here.
             foreach ($this->getActiveHost() as $host => $port) {
-                $this->pheanstalk = new Pheanstalk($host, $port, $this->config['client-timeout']);
+                if (method_exists(Pheanstalk::class, 'create')) {
+                    $this->pheanstalk = Pheanstalk::create($host, (int) $port, (int) ($this->config['client-timeout'] ?? 10));
+                } else {
+                    // Pheanstalk 3
+                    $this->pheanstalk = new Pheanstalk($host, $port, $this->config['client-timeout']);
+                }
                 break;
             }
         }
@@ -108,7 +123,10 @@ class PheanstalkConnection implements ConnectionDriverInterface
     public function close(): void
     {
         if ($this->pheanstalk !== null) {
-            $this->pheanstalk->getConnection()->disconnect();
+            if (method_exists($this->pheanstalk, 'getConnection')) {
+                $this->pheanstalk->getConnection()->disconnect();
+            }
+
             $this->pheanstalk = null;
         }
     }
@@ -143,7 +161,10 @@ class PheanstalkConnection implements ConnectionDriverInterface
         $valid = [];
 
         foreach ($this->config['hosts'] as $host => $port) {
-            if ((new Connection($host, $port))->isServiceListening()) {
+            $stream = @fsockopen($host, $port, $errno, $errstr, 0.1);
+
+            if ($stream !== false) {
+                fclose($stream);
                 $valid[$host] = $port;
             }
         }
