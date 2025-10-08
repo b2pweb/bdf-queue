@@ -65,8 +65,6 @@ jobs:
     - name: Install & run Beanstalkd
       run: | 
         sudo apt-get install -y beanstalkd
-        sudo systemctl enable beanstalkd.service
-        sudo systemctl enable beanstalkd.socket
         sudo systemctl start beanstalkd.service
 
     - name: Install dependencies
