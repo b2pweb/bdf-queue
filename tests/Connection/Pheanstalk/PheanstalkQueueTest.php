@@ -9,6 +9,7 @@ use Bdf\Queue\Message\Message;
 use Bdf\Queue\Message\QueuedMessage;
 use Bdf\Queue\Serializer\JsonSerializer;
 use Pheanstalk\Contract\PheanstalkInterface;
+use Pheanstalk\Contract\PheanstalkSubscriberInterface;
 use Pheanstalk\Contract\ResponseInterface;
 use Pheanstalk\Exception\SocketException;
 use Pheanstalk\Job as PheanstalkJob;
@@ -18,6 +19,7 @@ use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 
 use function class_exists;
+use function interface_exists;
 use function method_exists;
 
 /**
@@ -42,6 +44,10 @@ class PheanstalkQueueTest extends TestCase
      */
     public function setUp(): void
     {
+        if (interface_exists(PheanstalkSubscriberInterface::class)) {
+            $this->markTestSkipped('Pheanstalk >= 5 is not supported');
+        }
+
         class_exists(PheanstalkConnection::class); // Autoload Pheanstalk classes to ensure that interface alias is defined
         $this->pheanstalk = $this->createMock(PheanstalkInterface::class);
 
@@ -103,10 +109,10 @@ class PheanstalkQueueTest extends TestCase
         $this->driver->push($message);
     }
 
-    public function provideExceptions()
+    public static function provideExceptions()
     {
         return [
-            [ConnectionLostException::class, new SocketException()],
+            [ConnectionLostException::class, class_exists(SocketException::class) ? new SocketException() : new \Pheanstalk\Exception\ConnectionException(1, '')],
             [ServerException::class, new \Pheanstalk\Exception\ServerException()],
             [ConnectionException::class, new \Pheanstalk\Exception\ClientException()],
         ];

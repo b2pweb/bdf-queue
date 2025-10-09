@@ -6,10 +6,12 @@ use Bdf\Queue\Connection\Generic\GenericTopic;
 use Bdf\Queue\Serializer\JsonSerializer;
 use Pheanstalk\Connection;
 use Pheanstalk\Contract\PheanstalkInterface;
+use Pheanstalk\Contract\PheanstalkSubscriberInterface;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 
 use function class_exists;
+use function interface_exists;
 use function method_exists;
 
 /**
@@ -34,6 +36,10 @@ class PheanstalkConnectionTest extends TestCase
      */
     public function setUp(): void
     {
+        if (interface_exists(PheanstalkSubscriberInterface::class)) {
+            $this->markTestSkipped('Pheanstalk >= 5 is not supported');
+        }
+
         class_exists(PheanstalkConnection::class); // Autoload Pheanstalk classes to ensure that interface alias is defined
         $this->pheanstalk = $this->createMock(PheanstalkInterface::class);
 

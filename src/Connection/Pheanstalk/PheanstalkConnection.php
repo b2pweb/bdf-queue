@@ -11,19 +11,30 @@ use Bdf\Queue\Exception\ServerNotAvailableException;
 use Bdf\Queue\Message\MessageSerializationTrait;
 use Bdf\Queue\Serializer\SerializerInterface;
 use Bdf\Queue\Util\MultiServer;
+use Pheanstalk\Contract\PheanstalkManagerInterface;
+use Pheanstalk\Contract\PheanstalkPublisherInterface;
+use Pheanstalk\Contract\PheanstalkSubscriberInterface;
 use Pheanstalk\Pheanstalk;
 use Pheanstalk\Contract\PheanstalkInterface;
 
+use Pheanstalk\Values\Timeout;
+
 use function class_alias;
+use function class_exists;
 use function fclose;
 use function fsockopen;
 use function interface_exists;
 use function method_exists;
 
-// Support for Pheanstalk 3
 if (!interface_exists(PheanstalkInterface::class)) {
-    /** @psalm-suppress UndefinedClass */
-    class_alias(\Pheanstalk\PheanstalkInterface::class, PheanstalkInterface::class);
+    // Support for Pheanstalk 3
+    if (interface_exists(\Pheanstalk\PheanstalkInterface::class)) {
+        /** @psalm-suppress UndefinedClass */
+        class_alias(\Pheanstalk\PheanstalkInterface::class, PheanstalkInterface::class);
+    } else {
+        // Support for Pheanstalk 5
+        class_alias(PheanstalkManagerInterface::class, PheanstalkInterface::class);
+    }
 }
 
 /**
@@ -33,6 +44,9 @@ class PheanstalkConnection implements ConnectionDriverInterface
 {
     use ConnectionNamed;
     use MessageSerializationTrait;
+
+    public const DEFAULT_PORT = 11300;
+    public const DEFAULT_TTR = 60; // 1 minute
 
     /**
      * @var PheanstalkInterface
@@ -61,8 +75,8 @@ class PheanstalkConnection implements ConnectionDriverInterface
      */
     public function setConfig(array $config): void
     {
-        $this->config = MultiServer::prepareMultiServers($config, '127.0.0.1', PheanstalkInterface::DEFAULT_PORT) + [
-            'ttr'            => PheanstalkInterface::DEFAULT_TTR,
+        $this->config = MultiServer::prepareMultiServers($config, '127.0.0.1', self::DEFAULT_PORT) + [
+            'ttr'            => self::DEFAULT_TTR,
             'client-timeout' => null,
         ];
     }
@@ -89,14 +103,21 @@ class PheanstalkConnection implements ConnectionDriverInterface
      * @return PheanstalkInterface
      * @throws ServerNotAvailableException If no servers has been found
      */
-    public function pheanstalk(): PheanstalkInterface
+    public function pheanstalk()
     {
         if ($this->pheanstalk === null) {
             // Set the first available server
             // Pheanstalk manage a lazy connection. We can instantiate the client here.
             foreach ($this->getActiveHost() as $host => $port) {
                 if (method_exists(Pheanstalk::class, 'create')) {
-                    $this->pheanstalk = Pheanstalk::create($host, (int) $port, (int) ($this->config['client-timeout'] ?? 10));
+                    $timeout = (int) ($this->config['client-timeout'] ?? 10);
+
+                    if (class_exists(Timeout::class)) {
+                        // Pheanstalk 5
+                        $timeout = new Timeout($timeout);
+                    }
+
+                    $this->pheanstalk = Pheanstalk::create($host, (int) $port, $timeout);
                 } else {
                     // Pheanstalk 3
                     /** @psalm-suppress InvalidArgument */
