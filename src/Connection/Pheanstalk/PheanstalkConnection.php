@@ -148,6 +148,9 @@ class PheanstalkConnection implements ConnectionDriverInterface
         if ($this->pheanstalk !== null) {
             if (method_exists($this->pheanstalk, 'getConnection')) {
                 $this->pheanstalk->getConnection()->disconnect();
+            } elseif (method_exists($this->pheanstalk, 'disconnect')) {
+                // Pheanstalk 7
+                $this->pheanstalk->disconnect();
             }
 
             $this->pheanstalk = null;
