@@ -22,6 +22,7 @@ use function method_exists;
 
 // Support for Pheanstalk 3
 if (!interface_exists(PheanstalkInterface::class)) {
+    /** @psalm-suppress UndefinedClass */
     class_alias(\Pheanstalk\PheanstalkInterface::class, PheanstalkInterface::class);
 }
 
@@ -98,6 +99,7 @@ class PheanstalkConnection implements ConnectionDriverInterface
                     $this->pheanstalk = Pheanstalk::create($host, (int) $port, (int) ($this->config['client-timeout'] ?? 10));
                 } else {
                     // Pheanstalk 3
+                    /** @psalm-suppress InvalidArgument */
                     $this->pheanstalk = new Pheanstalk($host, $port, $this->config['client-timeout']);
                 }
                 break;
