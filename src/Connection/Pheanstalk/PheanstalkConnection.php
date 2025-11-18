@@ -12,11 +12,8 @@ use Bdf\Queue\Message\MessageSerializationTrait;
 use Bdf\Queue\Serializer\SerializerInterface;
 use Bdf\Queue\Util\MultiServer;
 use Pheanstalk\Contract\PheanstalkManagerInterface;
-use Pheanstalk\Contract\PheanstalkPublisherInterface;
-use Pheanstalk\Contract\PheanstalkSubscriberInterface;
 use Pheanstalk\Pheanstalk;
 use Pheanstalk\Contract\PheanstalkInterface;
-
 use Pheanstalk\Values\Timeout;
 
 use function class_alias;
@@ -27,14 +24,8 @@ use function interface_exists;
 use function method_exists;
 
 if (!interface_exists(PheanstalkInterface::class)) {
-    // Support for Pheanstalk 3
-    if (interface_exists(\Pheanstalk\PheanstalkInterface::class)) {
-        /** @psalm-suppress UndefinedClass */
-        class_alias(\Pheanstalk\PheanstalkInterface::class, PheanstalkInterface::class);
-    } else {
-        // Support for Pheanstalk 5
-        class_alias(PheanstalkManagerInterface::class, PheanstalkInterface::class);
-    }
+    // Support for Pheanstalk 5
+    class_alias(PheanstalkManagerInterface::class, PheanstalkInterface::class);
 }
 
 /**
@@ -109,20 +100,14 @@ class PheanstalkConnection implements ConnectionDriverInterface
             // Set the first available server
             // Pheanstalk manage a lazy connection. We can instantiate the client here.
             foreach ($this->getActiveHost() as $host => $port) {
-                if (method_exists(Pheanstalk::class, 'create')) {
-                    $timeout = (int) ($this->config['client-timeout'] ?? 10);
+                $timeout = (int) ($this->config['client-timeout'] ?? 10);
 
-                    if (class_exists(Timeout::class)) {
-                        // Pheanstalk 5
-                        $timeout = new Timeout($timeout);
-                    }
-
-                    $this->pheanstalk = Pheanstalk::create($host, (int) $port, $timeout);
-                } else {
-                    // Pheanstalk 3
-                    /** @psalm-suppress InvalidArgument */
-                    $this->pheanstalk = new Pheanstalk($host, $port, $this->config['client-timeout']);
+                if (class_exists(Timeout::class)) {
+                    // Pheanstalk 5
+                    $timeout = new Timeout($timeout);
                 }
+
+                $this->pheanstalk = Pheanstalk::create($host, (int) $port, $timeout);
                 break;
             }
         }
@@ -146,9 +131,7 @@ class PheanstalkConnection implements ConnectionDriverInterface
     public function close(): void
     {
         if ($this->pheanstalk !== null) {
-            if (method_exists($this->pheanstalk, 'getConnection')) {
-                $this->pheanstalk->getConnection()->disconnect();
-            } elseif (method_exists($this->pheanstalk, 'disconnect')) {
+            if (method_exists($this->pheanstalk, 'disconnect')) {
                 // Pheanstalk 7
                 $this->pheanstalk->disconnect();
             }

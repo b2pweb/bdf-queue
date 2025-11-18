@@ -5,7 +5,6 @@ namespace Bdf\Queue\Connection\Pheanstalk;
 use Bdf\Queue\Connection\ConnectionDriverInterface;
 use Bdf\Queue\Connection\CountableQueueDriverInterface;
 use Bdf\Queue\Connection\Exception\ConnectionException;
-use Bdf\Queue\Connection\Exception\ConnectionFailedException;
 use Bdf\Queue\Connection\Exception\ConnectionLostException;
 use Bdf\Queue\Connection\Exception\ServerException;
 use Bdf\Queue\Connection\Extension\ConnectionBearer;
@@ -21,10 +20,8 @@ use Pheanstalk\Exception\ServerException as BaseServerException;
 use Pheanstalk\Exception\SocketException;
 use Pheanstalk\Job as PheanstalkJob;
 use Pheanstalk\Pheanstalk;
-
 use Pheanstalk\Values\Job as Pheanstalk5Job;
 use Pheanstalk\Values\TubeName;
-
 use Pheanstalk\Values\TubeStats;
 
 use function class_exists;
@@ -137,12 +134,7 @@ class PheanstalkQueue implements QueueDriverInterface, CountableQueueDriverInter
                 }
             }
 
-            if (method_exists($pheanstalk, 'reserveWithTimeout')) {
-                $job = $pheanstalk->reserveWithTimeout($duration);
-            } else {
-                // Support for Pheanstalk 3
-                $job = $pheanstalk->reserve($duration);
-            }
+            $job = $pheanstalk->reserveWithTimeout($duration);
         } catch (SocketException|PheanstalkConnectionException $e) {
             throw new ConnectionLostException($e->getMessage(), $e->getCode(), $e);
         } catch (BaseServerException $e) {
@@ -228,10 +220,7 @@ class PheanstalkQueue implements QueueDriverInterface, CountableQueueDriverInter
         $workersInfo = [];
 
         foreach ($this->connection->getActiveHost() as $host => $port) {
-            $pheanstalk = method_exists(Pheanstalk::class, 'create')
-                ? Pheanstalk::create($host, (int) $port)
-                : new Pheanstalk($host, $port)
-            ;
+            $pheanstalk = Pheanstalk::create($host, (int) $port);
 
             try {
                 $queuesInfo = array_merge($queuesInfo, $this->queuesInfo($pheanstalk, $host, $port));

@@ -80,13 +80,7 @@ class PheanstalkConnectionTest extends TestCase
      */
     public function test_close()
     {
-        if (!method_exists($this->pheanstalk, 'getConnection')) {
-            $this->markTestSkipped('Pheanstalk < 4.0 does not support connection closing');
-        }
-
-        $connection = $this->createMock(Connection::class);
-        $connection->expects($this->once())->method('disconnect');
-        $this->pheanstalk->expects($this->once())->method('getConnection')->willReturn($connection);
+        $this->expectNotToPerformAssertions();
 
         $this->connection->close();
         // close once
