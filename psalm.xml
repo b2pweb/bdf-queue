@@ -12,6 +12,9 @@
         <directory name="src" />
         <ignoreFiles>
             <directory name="vendor" />
+
+            <!-- Too much hack to get pheanstalk v3-5 works, so disable psalm until legacy is removed -->
+            <directory name="src/Connection/Pheanstalk" />
         </ignoreFiles>
     </projectFiles>
     
