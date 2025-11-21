@@ -52,7 +52,7 @@ class RegexQueueNamingStrategyTest extends TestCase
         $this->assertFalse($strategy->queueMatchWithTopic('/foo.*', 'bar.baz'));
 
         $cache = new \ReflectionProperty(RegexQueueNamingStrategy::class, 'matchCache');
-        $cache->setAccessible(true);
+        PHP_VERSION_ID >= 80100 or $cache->setAccessible(true);
 
         $this->assertSame([
             'foo.*' => [

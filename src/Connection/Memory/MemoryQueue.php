@@ -55,7 +55,7 @@ class MemoryQueue implements QueueDriverInterface, ReservableQueueDriverInterfac
         $metadata = ['reserved' => false, 'delay' => $delay];
         $object = (object)['raw' => $raw, 'queue' => $queue, 'metadata' => $metadata];
 
-        $this->connection->storage()->queues[$queue]->attach($object, $metadata);
+        $this->connection->storage()->queues[$queue][$object] = $metadata;
     }
 
     /**
@@ -115,8 +115,7 @@ class MemoryQueue implements QueueDriverInterface, ReservableQueueDriverInterfac
      */
     public function acknowledge(QueuedMessage $message): void
     {
-        $this->connection->storage()->queues[$message->queue()]
-            ->detach($message->internalJob());
+        unset($this->connection->storage()->queues[$message->queue()][$message->internalJob()]);
     }
 
     /**

@@ -62,7 +62,7 @@ class MapProcessorResolver implements ProcessorResolverInterface
     {
         $key = ($this->keyBuilder)($envelope);
 
-        if (isset($this->map[$key])) {
+        if ($key !== null && isset($this->map[$key])) {
             if ($this->map[$key] instanceof ProcessorInterface) {
                 return $this->map[$key];
             }

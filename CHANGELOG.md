@@ -1,3 +1,8 @@
+v1.6.0
+------
+
+* Drop support for pheanstalk v3
+
 v1.4.0
 ------
 

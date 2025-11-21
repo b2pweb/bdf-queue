@@ -65,7 +65,7 @@ class InfoCommand extends Command
         foreach ($connections as $connection) {
             $reports = $connection->queue()->stats();
 
-            if (isset($reports[$filter])) {
+            if ($filter !== null && isset($reports[$filter])) {
                 $reports = [$filter => $reports[$filter]];
             }
 
