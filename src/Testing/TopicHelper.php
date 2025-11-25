@@ -25,9 +25,9 @@ class TopicHelper
     private $container;
 
     /**
-     * @var string
+     * @var string|null
      */
-    private $defaultDestination;
+    private $defaultDestination = null;
 
     /**
      * @var TopicConsumer[]

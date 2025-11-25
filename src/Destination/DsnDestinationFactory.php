@@ -66,12 +66,13 @@ final class DsnDestinationFactory implements DestinationFactoryInterface
         $dsn = Dsn::parse($destination);
 
         $connection = $this->factory->create($dsn->getHost());
+        $scheme = $dsn->getScheme() ?? '';
 
-        if (!isset($this->factories[$dsn->getScheme()])) {
-            throw new \InvalidArgumentException('The destination type '.$dsn->getScheme().' is not supported, for destination '.$destination);
+        if (!isset($this->factories[$scheme])) {
+            throw new \InvalidArgumentException('The destination type '.$scheme.' is not supported, for destination '.$destination);
         }
 
-        return $this->factories[$dsn->getScheme()]($connection, $dsn);
+        return $this->factories[$scheme]($connection, $dsn);
     }
 
     /**

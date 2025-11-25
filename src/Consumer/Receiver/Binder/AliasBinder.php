@@ -43,7 +43,7 @@ final class AliasBinder implements BinderInterface
         $name = $message->name();
         $data = $message->data();
 
-        if (!is_array($data) || !isset($this->mapping[$name])) {
+        if (!is_array($data) || $name === null || !isset($this->mapping[$name])) {
             return false;
         }
 

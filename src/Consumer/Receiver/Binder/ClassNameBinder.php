@@ -43,7 +43,7 @@ final class ClassNameBinder implements BinderInterface
         $name = $message->name();
         $data = $message->data();
 
-        if (!is_array($data) || !class_exists($name)) {
+        if (!is_array($data) || $name === null || !class_exists($name)) {
             return false;
         }
 
