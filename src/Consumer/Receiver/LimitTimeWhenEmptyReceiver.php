@@ -14,24 +14,9 @@ class LimitTimeWhenEmptyReceiver implements ReceiverInterface
 {
     use DelegateHelper;
 
-    /**
-     * Time limit in second
-     *
-     * @var int
-     */
-    private $limit;
-
-    /**
-     * The end time
-     *
-     * @var int
-     */
-    private $endTime;
-
-    /**
-     * @var LoggerInterface
-     */
-    private $logger;
+    private int $limit;
+    private ?int $endTime;
+    private ?LoggerInterface $logger;
 
     /**
      * TimeLimiterMiddlewareReceiver constructor.

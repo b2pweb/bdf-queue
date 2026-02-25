@@ -9,6 +9,7 @@ use Bdf\Queue\Consumer\DelegateHelper;
 use Bdf\Queue\Consumer\Receiver\BenchReceiver;
 use Bdf\Queue\Consumer\Receiver\Binder\BinderReceiver;
 use Bdf\Queue\Consumer\Receiver\Binder\ClassNameBinder;
+use Bdf\Queue\Consumer\Receiver\LimitTimeWhenEmptyReceiver;
 use Bdf\Queue\Consumer\Receiver\MemoryLimiterReceiver;
 use Bdf\Queue\Consumer\Receiver\MessageCountLimiterReceiver;
 use Bdf\Queue\Consumer\Receiver\MessageLoggerReceiver;
@@ -567,6 +568,22 @@ class ReceiverBuilderTest extends TestCase
         $this->assertEquals(
             new ReceiverPipeline([
                 new TimeLimiterReceiver(10, new LoggerProxy(new NullLogger())),
+                new ProcessorReceiver(new JobHintProcessorResolver($this->container->get(InstantiatorInterface::class))),
+            ]),
+            $this->builder->build()
+        );
+    }
+
+    /**
+     *
+     */
+    public function test_expire_when_empty()
+    {
+        $this->builder->expireWhenEmpty(10);
+
+        $this->assertEquals(
+            new ReceiverPipeline([
+                new LimitTimeWhenEmptyReceiver(10, new LoggerProxy(new NullLogger())),
                 new ProcessorReceiver(new JobHintProcessorResolver($this->container->get(InstantiatorInterface::class))),
             ]),
             $this->builder->build()
