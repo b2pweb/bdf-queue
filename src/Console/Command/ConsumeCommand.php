@@ -83,7 +83,7 @@ class ConsumeCommand extends Command
             ->addOption('save', null, InputOption::VALUE_NONE, 'Save failed job.')
             ->addOption('max', null, InputOption::VALUE_REQUIRED, 'The max number of jobs.')
             ->addOption('expire', null, InputOption::VALUE_REQUIRED, 'The worker duration in seconds.')
-            ->addOption('expireWhenEmpty', null, InputOption::VALUE_REQUIRED, 'Stop the worker when the queues are empty for an among of time in seconds.')
+            ->addOption('expireWhenEmpty', null, InputOption::VALUE_REQUIRED, 'Stop the worker when the queues are empty for an amount of time in seconds.')
             ->addOption('stopWhenEmpty', null, InputOption::VALUE_NONE, 'Stop the worker if the queues are empty.')
             ->addOption('stopOnError', null, InputOption::VALUE_NONE, 'Stop the worker if error occurs.')
             ->addOption('logger', null, InputOption::VALUE_REQUIRED, 'The logger to use "stdout", "null", or "default".', "default")

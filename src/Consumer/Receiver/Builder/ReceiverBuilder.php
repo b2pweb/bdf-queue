@@ -232,7 +232,7 @@ class ReceiverBuilder
     }
 
     /**
-     * Stops consumption when the queues are empty for a among of time
+     * Stops consumption when the queues are empty for an amount of time
      *
      * @param int $seconds Time in seconds
      *
