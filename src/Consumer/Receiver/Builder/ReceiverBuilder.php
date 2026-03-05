@@ -7,6 +7,7 @@ use Bdf\Queue\Consumer\Receiver\Binder\AliasBinder;
 use Bdf\Queue\Consumer\Receiver\Binder\BinderInterface;
 use Bdf\Queue\Consumer\Receiver\Binder\BinderReceiver;
 use Bdf\Queue\Consumer\Receiver\Binder\ClassNameBinder;
+use Bdf\Queue\Consumer\Receiver\LimitTimeWhenEmptyReceiver;
 use Bdf\Queue\Consumer\Receiver\MemoryLimiterReceiver;
 use Bdf\Queue\Consumer\Receiver\MessageCountLimiterReceiver;
 use Bdf\Queue\Consumer\Receiver\MessageLoggerReceiver;
@@ -219,15 +220,29 @@ class ReceiverBuilder
      * Limit the number of received message
      * When the limit is reached, the consumer is stopped
      *
-     * @param int $seconds Number of messages
+     * @param int $seconds Time in seconds
      *
      * @return $this
      *
-     * @see MessageCountLimiterReceiver
+     * @see TimeLimiterReceiver
      */
     public function expire(int $seconds): ReceiverBuilder
     {
         return $this->add(new TimeLimiterReceiver($seconds, $this->logger));
+    }
+
+    /**
+     * Stops consumption when the queues are empty for an amount of time
+     *
+     * @param int $seconds Time in seconds
+     *
+     * @return $this
+     *
+     * @see LimitTimeWhenEmptyReceiver
+     */
+    public function expireWhenEmpty(int $seconds): ReceiverBuilder
+    {
+        return $this->add(new LimitTimeWhenEmptyReceiver($seconds, $this->logger));
     }
 
     /**
