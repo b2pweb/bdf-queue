@@ -15,6 +15,8 @@ use Symfony\Component\Console\Application;
 use Symfony\Component\Console\Tester\CommandCompletionTester;
 use Symfony\Component\Console\Tester\CommandTester;
 
+use function method_exists;
+
 /**
  * @group Bdf_Queue
  * @group Bdf_Queue_Console
@@ -156,7 +158,7 @@ class ProduceCommandTest extends TestCase
 
         $command = new ProduceCommand($this->manager);
         $application = new Application();
-        $application->add($command);
+        method_exists($application, 'addCommand') ? $application->addCommand($command) : $application->add($command);
 
         $tester = new CommandCompletionTester($application->get('queue:produce'));
         $suggestions = $tester->complete($input);

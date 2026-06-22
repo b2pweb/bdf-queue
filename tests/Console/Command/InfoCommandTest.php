@@ -14,6 +14,8 @@ use Symfony\Component\Console\Application;
 use Symfony\Component\Console\Tester\CommandCompletionTester;
 use Symfony\Component\Console\Tester\CommandTester;
 
+use function method_exists;
+
 /**
  * @group Bdf_Queue
  * @group Bdf_Queue_Console
@@ -118,7 +120,7 @@ EOF;
 
         $command = new InfoCommand($this->container->get(ConnectionDriverFactoryInterface::class));
         $application = new Application();
-        $application->add($command);
+        method_exists($application, 'addCommand') ? $application->addCommand($command) : $application->add($command);
 
         $tester = new CommandCompletionTester($application->get('queue:info'));
         $suggestions = $tester->complete($input);

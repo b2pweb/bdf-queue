@@ -14,6 +14,8 @@ use Symfony\Component\Console\Application;
 use Symfony\Component\Console\Tester\CommandCompletionTester;
 use Symfony\Component\Console\Tester\CommandTester;
 
+use function method_exists;
+
 /**
  *
  */
@@ -162,7 +164,7 @@ class SetupCommandTest extends TestCase
 
         $command = new SetupCommand($this->manager);
         $application = new Application();
-        $application->add($command);
+        method_exists($application, 'addCommand') ? $application->addCommand($command) : $application->add($command);
 
         $tester = new CommandCompletionTester($application->get('queue:setup'));
         $suggestions = $tester->complete($input);

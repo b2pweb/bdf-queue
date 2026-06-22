@@ -63,7 +63,7 @@ class DoctrineConnection implements ConnectionDriverInterface, ManageableQueueIn
         if ($this->connection === null) {
             try {
                 $this->connection = DriverManager::getConnection($this->config);
-                $this->connection->connect();
+                $this->connection->executeQuery('SELECT 1');
             } catch (Exception $e) {
                 throw new ConnectionFailedException($e->getMessage(), $e->getCode(), $e);
             }
