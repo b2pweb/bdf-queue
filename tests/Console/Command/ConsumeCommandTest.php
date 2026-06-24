@@ -21,6 +21,8 @@ use Symfony\Component\Console\Application;
 use Symfony\Component\Console\Tester\CommandCompletionTester;
 use Symfony\Component\Console\Tester\CommandTester;
 
+use function method_exists;
+
 /**
  * @group Bdf_Queue
  * @group Bdf_Queue_Console
@@ -393,7 +395,7 @@ class ConsumeCommandTest extends TestCase
 
         $command = new ConsumeCommand($this->manager, $this->container->get(ReceiverLoader::class));
         $application = new Application();
-        $application->add($command);
+        method_exists($application, 'addCommand') ? $application->addCommand($command) : $application->add($command);
 
         $tester = new CommandCompletionTester($application->get('queue:consume'));
         $suggestions = $tester->complete($input);

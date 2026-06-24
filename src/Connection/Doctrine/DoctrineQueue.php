@@ -14,9 +14,11 @@ use Bdf\Queue\Message\EnvelopeInterface;
 use Bdf\Queue\Message\Message;
 use Bdf\Queue\Message\QueuedMessage;
 use DateTime;
+use Doctrine\DBAL\ArrayParameterType;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Exception;
 use Doctrine\DBAL\Exception\ConnectionLost;
+use Doctrine\DBAL\Platforms\SqlitePlatform;
 use Doctrine\DBAL\Types\Types;
 use Ramsey\Uuid\Uuid;
 
@@ -105,11 +107,12 @@ class DoctrineQueue implements QueueDriverInterface, ReservableQueueDriverInterf
     public function reserve(int $number, string $queue, int $duration = ConnectionDriverInterface::DURATION): array
     {
         $doctrine = $this->connection->connection();
+        $forUpdate = $doctrine->getDatabasePlatform() instanceof SqlitePlatform ? '' : 'FOR UPDATE';
 
         // The query builder of Doctrine does not manage the lock for update.
         $sql = 'SELECT * FROM '.$doctrine->quoteIdentifier($this->connection->table()).'
               WHERE queue = :queue AND reserved = :reserved AND available_at <= :available_at
-              ORDER BY available_at, created_at LIMIT '.((int)$number).' '.$doctrine->getDatabasePlatform()->getForUpdateSql();
+              ORDER BY available_at, created_at LIMIT '.((int)$number).' '.$forUpdate;
 
         $task = function () use ($sql, $queue, $doctrine) {
             $dbJobs = $doctrine->executeQuery(
@@ -142,7 +145,7 @@ class DoctrineQueue implements QueueDriverInterface, ReservableQueueDriverInterf
                 ->andWhere('id IN (:ids)')
                 ->setParameter('reserved', true, Types::BOOLEAN)
                 ->setParameter('reserved_at', new DateTime(), Types::DATETIME_MUTABLE)
-                ->setParameter('ids', $ids, Connection::PARAM_STR_ARRAY);
+                ->setParameter('ids', $ids, ArrayParameterType::STRING);
 
             // Doctrine 3 compatibility
             if (method_exists($updateQuery, 'executeStatement')) {
