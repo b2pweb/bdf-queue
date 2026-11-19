@@ -90,7 +90,7 @@ class SetupCommand extends Command
     private function destinations(InputInterface $input): iterable
     {
         if (!$input->getOption('all')) {
-            yield $input->getArgument('connection') => $this->createDestination($this->manager, $input);
+            yield (string) $input->getArgument('connection') => $this->createDestination($this->manager, $input);
             return;
         }
 

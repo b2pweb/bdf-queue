@@ -22,7 +22,7 @@
   "minimum-stability": "dev",
   "prefer-stable": true,
   "require": {
-    "php": "~7.4 || ~8.0.0 || ~8.1.0 || ~8.2.0 || ~8.3.0 || ~8.4.0 || ~8.5.0",
+    "php": "~7.4 || ~8.0.0 || ~8.1.0 || ~8.2.0 || ~8.3.0 || ~8.4.0 || ~8.5.0 || ~8.6.0",
     "ext-pcntl": "*",
     "b2pweb/bdf-dsn": "~1.0",
     "b2pweb/bdf-instantiator": "~1.0",
@@ -44,9 +44,10 @@
     "symfony/error-handler": "~5.4|~6.0|~7.0|~8.0",
     "symfony/phpunit-bridge": "~5.4|~6.0|~7.0|~8.0",
     "symfony/var-dumper": "~5.4|~6.0|~7.0|~8.0",
-    "vimeo/psalm": "~5.22 | ~6.0",
+    "vimeo/psalm": "~5.22 | ~7.0",
     "predis/predis": "~1.1.0",
-    "friendsofphp/php-cs-fixer": "^3.0"
+    "friendsofphp/php-cs-fixer": "^3.0",
+    "kwn/php-rdkafka-stubs": "~2.0"
   },
   "suggest": {
     "ext-redis": "Required to use the Redis queue driver",
