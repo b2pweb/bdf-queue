@@ -12,6 +12,8 @@ use Bdf\Queue\Connection\TopicDriverInterface;
 use Bdf\Queue\Message\Message;
 use Bdf\Queue\Util\TopicMatcher;
 
+use function spl_object_id;
+
 /**
  * MemoryTopic
  */
@@ -62,7 +64,7 @@ class MemoryTopic implements TopicDriverInterface, CountableDriverInterface, Pee
     public function consume(int $duration = ConnectionDriverInterface::DURATION): int
     {
         $count = 0;
-        $consumerId = spl_object_hash($this);
+        $consumerId = spl_object_id($this);
         $awaiting = $this->connection->storage()->awaitings[$consumerId] ?? [];
         $this->connection->storage()->awaitings[$consumerId] = [];
 
@@ -87,7 +89,7 @@ class MemoryTopic implements TopicDriverInterface, CountableDriverInterface, Pee
      */
     public function subscribe(array $topics, callable $callback): void
     {
-        $consumerId = spl_object_hash($this);
+        $consumerId = spl_object_id($this);
 
         if (!isset($this->connection->storage()->awaitings[$consumerId])) {
             $this->connection->storage()->awaitings[$consumerId] = [];
@@ -153,7 +155,7 @@ class MemoryTopic implements TopicDriverInterface, CountableDriverInterface, Pee
      */
     public function awaiting()
     {
-        return count($this->connection->storage()->awaitings[spl_object_hash($this)] ?? []);
+        return count($this->connection->storage()->awaitings[spl_object_id($this)] ?? []);
     }
 
     /**
@@ -161,6 +163,6 @@ class MemoryTopic implements TopicDriverInterface, CountableDriverInterface, Pee
      */
     public function __destruct()
     {
-        unset($this->connection->storage()->awaitings[spl_object_hash($this)]);
+        unset($this->connection->storage()->awaitings[spl_object_id($this)]);
     }
 }
