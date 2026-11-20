@@ -273,7 +273,8 @@ class PheanstalkQueue implements QueueDriverInterface, CountableQueueDriverInter
                 } else {
                     $status[] = [
                         'host'              => $host.':'.$port,
-                        'queue'             => $stats['name'],
+                        // beanstalkd >= 1.13 quotes the name in stats-tube response, and Pheanstalk 4 does not unquote it
+                        'queue'             => trim($stats['name'], '"'),
                         'jobs in queue'     => $stats['current-jobs-ready'],
                         'jobs running'      => $stats['current-jobs-reserved'],
                         'jobs delayed'      => $stats['current-jobs-delayed'],
