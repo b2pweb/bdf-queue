@@ -103,7 +103,7 @@ class PheanstalkFunctionalTest extends TestCase
         });
 
         if (pcntl_fork() === 0) {
-            usleep(50000);
+            usleep(100000);
             $topic->publish(
                 (new Message(['foo' => 'bar']))
                     ->setTopic('topic.test')
